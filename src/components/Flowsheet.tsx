@@ -41,6 +41,12 @@ export default function Flowsheet({ patient }: Props) {
   const [customDoseRate, setCustomDoseRate] = useState<number | ''>('');
   const [customConc, setCustomConc] = useState<number | ''>('');
 
+  // CRI Stop form state
+  const [stoppingDrugIndex, setStoppingDrugIndex] = useState<number | null>(null);
+  const [stoppingTime, setStoppingTime] = useState<string>('12:00');
+  const [stoppingReason, setStoppingReason] = useState<string>('improved motility');
+  const [stoppingNote, setStoppingNote] = useState<string>('');
+
   useEffect(() => {
     const drugTemplate = drugDatabase[selectedCategory]?.[selectedDrugIndex];
     if (drugTemplate) {
@@ -258,6 +264,24 @@ export default function Flowsheet({ patient }: Props) {
     const drugName = rxList[drugIndex].name;
     setRxList(rxList.map((d, i) => (i === drugIndex ? { ...d, freq: newFreq } : d)));
     setRounds(prev => buildDrugSchedule(drugName, newFreq, prev));
+  };
+
+  const setCriStopInfo = (drugIndex: number, stopTime: string, stopReason: string, stopNote = '') => {
+    setRxList(prev => prev.map((d, i) => i === drugIndex ? { ...d, stopTime, stopReason, stopNote } : d));
+    setStoppingDrugIndex(null);
+  };
+
+  const clearCriStopInfo = (drugIndex: number) => {
+    setRxList(prev => prev.map((d, i) => {
+      if (i === drugIndex) {
+        const copy = { ...d };
+        delete copy.stopTime;
+        delete copy.stopReason;
+        delete copy.stopNote;
+        return copy;
+      }
+      return d;
+    }));
   };
 
   return (
@@ -693,17 +717,82 @@ export default function Flowsheet({ patient }: Props) {
                              onClick={() => removeDrugFromFlowsheet(drugIndex)}
                            >×</button>
                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: 0 }}>
-                             <span style={{ fontWeight: 600 }}>{drug.name}</span>
-                             <select
-                               className="med-freq"
-                               value={drugFreq}
-                               onChange={e => updateDrugFreq(drugIndex, e.target.value)}
-                             >
-                               {showCustomFreq && <option value={drugFreq}>{drugFreq}h</option>}
-                               {!drugFreq && <option value="">PRN</option>}
-                               {freqOptions.map(o => <option key={o} value={o}>{o === 'CRI' || o === 'STAT' ? o : `${o}h`}</option>)}
-                             </select>
-                           </div>
+                              <span style={{ fontWeight: 600 }}>{drug.name}</span>
+                              <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                                <select
+                                  className="med-freq"
+                                  value={drugFreq}
+                                  onChange={e => updateDrugFreq(drugIndex, e.target.value)}
+                                >
+                                  {showCustomFreq && <option value={drugFreq}>{drugFreq}h</option>}
+                                  {!drugFreq && <option value="">PRN</option>}
+                                  {freqOptions.map(o => <option key={o} value={o}>{o === 'CRI' || o === 'STAT' ? o : `${o}h`}</option>)}
+                                </select>
+
+                                {(drugFreq === 'CRI' || drug.type === 'cri') && !drug.stopTime && stoppingDrugIndex !== drugIndex && (
+                                  <button
+                                    type="button"
+                                    className="btn btn-ghost"
+                                    style={{ fontSize: '0.65rem', padding: '2px 5px', color: 'var(--danger)' }}
+                                    onClick={() => {
+                                      const lastT = rounds.length > 0 ? rounds[rounds.length - 1].time : '12:00';
+                                      setStoppingDrugIndex(drugIndex);
+                                      setStoppingTime(lastT);
+                                      setStoppingReason('improved motility');
+                                      setStoppingNote('');
+                                    }}
+                                  >
+                                    + Stop CRI
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* CRI Stopped info badge */}
+                              {drug.stopTime && (
+                                <div style={{ fontSize: '0.7rem', display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px' }}>
+                                  <span className="badge danger" style={{ fontSize: '0.65rem', padding: '2px 6px', width: 'fit-content' }}>
+                                    Stopped @ {drug.stopTime} ({drug.stopReason})
+                                  </span>
+                                  {drug.stopNote && <span className="text-muted" style={{ fontStyle: 'italic', fontSize: '0.65rem' }}>"{drug.stopNote}"</span>}
+                                  <button
+                                    type="button"
+                                    style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.65rem', cursor: 'pointer', textAlign: 'left', textDecoration: 'underline', padding: 0 }}
+                                    onClick={() => clearCriStopInfo(drugIndex)}
+                                  >
+                                    Resume CRI
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* CRI Stop Form */}
+                              {stoppingDrugIndex === drugIndex && (
+                                <div style={{ padding: '0.5rem', marginTop: '0.36rem', background: 'var(--danger-light)', borderRadius: '6px', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', border: '1px solid var(--danger)' }}>
+                                  <div style={{ fontWeight: 700, color: 'var(--danger)' }}>Stop CRI Infusion</div>
+                                  <div>
+                                    <label style={{ fontSize: '0.68rem', display: 'block', fontWeight: 600 }}>Stop Time</label>
+                                    <input type="time" value={stoppingTime} onChange={e => setStoppingTime(e.target.value)} style={{ padding: '2px 4px', fontSize: '0.75rem', width: '100%' }} />
+                                  </div>
+                                  <div>
+                                    <label style={{ fontSize: '0.68rem', display: 'block', fontWeight: 600 }}>Reason / Complication</label>
+                                    <select value={stoppingReason} onChange={e => setStoppingReason(e.target.value)} style={{ padding: '2px 4px', fontSize: '0.75rem', width: '100%' }}>
+                                      <option value="improved motility">improved motility</option>
+                                      <option value="reaction">reaction</option>
+                                      <option value="other">other</option>
+                                    </select>
+                                  </div>
+                                  {stoppingReason === 'other' && (
+                                    <div>
+                                      <label style={{ fontSize: '0.68rem', display: 'block', fontWeight: 600 }}>Details</label>
+                                      <input type="text" value={stoppingNote} onChange={e => setStoppingNote(e.target.value)} placeholder="Specify reason..." style={{ padding: '2px 4px', fontSize: '0.75rem', width: '100%' }} />
+                                    </div>
+                                  )}
+                                  <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.2rem' }}>
+                                    <button type="button" className="btn btn-primary" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => setCriStopInfo(drugIndex, stoppingTime, stoppingReason, stoppingNote)}>Save Stop</button>
+                                    <button type="button" className="btn btn-ghost" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => setStoppingDrugIndex(null)}>Cancel</button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                          </div>
                        </td>
                        <td style={{ fontWeight: 600, color: 'var(--primary-color)' }}>
@@ -720,6 +809,17 @@ export default function Flowsheet({ patient }: Props) {
                          const isGiven = medState === 'GIVEN';
                          const isCri = medState === 'CRI';
                          if (isCri) {
+                           const isStopped = drug.stopTime && r.time >= drug.stopTime;
+                           if (isStopped) {
+                             return (
+                               <td key={i} className="med-cell" style={{ backgroundColor: '#fdecea', color: 'var(--danger)', fontSize: '0.75rem', textAlign: 'center' }} title={`CRI Stopped at ${drug.stopTime}: ${drug.stopReason}`}>
+                                 <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
+                                   <span style={{ fontWeight: 800, fontSize: '0.7rem' }}>⏹ STOPPED</span>
+                                   <span className="badge danger" style={{ fontSize: '0.6rem', padding: '1px 4px' }}>{drug.stopReason}</span>
+                                 </span>
+                               </td>
+                             );
+                           }
                            return <td key={i} className="med-cell med-cri" title="CRI — continuous infusion">▶ {suggestedText}</td>;
                          }
                          if (isGiven || isDue) {

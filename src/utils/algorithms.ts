@@ -84,6 +84,9 @@ export type DrugConfig = {
   conc: number | '';
   concUnit: string;
   freq?: string;
+  stopTime?: string;
+  stopReason?: string;
+  stopNote?: string;
 };
 
 export const drugDatabase: Record<string, DrugConfig[]> = {
