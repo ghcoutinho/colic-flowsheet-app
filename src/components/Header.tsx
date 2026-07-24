@@ -38,13 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3">
         {/* Brand & Logo */}
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab('flowsheet')}>
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-800 p-1.5 flex items-center justify-center shadow-inner border border-blue-400/30">
-            {/* Custom SVG Horse-Pulse Mark */}
-            <svg viewBox="0 0 100 100" className="w-full h-full text-white fill-none stroke-current stroke-[7] stroke-linecap-round stroke-linejoin-round">
-              <path d="M 15 50 H 30 L 38 25 L 48 75 L 58 40 L 65 50 H 85" />
-              <path d="M 45 20 C 50 10, 65 10, 75 25 C 80 35, 75 48, 65 55 C 60 58, 55 68, 52 85" />
-            </svg>
-          </div>
+          <img src="icon.png" alt="CMT Cover Logo" className="w-10 h-10 rounded-xl object-cover border border-blue-400/40 shadow-sm hover:scale-105 transition-transform" />
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold tracking-tight text-lg text-white">CMT</span>
