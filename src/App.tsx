@@ -264,7 +264,13 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'prognosis' && <PrognosisEngine patient={activePatient} />}
+        {activeTab === 'prognosis' && (
+          <PrognosisEngine
+            patient={activePatient}
+            rows={flowsheetRows}
+            timeSlots={timeSlots}
+          />
+        )}
 
         {activeTab === 'schedule' && (
           <SurgeonSettingsView
