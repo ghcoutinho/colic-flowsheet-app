@@ -87,6 +87,8 @@ export type DrugConfig = {
   stopTime?: string;
   stopReason?: string;
   stopNote?: string;
+  discontinued?: boolean;
+  discontinuedTime?: string;
 };
 
 export const drugDatabase: Record<string, DrugConfig[]> = {

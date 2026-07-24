@@ -284,6 +284,23 @@ export default function Flowsheet({ patient }: Props) {
     }));
   };
 
+  const discontinueDrug = (drugIndex: number) => {
+    const lastTime = rounds.length > 0 ? rounds[rounds.length - 1].time : '12:00';
+    setRxList(prev => prev.map((d, i) => i === drugIndex ? { ...d, discontinued: true, discontinuedTime: lastTime } : d));
+  };
+
+  const resumeDrug = (drugIndex: number) => {
+    setRxList(prev => prev.map((d, i) => {
+      if (i === drugIndex) {
+        const copy = { ...d };
+        delete copy.discontinued;
+        delete copy.discontinuedTime;
+        return copy;
+      }
+      return d;
+    }));
+  };
+
   return (
     <div className="flex-col gap-4">
       {/* Prescription Builder */}
@@ -724,13 +741,26 @@ export default function Flowsheet({ patient }: Props) {
                                   className="med-freq"
                                   value={drugFreq}
                                   onChange={e => updateDrugFreq(drugIndex, e.target.value)}
+                                  disabled={drug.discontinued}
                                 >
                                   {showCustomFreq && <option value={drugFreq}>{drugFreq}h</option>}
                                   {!drugFreq && <option value="">PRN</option>}
                                   {freqOptions.map(o => <option key={o} value={o}>{o === 'CRI' || o === 'STAT' ? o : `${o}h`}</option>)}
                                 </select>
 
-                                {(drugFreq === 'CRI' || drug.type === 'cri') && !drug.stopTime && stoppingDrugIndex !== drugIndex && (
+                                {!drug.discontinued && (
+                                  <button
+                                    type="button"
+                                    className="btn btn-ghost"
+                                    style={{ fontSize: '0.65rem', padding: '2px 5px', color: '#dc2626', fontWeight: 600 }}
+                                    onClick={() => discontinueDrug(drugIndex)}
+                                    title="Discontinue future doses of this medication"
+                                  >
+                                    Discontinue
+                                  </button>
+                                )}
+
+                                {(drugFreq === 'CRI' || drug.type === 'cri') && !drug.stopTime && !drug.discontinued && stoppingDrugIndex !== drugIndex && (
                                   <button
                                     type="button"
                                     className="btn btn-ghost"
@@ -747,6 +777,22 @@ export default function Flowsheet({ patient }: Props) {
                                   </button>
                                 )}
                               </div>
+
+                              {/* Discontinued badge */}
+                              {drug.discontinued && (
+                                <div style={{ fontSize: '0.7rem', display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px' }}>
+                                  <span className="badge" style={{ fontSize: '0.65rem', padding: '2px 6px', width: 'fit-content', backgroundColor: '#64748b', color: 'white' }}>
+                                    🚫 Discontinued
+                                  </span>
+                                  <button
+                                    type="button"
+                                    style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.65rem', cursor: 'pointer', textAlign: 'left', textDecoration: 'underline', padding: 0 }}
+                                    onClick={() => resumeDrug(drugIndex)}
+                                  >
+                                    Re-activate
+                                  </button>
+                                </div>
+                              )}
 
                               {/* CRI Stopped info badge */}
                               {drug.stopTime && (
@@ -809,6 +855,15 @@ export default function Flowsheet({ patient }: Props) {
                          const isDue = medState === 'DUE';
                          const isGiven = medState === 'GIVEN';
                          const isCri = medState === 'CRI';
+
+                         if (drug.discontinued && !isGiven) {
+                           return (
+                             <td key={i} className="med-cell" style={{ backgroundColor: '#f1f5f9', color: '#94a3b8', fontSize: '0.7rem', textAlign: 'center' }} title="Discontinued">
+                               <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600 }}>Discontinued</span>
+                             </td>
+                           );
+                         }
+
                          if (isCri) {
                            const isStopped = drug.stopTime && r.time >= drug.stopTime;
                            if (isStopped) {
