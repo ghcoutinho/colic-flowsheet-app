@@ -152,9 +152,55 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
     setCellInputValue(currentValue);
   };
 
+  // Helper to find the single NEXT DUE time slot for a medication row
+  const getNextDueSlot = (row: FlowsheetRow) => {
+    if (row.category !== 'MEDICATIONS' && row.type !== 'medication') return null;
+
+    const nowIdx = timeSlots.indexOf(nowSlot);
+    const startIdx = nowIdx >= 0 ? nowIdx : 0;
+
+    // Search from nowSlot forward for the first unfulfilled scheduled slot
+    for (let i = startIdx; i < timeSlots.length; i++) {
+      const slot = timeSlots[i];
+      const cell = row.values[slot];
+      const isGiven = cell && cell.value !== '' && cell.value !== undefined;
+      const isMarkedDue = cell?.status === 'DUE' || cell?.status === 'AMBER_DUE' || cell?.note === 'DUE';
+      if (!isGiven && isMarkedDue) {
+        return slot;
+      }
+    }
+
+    // Fallback search from start of slots
+    for (let i = 0; i < startIdx; i++) {
+      const slot = timeSlots[i];
+      const cell = row.values[slot];
+      const isGiven = cell && cell.value !== '' && cell.value !== undefined;
+      const isMarkedDue = cell?.status === 'DUE' || cell?.status === 'AMBER_DUE' || cell?.note === 'DUE';
+      if (!isGiven && isMarkedDue) {
+        return slot;
+      }
+    }
+
+    return null;
+  };
+
   const handleSaveCell = () => {
     if (editingCell) {
-      onUpdateCellValue(editingCell.rowId, editingCell.timeSlot, cellInputValue);
+      const activeRow = rows.find((r) => r.id === editingCell.rowId);
+      const isMed = activeRow?.category === 'MEDICATIONS' || activeRow?.type === 'medication';
+      let valToSave = cellInputValue.trim();
+
+      // Feature 2: Preserve units when entering custom numbers
+      if (isMed && valToSave !== '' && !isNaN(Number(valToSave))) {
+        let unitStr = 'mL';
+        if (activeRow?.target) {
+          const uMatch = activeRow.target.match(/mL|mg\/kg|IU\/kg|mcg\/kg|g\/dL|mg\/dL/i);
+          if (uMatch) unitStr = uMatch[0];
+        }
+        valToSave = `${valToSave} ${unitStr}`;
+      }
+
+      onUpdateCellValue(editingCell.rowId, editingCell.timeSlot, valToSave);
       setEditingCell(null);
     }
   };
@@ -289,6 +335,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                     {/* Individual Parameter Rows */}
                     {categoryRows.map((row) => {
                       const colorStyles = getRowColorStyles(row.bandColor);
+                      const nextDueSlot = getNextDueSlot(row);
+
                       return (
                         <tr key={row.id} className="transition-colors">
                           {/* Sticky Left Title + Target Column */}
@@ -305,6 +353,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                           {timeSlots.map((slot) => {
                             const cell = row.values[slot];
                             const isNow = slot === nowSlot;
+                            const isNextDue = slot === nextDueSlot;
                             const isDue = cell?.status === 'AMBER_DUE' || cell?.status === 'DUE' || cell?.note === 'AMBER DUE' || cell?.note === 'DUE';
                             const hasValue = cell && cell.value !== '' && cell.value !== undefined;
 
@@ -313,11 +362,15 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                 key={slot}
                                 onClick={() => handleCellClick(row.id, slot, cell?.value?.toString() || '')}
                                 className={`p-1.5 text-center border-r border-slate-200/80 cursor-pointer transition-all hover:brightness-95 relative min-w-[75px] ${colorStyles.rowCellBg} ${
-                                  isNow ? 'ring-2 ring-amber-500 z-10' : ''
+                                  isNextDue ? 'ring-4 ring-amber-500 z-20 bg-amber-200/80' : isNow ? 'ring-2 ring-amber-500 z-10' : ''
                                 }`}
                               >
-                                {isDue ? (
-                                  <div className="bg-amber-500 text-white font-black text-[10px] px-2.5 py-1 rounded-lg border border-amber-600 shadow-sm animate-pulse tracking-wider">
+                                {isNextDue ? (
+                                  <div className="bg-amber-500 text-slate-950 font-black text-[10px] px-2 py-1 rounded-lg border-2 border-amber-600 shadow-md animate-pulse tracking-wider">
+                                    NEXT DUE
+                                  </div>
+                                ) : isDue ? (
+                                  <div className="bg-amber-500 text-white font-black text-[10px] px-2.5 py-1 rounded-lg border border-amber-600 shadow-sm tracking-wider">
                                     DUE
                                   </div>
                                 ) : hasValue ? (

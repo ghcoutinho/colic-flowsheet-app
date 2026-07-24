@@ -85,11 +85,50 @@ export default function App() {
     showToast(`Added Vitals Round for ${timeSlot}`);
   };
 
+  // Helper to project scheduled timepoints for a drug starting from current hour
+  const getScheduledDrugValues = (doseText: string, frequencyStr: string, slots: string[]) => {
+    const d = new Date();
+    const currentHour = d.getHours();
+    
+    // Parse frequency hours
+    let freqHours = 24;
+    const match = (frequencyStr || '').match(/\d+/);
+    if (match) {
+      freqHours = parseInt(match[0], 10);
+    } else if (frequencyStr === 'CRI') {
+      freqHours = 1; // CRI is continuous across all slots
+    }
+
+    // Generate scheduled clock hours across 48h horizon
+    const scheduledHours: number[] = [];
+    for (let h = currentHour; h < currentHour + 48; h += freqHours) {
+      scheduledHours.push(h % 24);
+    }
+
+    const values: Record<string, any> = {};
+    slots.forEach((slot) => {
+      const slotHour = parseInt((slot || '').split(':')[0], 10);
+      if (!isNaN(slotHour) && scheduledHours.includes(slotHour)) {
+        values[slot] = {
+          value: '',
+          status: 'DUE',
+          note: 'DUE',
+        };
+      }
+    });
+    return values;
+  };
+
   // Sync drug order directly from Dose Calculator to Flowsheet
   const handleSyncToFlowsheet = (drugName: string, doseText: string) => {
     const existingIndex = flowsheetRows.findIndex(
       (r) => r.parameter.toLowerCase().includes(drugName.toLowerCase())
     );
+
+    // Extract frequency from formulary or default to q6h
+    const formularyItem = formulary.find(f => f.name.toLowerCase().includes(drugName.toLowerCase()));
+    const freq = formularyItem?.defaultFrequency || 'q6h';
+    const scheduledValues = getScheduledDrugValues(doseText, freq, timeSlots);
 
     if (existingIndex >= 0) {
       setFlowsheetRows((prev) =>
@@ -97,9 +136,10 @@ export default function App() {
           if (idx === existingIndex) {
             return {
               ...row,
+              target: doseText,
               values: {
                 ...row.values,
-                '14:00': { value: doseText, status: 'NORMAL' },
+                ...scheduledValues,
               },
             };
           }
@@ -107,7 +147,7 @@ export default function App() {
         })
       );
     } else {
-      // Create new medication row
+      // Create new medication row with scheduled due timepoints
       const newRow: FlowsheetRow = {
         id: `med_${Date.now()}`,
         category: 'MEDICATIONS',
@@ -116,14 +156,12 @@ export default function App() {
         target: doseText,
         bandColor: 'pink',
         type: 'medication',
-        values: {
-          '14:00': { value: doseText, status: 'NORMAL' },
-        },
+        values: scheduledValues,
       };
       setFlowsheetRows((prev) => [...prev, newRow]);
     }
 
-    showToast(`Synced ${drugName} order to ${activePatient.name}'s Flowsheet!`);
+    showToast(`Scheduled ${drugName} (${freq}) to ${activePatient.name}'s Flowsheet!`);
   };
 
   // Update patient weight
