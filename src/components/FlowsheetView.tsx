@@ -945,17 +945,221 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                     ].map(opt => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                 </div>
-              ) : (
-                /* Standard Parameter Cell Modal */
+              ) : activeRow?.parameter.includes('Mucous') || activeRow?.id === 'mm' ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Enter Parameter Value:</label>
+                  <label className="text-xs font-bold text-slate-700 block">Select Mucous Membrane Status:</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      'Pink, Moist',
+                      'Injected / Hyperemic',
+                      'Pale / Tacky',
+                      'Muddy / Dry',
+                      'Brick-Red / Toxic',
+                      'Cyanotic / Blue',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.parameter.includes('Mentation') ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Select Mentation:</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      'BAR (Bright, Alert)',
+                      'QAR (Quiet, Alert)',
+                      'Dull / Depressed',
+                      'Stuporous / Somnolent',
+                      'Agitated / Severe Pain',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.parameter.includes('Pain behavior') ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Select Pain Behavior:</label>
+                  <div className="space-y-1.5">
+                    {[
+                      'Quiet / Resting',
+                      'Mild Flank Watching / Pawing',
+                      'Restless / Frequent Lying Down',
+                      'Violent Rolling / Uncontrolled Pain',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.parameter.includes('Analgesia') ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Select Analgesia Administered:</label>
+                  <div className="space-y-1.5">
+                    {[
+                      'None Needed',
+                      'Flunixin Meglumine 1.1 mg/kg IV',
+                      'Buprenorphine 0.006 mg/kg IV',
+                      'Xylazine 0.5 mg/kg IV',
+                      'Detomidine 0.01 mg/kg IV',
+                      'Buscopan 0.3 mg/kg IV',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.parameter.includes('Reflux appearance') ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Select Reflux Appearance:</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      'None / No Reflux',
+                      'Yellow / Bilious Fluid',
+                      'Green Feed-Tinged',
+                      'Fetid / Malodorous',
+                      'Hemorrhagic / Dark Red',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.parameter.includes('Digital pulse') ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Select Digital Pulse Status:</label>
+                  <div className="space-y-1.5">
+                    {[
+                      'Normal / Cool Hooves',
+                      'Slightly Bounding Pulse',
+                      'Markedly Bounding / Warm Hooves',
+                      'Absent Pulse',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.parameter.includes('Cryotherapy') ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Select Cryotherapy Status:</label>
+                  <div className="space-y-1.5">
+                    {[
+                      'Yes (Ice Boots ON)',
+                      'Yes (Continuous Slurry)',
+                      'No (Off / Paused)',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.parameter.includes('Hoof Temp') ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Select Hoof Temp Status:</label>
+                  <div className="space-y-1.5">
+                    {[
+                      '< 10°C (Target Cryo)',
+                      '10 - 15°C (Mild Cooling)',
+                      '> 15°C (Warm / Re-ice Required)',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.parameter.includes('Incision') ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Select Incision Status:</label>
+                  <div className="space-y-1.5">
+                    {[
+                      'Clean, Dry, Intact',
+                      'Mild Edema / Swelling',
+                      'Serosanguinous Drainage',
+                      'Purulent Discharge',
+                      'Dehiscence / Herniation',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Numeric Parameter Cell Modal */
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Enter Parameter Value ({activeRow?.unit || activeRow?.target}):</label>
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     value={cellInputValue}
                     onChange={(e) => setCellInputValue(e.target.value)}
                     autoFocus
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-900 font-bold focus:ring-2 focus:ring-blue-500 outline-none text-base"
-                    placeholder="e.g. 48, BAR, 38.1..."
+                    placeholder="e.g. 48, 38.1..."
                   />
                 </div>
               )}
