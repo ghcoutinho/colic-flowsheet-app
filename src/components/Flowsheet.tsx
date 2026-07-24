@@ -704,7 +704,7 @@ export default function Flowsheet({ patient }: Props) {
                    const drugFreq = drug.freq || '';
                    // Preserve range/custom freqs (e.g. '12') as a selectable option.
                    const showCustomFreq = drugFreq && !freqOptions.includes(drugFreq);
-                   const w = Number(patient.weight) || 0;
+                   const w = Number(patient.weight) || 450;
                    const rate = Number(drug.doseRate) || 0;
                    const conc = drug.conc !== '' ? Number(drug.conc) : null;
                    

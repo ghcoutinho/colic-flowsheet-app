@@ -14,7 +14,7 @@ export type PatientProfile = {
 export const defaultPatient: PatientProfile = {
   id: '',
   date: new Date().toISOString().split('T')[0],
-  weight: '',
+  weight: 450,
   surgeon: '',
   sxDate: '',
   lesion: '',
