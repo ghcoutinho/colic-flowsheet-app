@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, Plus, Snowflake, Droplets, Activity, Settings, Pill } from 'lucide-react';
-import { calculateIceScore, checkAlerts, drugDatabase, evaluateParameterColor, calculatePrognosis, defaultRound, parseFreqHours, sortRoundsByTime, ceilToHour, projectDueTimes } from '../utils/algorithms';
+import { Plus, Activity, Pill } from 'lucide-react';
+import { drugDatabase, evaluateParameterColor, defaultRound, parseFreqHours, sortRoundsByTime, ceilToHour, projectDueTimes } from '../utils/algorithms';
 import type { PatientProfile, RoundData, DrugConfig } from '../utils/algorithms';
 
 const MED_HORIZON_HOURS = 24;
@@ -26,8 +26,6 @@ export default function Flowsheet({ patient }: Props) {
     laminitis: 'q6h',
     incision: 'q12h'
   });
-
-  const [showSettings, setShowSettings] = useState(false);
 
   const [rxList, setRxList] = useState<DrugConfig[]>(() => {
     const savedRx = localStorage.getItem('cmt_rxList');
@@ -253,106 +251,8 @@ export default function Flowsheet({ patient }: Props) {
     setRounds(prev => buildDrugSchedule(drugName, newFreq, prev));
   };
 
-  const activeAlerts = rounds.flatMap((r) => checkAlerts(r));
-  const latestRound = rounds[rounds.length - 1];
-  const iceScore = calculateIceScore(latestRound, patient);
-  const prognosis = calculatePrognosis(latestRound);
-
-  const totalReflux = rounds.reduce((sum, r) => sum + (Number(r.refluxVol) || 0), 0);
-  const totalFluidsIn = rounds.reduce((sum, r) => sum + (Number(r.volInfused) || 0), 0);
-  const totalUrineOut = rounds.reduce((sum, r) => sum + (Number(r.urineOut) || 0), 0);
-  const fluidBalance = totalFluidsIn - totalUrineOut - totalReflux;
-
   return (
     <div className="flex-col gap-4">
-      {/* Dashboard Top */}
-      <div className="flex gap-4 mb-4" style={{ flexWrap: 'wrap' }}>
-        <div className="card" style={{ flex: '1 1 200px', marginBottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="text-muted mb-2"><Snowflake size={16} style={{display:'inline', marginRight: '4px'}}/> On Ice Score</div>
-          {iceScore ? (
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', fontWeight: 700, color: iceScore.color }}>{iceScore.score}%</div>
-              <div className="badge" style={{ backgroundColor: iceScore.color, color: 'white' }}>{iceScore.label}</div>
-            </div>
-          ) : (
-            <div className="text-muted">No data</div>
-          )}
-        </div>
-        
-        <div className="card" style={{ flex: '1 1 200px', marginBottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="text-muted mb-2"><Activity size={16} style={{display:'inline', marginRight: '4px'}}/> Prognosis</div>
-          {prognosis ? (
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', fontWeight: 700, color: prognosis.survColor }}>{prognosis.survProb.toFixed(1)}%</div>
-              <div className="badge" style={{ backgroundColor: prognosis.survColor, color: 'white' }}>{prognosis.survLabel}</div>
-            </div>
-          ) : (
-            <div className="text-muted">No data</div>
-          )}
-        </div>
-        
-        <div className="card" style={{ flex: '1 1 200px', marginBottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="text-muted mb-2"><Droplets size={16} style={{display:'inline', marginRight: '4px'}}/> Fluid Balance</div>
-          <div style={{ fontSize: '2rem', fontWeight: 700, color: fluidBalance >= 0 ? 'var(--success)' : 'var(--warning)' }}>
-            {fluidBalance > 0 ? '+' : ''}{fluidBalance} L
-          </div>
-          <div className="text-muted text-center mt-2" style={{ fontSize: '0.75rem' }}>
-            In: {totalFluidsIn}L | Out: {totalUrineOut}L | Reflux: {totalReflux}L
-          </div>
-        </div>
-
-        <div className="card" style={{ flex: '2 1 300px', marginBottom: 0 }}>
-          <div className="text-danger mb-2" style={{ fontWeight: 600 }}><AlertTriangle size={16} style={{display:'inline', marginRight: '4px'}}/> Call Surgeon Triggers</div>
-          {activeAlerts.length > 0 ? (
-            <div style={{ maxHeight: '80px', overflowY: 'auto' }}>
-              {activeAlerts.map((a, i) => (
-                <div key={i} style={{ fontSize: '0.875rem', marginBottom: '0.25rem', padding: '0.25rem', backgroundColor: 'var(--danger-light)', borderLeft: '3px solid var(--danger)', borderRadius: '4px' }}>
-                  <strong>{a.trigger}:</strong> {a.message}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-muted">No active escalation triggers.</div>
-          )}
-        </div>
-      </div>
-
-      {/* Surgeon Settings */}
-      <div className="card" style={{ padding: '1rem' }}>
-        <div className="flex justify-between items-center cursor-pointer" onClick={() => setShowSettings(!showSettings)}>
-          <div style={{ fontWeight: 600, color: 'var(--primary-color)' }}><Settings size={16} style={{display:'inline', marginRight:'4px'}}/> Surgeon Settings (Schedule)</div>
-          <div className="text-muted">{showSettings ? '▲ Hide' : '▼ Show'}</div>
-        </div>
-        {showSettings && (
-          <div className="mt-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-            <div className="input-group">
-              <label className="input-label">TPR (Vitals)</label>
-              <select className="input-field" value={schedule.tpr} onChange={e => setSchedule({...schedule, tpr: e.target.value})}>
-                <option value="q1h">q1h</option><option value="q2h">q2h</option><option value="q4h">q4h</option><option value="q6h">q6h</option>
-              </select>
-            </div>
-            <div className="input-group">
-              <label className="input-label">GI / Full Exam</label>
-              <select className="input-field" value={schedule.gi} onChange={e => setSchedule({...schedule, gi: e.target.value})}>
-                <option value="q2h">q2h</option><option value="q4h">q4h</option><option value="q6h">q6h</option><option value="q12h">q12h</option>
-              </select>
-            </div>
-            <div className="input-group">
-              <label className="input-label">Clinicopathology</label>
-              <select className="input-field" value={schedule.clinpath} onChange={e => setSchedule({...schedule, clinpath: e.target.value})}>
-                <option value="q6h">q6h</option><option value="q12h">q12h</option><option value="q24h">q24h</option>
-              </select>
-            </div>
-            <div className="input-group">
-              <label className="input-label">Laminitis Check</label>
-              <select className="input-field" value={schedule.laminitis} onChange={e => setSchedule({...schedule, laminitis: e.target.value})}>
-                <option value="q6h">q6h</option><option value="q12h">q12h</option>
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Prescription Builder */}
       <div className="card" style={{ padding: '1rem' }}>
         <h2 style={{ fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--primary-color)' }}>

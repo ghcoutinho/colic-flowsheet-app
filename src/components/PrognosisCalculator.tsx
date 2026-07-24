@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { RoundData } from '../utils/algorithms';
+import { Download } from 'lucide-react';
 
 export default function PrognosisCalculator() {
+  const [lastRoundTime, setLastRoundTime] = useState<string>('');
   const [inputs, setInputs] = useState({
     hr: '',
     rr: '',
@@ -23,28 +25,6 @@ export default function PrognosisCalculator() {
     surgLabel: string;
   } | null>(null);
 
-  useEffect(() => {
-    // Auto-fetch from latest round
-    const saved = localStorage.getItem('cmt_rounds');
-    if (saved) {
-      try {
-        const rounds = JSON.parse(saved) as RoundData[];
-        if (rounds.length > 0) {
-          const r = rounds[rounds.length - 1];
-          setInputs(prev => ({
-            ...prev,
-            hr: String(r.hr || ''),
-            rr: String(r.rr || ''),
-            pcv: String(r.pcv || ''),
-            lactate: String(r.lactate || ''),
-            pain: mapPain(r.painScore, r.painBehavior),
-            gutSounds: mapGutSounds(r.gutSounds)
-          }));
-        }
-      } catch (e) {}
-    }
-  }, []);
-
   const mapPain = (score: any, behavior: any) => {
     const s = Number(score) || 0;
     if (s >= 2 || behavior === 'rolling' || behavior === 'kicking abdomen') return '2';
@@ -58,14 +38,14 @@ export default function PrognosisCalculator() {
     return '0';
   };
 
-  const calculateProbabilities = () => {
-    const hr = Number(inputs.hr) || 0;
-    const pcv = Number(inputs.pcv) || 0;
-    const lac = Number(inputs.lactate) || 0;
-    const dor = Number(inputs.pain);
-    const sons = Number(inputs.gutSounds);
-    const retal = Number(inputs.rectal);
-    const us = Number(inputs.us);
+  const calculateProbabilities = useCallback((currentInputs = inputs) => {
+    const hr = Number(currentInputs.hr) || 0;
+    const pcv = Number(currentInputs.pcv) || 0;
+    const lac = Number(currentInputs.lactate) || 0;
+    const dor = Number(currentInputs.pain);
+    const sons = Number(currentInputs.gutSounds);
+    const retal = Number(currentInputs.rectal);
+    const us = Number(currentInputs.us);
 
     // 1. SURVIVAL PROBABILITY (Logistic Regression)
     // Z = 4.5 - (0.03 * HR) - (0.04 * PCV) - (0.25 * Lactate)
@@ -109,17 +89,58 @@ export default function PrognosisCalculator() {
     }
 
     setResults({ survProb, survColor, survLabel, surgProb, surgColor, surgLabel });
-  };
+  }, [inputs]);
+
+  const importFromFlowsheet = useCallback(() => {
+    const saved = localStorage.getItem('cmt_rounds');
+    if (saved) {
+      try {
+        const rounds = JSON.parse(saved) as RoundData[];
+        if (rounds.length > 0) {
+          const r = rounds[rounds.length - 1];
+          setLastRoundTime(r.time || '');
+          const newInputs = {
+            ...inputs,
+            hr: String(r.hr || ''),
+            rr: String(r.rr || ''),
+            pcv: String(r.pcv || ''),
+            lactate: String(r.lactate || ''),
+            pain: mapPain(r.painScore, r.painBehavior),
+            gutSounds: mapGutSounds(r.gutSounds)
+          };
+          setInputs(newInputs);
+          calculateProbabilities(newInputs);
+        }
+      } catch (e) {}
+    }
+  }, [inputs, calculateProbabilities]);
+
+  useEffect(() => {
+    importFromFlowsheet();
+  }, []);
 
   return (
     <div className="flex-col gap-4 max-w-4xl mx-auto">
       <div className="card" style={{ padding: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary-color)', textAlign: 'center', marginBottom: '0.5rem' }}>
-          Equine Prognosis Calculator
-        </h2>
-        <p className="text-muted" style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          Logistic Survival Analysis and Surgical Risk (%)
-        </p>
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+          <div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary-color)', margin: 0 }}>
+              Equine Prognosis Calculator
+            </h2>
+            <p className="text-muted" style={{ margin: 0, fontSize: '0.875rem' }}>
+              Logistic Survival Analysis and Surgical Risk (%)
+            </p>
+          </div>
+
+          <button 
+            className="btn btn-ghost" 
+            onClick={importFromFlowsheet}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Download size={16} /> Import Latest Flowsheet Results
+            {lastRoundTime && <span className="badge" style={{ marginLeft: '4px' }}>{lastRoundTime}</span>}
+          </button>
+        </div>
 
         {/* Systemic Parameters */}
         <h3 style={{ fontSize: '1.1rem', borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '1rem', color: 'var(--primary-color)' }}>
@@ -181,7 +202,7 @@ export default function PrognosisCalculator() {
           </div>
         </div>
 
-        <button className="btn btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1.1rem', fontWeight: 700 }} onClick={calculateProbabilities}>
+        <button className="btn btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1.1rem', fontWeight: 700 }} onClick={() => calculateProbabilities()}>
           Process Probabilities
         </button>
 
