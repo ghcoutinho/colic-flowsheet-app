@@ -105,9 +105,10 @@ export const drugDatabase: Record<string, DrugConfig[]> = {
     { name: 'Chloramphenicol', type: 'oral', doseRate: 50, unit: 'mg/kg', conc: 1000, concUnit: 'mg/tablet', freq: '6' }
   ],
   "Analgesics": [
+    { name: 'Lidocaine (Bolus)', type: 'bolus', doseRate: 1.3, unit: 'mg/kg', conc: 20, concUnit: 'mg/mL', freq: 'STAT' },
+    { name: 'Lidocaine (CRI)', type: 'cri', doseRate: 0.05, unit: 'mg/kg/min', conc: 20, concUnit: 'mg/mL', freq: 'CRI' },
     { name: 'Butorphanol', type: 'bolus', doseRate: 0.05, unit: 'mg/kg', conc: 10, concUnit: 'mg/mL', freq: '4' },
     { name: 'Morphine', type: 'bolus', doseRate: 0.1, unit: 'mg/kg', conc: 15, concUnit: 'mg/mL', freq: '4' },
-    { name: 'Lidocaine (CRI)', type: 'cri', doseRate: 3.0, unit: 'mg/kg/h', conc: 20, concUnit: 'mg/mL', freq: 'CRI' },
     { name: 'Ketamine (CRI)', type: 'cri', doseRate: 0.6, unit: 'mg/kg/h', conc: 100, concUnit: 'mg/mL', freq: 'CRI' },
     { name: 'Detomidine', type: 'bolus', doseRate: 0.01, unit: 'mg/kg', conc: 10, concUnit: 'mg/mL', freq: '4' },
     { name: 'Xylazine', type: 'bolus', doseRate: 0.3, unit: 'mg/kg', conc: 100, concUnit: 'mg/mL', freq: '2' },
@@ -127,7 +128,8 @@ export const drugDatabase: Record<string, DrugConfig[]> = {
     { name: 'Dexamethasone', type: 'bolus', doseRate: 0.05, unit: 'mg/kg', conc: 2, concUnit: 'mg/mL', freq: '24' }
   ],
   "GI-Prokinetic": [
-    { name: 'Lidocaine (CRI)', type: 'cri', doseRate: 3.0, unit: 'mg/kg/h', conc: 20, concUnit: 'mg/mL', freq: 'CRI' },
+    { name: 'Lidocaine (Bolus)', type: 'bolus', doseRate: 1.3, unit: 'mg/kg', conc: 20, concUnit: 'mg/mL', freq: 'STAT' },
+    { name: 'Lidocaine (CRI)', type: 'cri', doseRate: 0.05, unit: 'mg/kg/min', conc: 20, concUnit: 'mg/mL', freq: 'CRI' },
     { name: 'Metoclopramide', type: 'cri', doseRate: 0.04, unit: 'mg/kg/h', conc: 5, concUnit: 'mg/mL', freq: 'CRI' },
     { name: 'Erythromycin', type: 'bolus', doseRate: 1, unit: 'mg/kg', conc: 200, concUnit: 'mg/mL', freq: '6' },
     { name: 'Neostigmine', type: 'bolus', doseRate: 0.02, unit: 'mg/kg', conc: 1, concUnit: 'mg/mL', freq: '2' },

@@ -693,13 +693,14 @@ export default function Flowsheet({ patient }: Props) {
                    
                    let suggestedText = '-';
                    if (w > 0) {
-                     const totalDose = w * rate;
+                     const hourlyRate = drug.unit.includes('/min') ? rate * 60 : rate;
+                     const totalDose = w * hourlyRate;
                      if (drug.type === 'fluid') {
-                       suggestedText = `${totalDose.toLocaleString()} ${drug.unit.includes('/h') ? 'mL/h' : 'mL'}`;
+                       suggestedText = `${totalDose.toLocaleString()} ${drug.unit.includes('/h') || drug.unit.includes('/min') ? 'mL/h' : 'mL'}`;
                      } else {
                        if (conc && conc > 0) {
                          const vol = totalDose / conc;
-                         suggestedText = `${vol.toLocaleString(undefined, {maximumFractionDigits: 2})} ${drug.type === 'cri' ? 'mL/h' : drug.concUnit.includes('tablet') ? 'tabs' : 'mL'}`;
+                         suggestedText = `${vol.toLocaleString(undefined, {maximumFractionDigits: 2})} ${drug.type === 'cri' || drug.unit.includes('/h') || drug.unit.includes('/min') ? 'mL/h' : drug.concUnit.includes('tablet') ? 'tabs' : 'mL'}`;
                        } else {
                          suggestedText = `${totalDose.toLocaleString()} ${drug.unit.split('/')[0]}`;
                        }
