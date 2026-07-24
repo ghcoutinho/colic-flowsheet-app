@@ -141,6 +141,65 @@ export const drugDatabase: Record<string, DrugConfig[]> = {
   ]
 };
 
+/* ------------------------------------------------------------------ *
+ * Medication scheduling helpers
+ * ------------------------------------------------------------------ *
+ * Rounds are stored with an 'HH:MM' clock time only (no date). This is
+ * intentional for a shift-based flowsheet. Overnight ordering (e.g. a
+ * 23:00 round followed by a 01:00 round) is a known limitation of the
+ * clock-only model and is out of scope for this pass.
+ * ------------------------------------------------------------------ */
+
+/** Parse a frequency string ('q6h', 'q12-24h', 'STAT', 'CRI') into interval hours.
+ *  Ranges take the FIRST (shortest / most conservative) value.
+ *  Returns null for CRI, STAT, or anything without a number (handled specially). */
+export function parseFreqHours(freq?: string): number | null {
+  if (!freq) return null;
+  const f = freq.trim().toUpperCase();
+  if (f === 'CRI' || f === 'STAT') return null;
+  const match = freq.match(/\d+/); // first number: 'q12-24h' -> 12
+  if (!match) return null;
+  const h = parseInt(match[0], 10);
+  return h > 0 ? h : null;
+}
+
+/** Minutes since midnight for an 'HH:MM' string (used for sorting). */
+export function minutesOfDay(time: string): number {
+  const [h, m] = (time || '').split(':').map(Number);
+  if (isNaN(h)) return -1;
+  return h * 60 + (isNaN(m) ? 0 : m);
+}
+
+/** Sort rounds chronologically by clock time (replaces the old no-op sort). */
+export function sortRoundsByTime(rounds: RoundData[]): RoundData[] {
+  return [...rounds].sort((a, b) => minutesOfDay(a.time) - minutesOfDay(b.time));
+}
+
+/** Round an 'HH:MM' string up to the next full hour if it has minutes. */
+export function ceilToHour(time: string): string {
+  let [h, m] = (time || '00:00').split(':').map(Number);
+  if (isNaN(h)) h = 0;
+  if (!isNaN(m) && m > 0) h = (h + 1) % 24;
+  return `${String(h % 24).padStart(2, '0')}:00`;
+}
+
+/** Generate the list of 'HH:MM' dose times at a fixed interval, starting from
+ *  `startTime` (inclusive), across a horizon in hours. Wraps past midnight. */
+export function projectDueTimes(startTime: string, intervalHours: number, horizonHours = 24): string[] {
+  const times: string[] = [];
+  if (intervalHours <= 0) return times;
+  let [h, m] = (startTime || '00:00').split(':').map(Number);
+  if (isNaN(h)) h = 0;
+  if (isNaN(m)) m = 0;
+  let elapsed = 0;
+  while (elapsed <= horizonHours) {
+    times.push(`${String(h % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    h += intervalHours;
+    elapsed += intervalHours;
+  }
+  return times;
+}
+
 export function calculateIceScore(round: RoundData, patient: PatientProfile): { score: number, color: string, label: string } | null {
   if (!round.time) return null;
 

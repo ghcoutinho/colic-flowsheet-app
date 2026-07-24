@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { AlertTriangle, Plus, Snowflake, Droplets, Activity, Settings, Pill } from 'lucide-react';
-import { calculateIceScore, checkAlerts, drugDatabase, evaluateParameterColor, calculatePrognosis, defaultRound } from '../utils/algorithms';
+import { calculateIceScore, checkAlerts, drugDatabase, evaluateParameterColor, calculatePrognosis, defaultRound, parseFreqHours, sortRoundsByTime, ceilToHour, projectDueTimes } from '../utils/algorithms';
 import type { PatientProfile, RoundData, DrugConfig } from '../utils/algorithms';
+
+const MED_HORIZON_HOURS = 24;
 
 type Props = {
   patient: PatientProfile;
@@ -60,7 +62,24 @@ export default function Flowsheet({ patient }: Props) {
 
   const addDrugToFlowsheet = () => {
     const drugTemplate = drugDatabase[selectedCategory][selectedDrugIndex];
-    setRxList([...rxList, { ...drugTemplate }]);
+    // Avoid adding the same drug twice (the schedule is keyed by drug name).
+    if (rxList.some(d => d.name === drugTemplate.name)) return;
+    const newRx = { ...drugTemplate };
+    setRxList([...rxList, newRx]);
+    // Immediately project the dose schedule at the drug's own frequency.
+    setRounds(prev => buildDrugSchedule(newRx.name, newRx.freq, prev));
+  };
+
+  const removeDrugFromFlowsheet = (drugIndex: number) => {
+    const drugName = rxList[drugIndex].name;
+    setRxList(rxList.filter((_, i) => i !== drugIndex));
+    // Strip this drug's markers from every round.
+    setRounds(prev => prev.map(r => {
+      if (!r.medications || !(drugName in r.medications)) return r;
+      const meds = { ...r.medications };
+      delete meds[drugName];
+      return { ...r, medications: meds };
+    }));
   };
 
   const addRound = () => {
@@ -113,7 +132,13 @@ export default function Flowsheet({ patient }: Props) {
       newRounds.push({ ...defaultRound, time: manualTime });
     }
 
-    setRounds([...rounds, ...newRounds]);
+    // Merge, keep chronological order, then re-apply each drug's schedule so the
+    // newly-added columns pick up any DUE doses that fall on them.
+    let merged = sortRoundsByTime([...rounds, ...newRounds]);
+    for (const drug of rxList) {
+      merged = buildDrugSchedule(drug.name, drug.freq, merged);
+    }
+    setRounds(merged);
   };
 
   const updateRound = (index: number, field: keyof RoundData, value: any) => {
@@ -122,107 +147,91 @@ export default function Flowsheet({ patient }: Props) {
     setRounds(newRounds);
   };
 
-  const recalculateMedicationSchedule = (drugName: string, freqStr: string | undefined, currentRounds: RoundData[]) => {
-    if (!freqStr) return currentRounds;
-    const freqMatch = freqStr.match(/\d+/);
-    if (!freqMatch) return currentRounds;
-    const intervalHours = parseInt(freqMatch[0]);
-
-    // Find the last GIVEN dose
-    let lastGivenIndex = -1;
-    for (let i = currentRounds.length - 1; i >= 0; i--) {
-      if (currentRounds[i].medications?.[drugName] === 'GIVEN') {
-        lastGivenIndex = i;
-        break;
+  // Place DUE markers at the given times, creating new round columns when a
+  // matching time doesn't exist yet. GIVEN doses are never overwritten.
+  const placeDueMarkers = (rs: RoundData[], drugName: string, times: string[]): RoundData[] => {
+    const result = [...rs];
+    const seen = new Set<string>();
+    for (const t of times) {
+      if (seen.has(t)) continue;
+      seen.add(t);
+      const idx = result.findIndex(r => r.time === t);
+      if (idx !== -1) {
+        if (result[idx].medications?.[drugName] === 'GIVEN') continue;
+        result[idx] = { ...result[idx], medications: { ...(result[idx].medications || {}), [drugName]: 'DUE' } };
+      } else {
+        result.push({ ...defaultRound, time: t, medications: { [drugName]: 'DUE' } });
       }
     }
+    return result;
+  };
 
-    let newRounds = [...currentRounds];
-    
-    // Clear all DUE doses for this drug across all rounds
-    newRounds = newRounds.map(r => {
-      if (r.medications && r.medications[drugName] === 'DUE') {
-        const newMeds = { ...r.medications };
-        delete newMeds[drugName];
-        return { ...r, medications: newMeds };
+  // Rebuild the DUE/CRI markers for a single drug across all rounds, preserving
+  // any GIVEN doses. Anchoring:
+  //  - if a dose has been GIVEN, the next dose is due one interval after the
+  //    latest given time (a late dose pushes the next one back);
+  //  - otherwise doses are projected from the first round's time (due now).
+  const buildDrugSchedule = (drugName: string, freq: string | undefined, currentRounds: RoundData[]): RoundData[] => {
+    // Clear previous DUE / CRI markers for this drug (keep GIVEN).
+    let newRounds = currentRounds.map(r => {
+      const state = r.medications?.[drugName];
+      if (state === 'DUE' || state === 'CRI') {
+        const meds = { ...r.medications };
+        delete meds[drugName];
+        return { ...r, medications: meds };
       }
       return r;
     });
 
-    if (lastGivenIndex !== -1) {
-      const lastGivenRound = newRounds[lastGivenIndex];
-      const [hours, minutes] = lastGivenRound.time.split(':').map(Number);
-      let baseDate = new Date();
-      baseDate.setHours(hours, minutes, 0, 0);
+    const f = (freq || '').trim().toUpperCase();
 
-      // Round up to next full hour for the first scheduled dose
-      if (minutes > 0) {
-        baseDate.setHours(baseDate.getHours() + 1);
-        baseDate.setMinutes(0);
-      }
-
-      const newFutureRounds: RoundData[] = [];
-      let loopDate = new Date(baseDate);
-      loopDate.setHours(loopDate.getHours() + intervalHours); // First due dose
-      const endDate = new Date(baseDate);
-      endDate.setHours(endDate.getHours() + 24); // Generate for next 24 hours
-
-      while (loopDate <= endDate) {
-        const timeStr = loopDate.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-        
-        const existingRoundIndex = newRounds.findIndex(r => r.time === timeStr);
-        if (existingRoundIndex !== -1) {
-           if (!newRounds[existingRoundIndex].medications) newRounds[existingRoundIndex].medications = {};
-           if (!newRounds[existingRoundIndex].medications[drugName]) {
-               newRounds[existingRoundIndex].medications[drugName] = 'DUE';
-           }
-        } else {
-           const localExistsIndex = newFutureRounds.findIndex(r => r.time === timeStr);
-           if (localExistsIndex !== -1) {
-               if (!newFutureRounds[localExistsIndex].medications) newFutureRounds[localExistsIndex].medications = {};
-               newFutureRounds[localExistsIndex].medications![drugName] = 'DUE';
-           } else {
-               newFutureRounds.push({ 
-                 ...defaultRound, 
-                 time: timeStr, 
-                 medications: { [drugName]: 'DUE' } 
-               });
-           }
-        }
-        loopDate.setHours(loopDate.getHours() + intervalHours);
-      }
-
-      newRounds = [...newRounds, ...newFutureRounds].sort(() => 0);
+    // CRI: mark every round as continuously running.
+    if (f === 'CRI') {
+      newRounds = newRounds.map(r => ({
+        ...r,
+        medications: { ...(r.medications || {}), [drugName]: r.medications?.[drugName] === 'GIVEN' ? 'GIVEN' : 'CRI' }
+      }));
+      return sortRoundsByTime(newRounds);
     }
-    
-    return newRounds;
+
+    // Determine the anchor time.
+    const givenRounds = sortRoundsByTime(newRounds.filter(r => r.medications?.[drugName] === 'GIVEN'));
+    const sorted = sortRoundsByTime(newRounds);
+    const hasGiven = givenRounds.length > 0;
+    const anchor = ceilToHour(hasGiven ? givenRounds[givenRounds.length - 1].time : (sorted[0]?.time || defaultRound.time));
+
+    // STAT: a single dose at the anchor, only while nothing has been given.
+    if (f === 'STAT') {
+      if (!hasGiven) newRounds = placeDueMarkers(newRounds, drugName, [anchor]);
+      return sortRoundsByTime(newRounds);
+    }
+
+    const interval = parseFreqHours(freq);
+    if (!interval) return sortRoundsByTime(newRounds); // PRN / unknown freq: no auto-schedule
+
+    // If a dose was given, start the projection one interval later (the given
+    // dose covers the anchor); otherwise the first dose is due at the anchor.
+    const times = projectDueTimes(anchor, interval, MED_HORIZON_HOURS);
+    const dueTimes = hasGiven ? times.slice(1) : times;
+    newRounds = placeDueMarkers(newRounds, drugName, dueTimes);
+    return sortRoundsByTime(newRounds);
   };
 
   const updateMedicationRound = (index: number, drugName: string, isGiven: boolean, freq?: string) => {
-    let newRounds = [...rounds];
-    if (!newRounds[index].medications) {
-      newRounds[index].medications = {};
-    }
-    
-    if (isGiven) {
-      newRounds[index].medications![drugName] = 'GIVEN';
-    } else {
-      delete newRounds[index].medications![drugName];
-    }
-    
-    newRounds = recalculateMedicationSchedule(drugName, freq, newRounds);
-    setRounds(newRounds);
+    setRounds(prev => {
+      const rs = [...prev];
+      const meds = { ...(rs[index].medications || {}) };
+      if (isGiven) meds[drugName] = 'GIVEN';
+      else delete meds[drugName];
+      rs[index] = { ...rs[index], medications: meds };
+      return buildDrugSchedule(drugName, freq, rs);
+    });
   };
-  
+
   const updateDrugFreq = (drugIndex: number, newFreq: string) => {
-    const newRxList = [...rxList];
-    const drugName = newRxList[drugIndex].name;
-    newRxList[drugIndex] = { ...newRxList[drugIndex], freq: newFreq };
-    setRxList(newRxList);
-    
-    // Recalculate schedule
-    const newRounds = recalculateMedicationSchedule(drugName, newFreq, rounds);
-    setRounds(newRounds);
+    const drugName = rxList[drugIndex].name;
+    setRxList(rxList.map((d, i) => (i === drugIndex ? { ...d, freq: newFreq } : d)));
+    setRounds(prev => buildDrugSchedule(drugName, newFreq, prev));
   };
 
   const activeAlerts = rounds.flatMap((r) => checkAlerts(r));
@@ -664,8 +673,21 @@ export default function Flowsheet({ patient }: Props) {
             {/* Medications */}
             {rxList.length > 0 && (
               <>
-                <tr><td colSpan={100} style={{ backgroundColor: 'var(--bg-main)', fontWeight: 600, fontSize: '0.75rem' }}>MEDICATIONS</td></tr>
+                <tr><td colSpan={100} style={{ backgroundColor: 'var(--bg-main)', fontWeight: 600, fontSize: '0.75rem' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                    <span>MEDICATIONS</span>
+                    <span className="med-legend">
+                      <span><i className="med-key med-key-due" /> Due</span>
+                      <span><i className="med-key med-key-given" /> Given</span>
+                      <span><i className="med-key med-key-cri" /> CRI</span>
+                    </span>
+                  </span>
+                </td></tr>
                 {rxList.map((drug, drugIndex) => {
+                   const freqOptions = ['q1h','q2h','q4h','q6h','q8h','q12h','q24h','CRI','STAT'];
+                   const drugFreq = drug.freq || '';
+                   // Preserve range/custom freqs (e.g. 'q12-24h') as a selectable option.
+                   const showCustomFreq = drugFreq && !freqOptions.includes(drugFreq);
                    const w = Number(patient.weight) || 0;
                    const rate = Number(drug.doseRate) || 0;
                    const conc = drug.conc !== '' ? Number(drug.conc) : null;
@@ -687,36 +709,61 @@ export default function Flowsheet({ patient }: Props) {
 
                    return (
                      <tr key={drugIndex}>
-                       <td style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                         <span>{drug.name}</span>
-                         <select 
-                           value={drug.freq || ''} 
-                           onChange={e => updateDrugFreq(drugIndex, e.target.value)}
-                           style={{ fontSize: '0.65rem', padding: '2px', border: '1px solid var(--border-color)', borderRadius: '3px', background: 'transparent' }}
-                         >
-                           <option value="q1h">q1h</option><option value="q2h">q2h</option><option value="q4h">q4h</option><option value="q6h">q6h</option><option value="q8h">q8h</option><option value="q12h">q12h</option><option value="q24h">q24h</option><option value="CRI">CRI</option><option value="STAT">STAT</option>
-                         </select>
+                       <td>
+                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                           <button
+                             type="button"
+                             className="med-remove"
+                             title={`Remove ${drug.name}`}
+                             onClick={() => removeDrugFromFlowsheet(drugIndex)}
+                           >×</button>
+                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: 0 }}>
+                             <span style={{ fontWeight: 600 }}>{drug.name}</span>
+                             <select
+                               className="med-freq"
+                               value={drugFreq}
+                               onChange={e => updateDrugFreq(drugIndex, e.target.value)}
+                             >
+                               {showCustomFreq && <option value={drugFreq}>{drugFreq}</option>}
+                               {!drugFreq && <option value="">PRN</option>}
+                               {freqOptions.map(o => <option key={o} value={o}>{o}</option>)}
+                             </select>
+                           </div>
+                         </div>
                        </td>
-                       <td className="text-muted" style={{ fontWeight: 600, color: 'var(--primary-color)' }}>
+                       <td style={{ fontWeight: 600, color: 'var(--primary-color)' }}>
                           {suggestedText}
                        </td>
                        {rounds.map((r, i) => {
                          const medState = r.medications?.[drug.name];
                          const isDue = medState === 'DUE';
                          const isGiven = medState === 'GIVEN';
+                         const isCri = medState === 'CRI';
+                         if (isCri) {
+                           return <td key={i} className="med-cell med-cri" title="CRI — continuous infusion">▶</td>;
+                         }
+                         if (isGiven || isDue) {
+                           return (
+                             <td key={i} className={`med-cell ${isGiven ? 'med-given' : 'med-due'}`} title={isGiven ? 'Given' : 'Due'}>
+                               <input
+                                 type="checkbox"
+                                 checked={isGiven}
+                                 onChange={e => updateMedicationRound(i, drug.name, e.target.checked, drug.freq)}
+                               />
+                             </td>
+                           );
+                         }
+                         // Not scheduled at this time — muted dot, click to log an off-schedule dose.
                          return (
-                           <td key={i} className="editable-cell" style={{ 
-                             backgroundColor: isDue ? 'var(--warning-light)' : (isGiven ? 'var(--success-light)' : 'transparent'),
-                             textAlign: 'center', verticalAlign: 'middle' 
-                           }}>
-                             <input 
-                               type="checkbox" 
-                               checked={isGiven} 
-                               onChange={e => updateMedicationRound(i, drug.name, e.target.checked, drug.freq)}
-                               style={{ transform: 'scale(1.2)' }}
-                             />
+                           <td key={i} className="med-cell">
+                             <button
+                               type="button"
+                               className="med-empty"
+                               title="Record off-schedule dose"
+                               onClick={() => updateMedicationRound(i, drug.name, true, drug.freq)}
+                             >·</button>
                            </td>
-                         )
+                         );
                        })}
                      </tr>
                    );
