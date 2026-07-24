@@ -232,7 +232,8 @@ table {
 
 th, td {
   padding: 0.6rem 0.9rem;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid #cbd5e1;
+  border-right: 1px solid #e2e8f0;
   white-space: nowrap;
 }
 
@@ -246,17 +247,18 @@ th {
   position: sticky;
   top: 0;
   z-index: 5;
-  box-shadow: 0 1px 0 var(--line);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+  border-right: 1px solid #cbd5e1;
 }
 
 .table-fixed-col th:first-child,
 .table-fixed-col td:first-child {
   position: sticky;
   left: 0;
-  background-color: var(--card);
+  background-color: #ffffff;
   z-index: 6;
   font-weight: 600;
-  border-right: 2px solid var(--line);
+  border-right: 2px solid #94a3b8;
 }
 
 .table-fixed-col th:first-child {
@@ -264,14 +266,20 @@ th {
   top: 0;
   left: 0;
   background-color: var(--primary-light);
+  border-right: 2px solid #94a3b8;
 }
 
 tr:last-child td { border-bottom: none; }
 
-tbody tr:nth-child(even) td { background-color: #f8fafb; }
-tbody tr:nth-child(even) td:first-child { background-color: #eef3f3; }
+/* High contrast banded rows */
+tbody tr:nth-child(even) td { background-color: #e6eef6; }
+tbody tr:nth-child(even) td:first-child { background-color: #d6e3f0; }
 
-tr:hover td { background-color: var(--primary-light) !important; }
+/* High contrast banded columns */
+tbody tr:nth-child(odd) td:nth-child(even) { background-color: #f1f6fa; }
+tbody tr:nth-child(even) td:nth-child(even) { background-color: #dbe6f2; }
+
+tr:hover td { background-color: #d0e2e2 !important; }
 
 /* ---------- Badges ---------- */
 .badge {

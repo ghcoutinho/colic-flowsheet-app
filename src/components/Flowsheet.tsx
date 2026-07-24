@@ -39,6 +39,14 @@ export default function Flowsheet({ patient }: Props) {
 
   const [selectedCategory, setSelectedCategory] = useState<string>("Antibiotics");
   const [selectedDrugIndex, setSelectedDrugIndex] = useState<number>(0);
+  const [selectedFreq, setSelectedFreq] = useState<string>('6');
+
+  useEffect(() => {
+    const drugTemplate = drugDatabase[selectedCategory]?.[selectedDrugIndex];
+    if (drugTemplate) {
+      setSelectedFreq(drugTemplate.freq || '6');
+    }
+  }, [selectedCategory, selectedDrugIndex]);
 
 
   useEffect(() => {
@@ -64,7 +72,7 @@ export default function Flowsheet({ patient }: Props) {
     const drugTemplate = drugDatabase[selectedCategory][selectedDrugIndex];
     // Avoid adding the same drug twice (the schedule is keyed by drug name).
     if (rxList.some(d => d.name === drugTemplate.name)) return;
-    const newRx = { ...drugTemplate };
+    const newRx = { ...drugTemplate, freq: selectedFreq };
     setRxList([...rxList, newRx]);
     // Immediately project the dose schedule at the drug's own frequency.
     setRounds(prev => buildDrugSchedule(newRx.name, newRx.freq, prev));
@@ -352,7 +360,7 @@ export default function Flowsheet({ patient }: Props) {
               ))}
             </select>
           </div>
-          <div style={{ flex: '2 1 300px' }}>
+          <div style={{ flex: '2 1 250px' }}>
             <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Drug</label>
             <select 
               value={selectedDrugIndex} 
@@ -360,7 +368,19 @@ export default function Flowsheet({ patient }: Props) {
               style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
             >
               {drugDatabase[selectedCategory].map((d, i) => (
-                <option key={i} value={i}>{d.name} ({d.doseRate} {d.unit} {d.freq ? d.freq : ''})</option>
+                <option key={i} value={i}>{d.name} ({d.doseRate} {d.unit} {d.freq ? `${d.freq}h` : ''})</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ flex: '1 1 120px' }}>
+            <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Frequency (hours)</label>
+            <select 
+              value={selectedFreq} 
+              onChange={e => setSelectedFreq(e.target.value)}
+              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontWeight: 600 }}
+            >
+              {['1', '2', '4', '6', '8', '12', '24', 'CRI', 'STAT'].map(f => (
+                <option key={f} value={f}>{f === 'CRI' || f === 'STAT' ? f : `every ${f}h`}</option>
               ))}
             </select>
           </div>
@@ -685,9 +705,9 @@ export default function Flowsheet({ patient }: Props) {
                   </span>
                 </td></tr>
                 {rxList.map((drug, drugIndex) => {
-                   const freqOptions = ['q1h','q2h','q4h','q6h','q8h','q12h','q24h','CRI','STAT'];
+                   const freqOptions = ['1','2','4','6','8','12','24','CRI','STAT'];
                    const drugFreq = drug.freq || '';
-                   // Preserve range/custom freqs (e.g. 'q12-24h') as a selectable option.
+                   // Preserve range/custom freqs (e.g. '12') as a selectable option.
                    const showCustomFreq = drugFreq && !freqOptions.includes(drugFreq);
                    const w = Number(patient.weight) || 0;
                    const rate = Number(drug.doseRate) || 0;
@@ -725,9 +745,9 @@ export default function Flowsheet({ patient }: Props) {
                                value={drugFreq}
                                onChange={e => updateDrugFreq(drugIndex, e.target.value)}
                              >
-                               {showCustomFreq && <option value={drugFreq}>{drugFreq}</option>}
+                               {showCustomFreq && <option value={drugFreq}>{drugFreq}h</option>}
                                {!drugFreq && <option value="">PRN</option>}
-                               {freqOptions.map(o => <option key={o} value={o}>{o}</option>)}
+                               {freqOptions.map(o => <option key={o} value={o}>{o === 'CRI' || o === 'STAT' ? o : `${o}h`}</option>)}
                              </select>
                            </div>
                          </div>
