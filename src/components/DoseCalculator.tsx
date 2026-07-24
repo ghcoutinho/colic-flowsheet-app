@@ -67,7 +67,9 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
   const handleSync = (item: DrugFormularyItem) => {
     const state = drugStates[item.id] || { doseRate: item.defaultDoseRate, concentration: item.defaultConcentration };
     const volume = calculateVolume(patient.weightKg, state.doseRate, state.concentration);
-    const doseText = `${volume} mL (${state.doseRate} ${item.doseUnit})`;
+    const isCRI = item.category === 'CRIs' || item.defaultFrequency === 'CRI' || item.doseUnit.includes('/hr');
+    const unitLabel = isCRI ? 'mL/hr' : 'mL';
+    const doseText = `${volume} ${unitLabel} (${state.doseRate} ${item.doseUnit})`;
 
     onSyncToFlowsheet(item.name, doseText);
     setSyncedDrugId(item.id);
@@ -238,7 +240,7 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
               <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-4 text-center border border-blue-400/40 shadow-inner">
                 <div className="text-xs font-bold uppercase tracking-wider text-blue-100">Calculated Volume</div>
                 <div className="text-2xl sm:text-3xl font-black text-white mt-1">
-                  {calcVol} mL
+                  {calcVol} {(item.category === 'CRIs' || item.defaultFrequency === 'CRI' || item.doseUnit.includes('/hr')) ? 'mL/hr' : 'mL'}
                 </div>
                 <div className="text-[11px] text-blue-200 mt-0.5">
                   ({patient.weightKg} kg × {state.doseRate} {item.doseUnit} ÷ {state.concentration} {item.concentrationUnit})

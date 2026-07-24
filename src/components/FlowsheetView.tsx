@@ -194,7 +194,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
       if (isMed && valToSave !== '' && !isNaN(Number(valToSave))) {
         let unitStr = 'mL';
         if (activeRow?.target) {
-          const uMatch = activeRow.target.match(/mL|mg\/kg|IU\/kg|mcg\/kg|g\/dL|mg\/dL/i);
+          const uMatch = activeRow.target.match(/mL\/hr|mL|mg\/kg\/hr|mg\/kg|IU\/kg|mcg\/kg|g\/dL|mg\/dL/i);
           if (uMatch) unitStr = uMatch[0];
         }
         valToSave = `${valToSave} ${unitStr}`;
