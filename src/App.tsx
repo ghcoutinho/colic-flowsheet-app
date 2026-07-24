@@ -1,22 +1,57 @@
-import { useState } from 'react';
-import { Activity, Calculator, FileText, BookOpen, Stethoscope } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Calculator, FileText, BookOpen, Stethoscope, AlertTriangle, User, Users } from 'lucide-react';
 import './index.css';
 
 // Components
 import Flowsheet from './components/Flowsheet';
 import DoseCalculator from './components/DoseCalculator';
+import ReferenceIntervals from './components/ReferenceIntervals';
+import PrognosisCalculator from './components/PrognosisCalculator';
+import DecisionTriggers from './components/DecisionTriggers';
+import ExpandableText from './components/ExpandableText';
+import Identification from './components/Identification';
+import PatientManager from './components/PatientManager';
+import { defaultPatient } from './utils/algorithms';
+import type { PatientProfile } from './utils/algorithms';
 import data from './data.json';
 
 const appData = data as Record<string, any>;
 
+const HorseIcon = ({ size = 18, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.87 3.09C11.53 2.37 12.72 2 14.15 2c1.78 0 3.2 1.34 3.4 3 .2.1 1.05.5 2 1 1 1 2.22 2.65 2.22 3.65 0 .5-.2.5-1.22 1.5a7 7 0 0 1-1.63 1.15c-.24 2.26-1.57 3.55-3.32 4.1a5 5 0 0 1-1.6.3v4.3L12 22l-2-2v-4.3c-.5-.1-1-.25-1.47-.45-2.04-1-3.15-2.9-3.48-5.25L4 8l3-3a6.83 6.83 0 0 1 3.87-1.91z"/>
+  </svg>
+);
+
 function App() {
-  const [activeTab, setActiveTab] = useState('Flowsheet');
+  const [activeTab, setActiveTab] = useState('Patients');
+  const [sessionId, setSessionId] = useState<number>(Date.now());
+  const [patient, setPatient] = useState<PatientProfile>(() => {
+    const saved = localStorage.getItem('cmt_patient');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return defaultPatient;
+  });
+
+  const handleSessionChange = (newPatient: PatientProfile) => {
+    setPatient(newPatient);
+    setSessionId(Date.now()); // trigger remounts
+  };
+
+  useEffect(() => {
+    localStorage.setItem('cmt_patient', JSON.stringify(patient));
+  }, [patient]);
   
   const tabs = [
-    { id: 'Flowsheet', icon: <Activity size={18} />, label: 'Flowsheet' },
+    { id: 'Patients', icon: <Users size={18} />, label: 'Patients' },
+    { id: 'Identification', icon: <User size={18} />, label: 'Patient ID' },
+    { id: 'Flowsheet', icon: <HorseIcon size={18} />, label: 'Flowsheet' },
+    { id: 'Prognosis', icon: <Calculator size={18} />, label: 'Prognosis' },
     { id: 'Dose Calculator', icon: <Calculator size={18} />, label: 'Dose Calculator' },
     { id: 'Standing Orders', icon: <FileText size={18} />, label: 'Orders' },
     { id: 'References', icon: <BookOpen size={18} />, label: 'References' },
+    { id: 'Triggers', icon: <AlertTriangle size={18} />, label: 'Triggers' },
   ];
 
   const renderTable = (sheetName: string) => {
@@ -42,7 +77,7 @@ function App() {
             {validData.map((row: any, rowIdx: number) => (
               <tr key={rowIdx}>
                 {sheet.columns.map((col: string, colIdx: number) => (
-                  <td key={colIdx}>{row[col] !== null ? String(row[col]) : ''}</td>
+                  <td key={colIdx}><ExpandableText text={row[col] !== null ? String(row[col]) : ''} maxLength={80} /></td>
                 ))}
               </tr>
             ))}
@@ -58,7 +93,7 @@ function App() {
       <header className="header">
         <div className="header-title">
           <Stethoscope color="var(--primary-color)" />
-          Colic Flowsheet
+          CMT - Colic Monitoring Tool
         </div>
       </header>
 
@@ -94,10 +129,14 @@ function App() {
             </p>
           </div>
 
-          {activeTab === 'Flowsheet' && <Flowsheet />}
+          {activeTab === 'Patients' && <PatientManager currentPatient={patient} onSessionChange={handleSessionChange} />}
+          {activeTab === 'Identification' && <Identification key={sessionId} patient={patient} setPatient={setPatient} />}
+          {activeTab === 'Flowsheet' && <Flowsheet key={sessionId} patient={patient} />}
+          {activeTab === 'Prognosis' && <PrognosisCalculator />}
           {activeTab === 'Dose Calculator' && <DoseCalculator />}
           {activeTab === 'Standing Orders' && renderTable('Standing Orders')}
-          {activeTab === 'References' && renderTable('References')}
+          {activeTab === 'References' && <ReferenceIntervals />}
+          {activeTab === 'Triggers' && <DecisionTriggers />}
           
         </section>
       </main>

@@ -1,0 +1,65 @@
+[
+  {
+    "category": "Vitals & Perfusion",
+    "parameters": [
+      { "name": "Heart rate", "reference": "28–44 bpm", "notes": "Resting adult" },
+      { "name": "Respiratory rate", "reference": "10–24 breaths/min", "notes": "Resting adult" },
+      { "name": "Rectal temperature", "reference": "37.2–38.3 °C (99–101 °F)", "notes": "Up to ~38.5 °C sometimes cited as upper normal" },
+      { "name": "Capillary refill time", "reference": "≤ 2 seconds", "notes": "—" },
+      { "name": "Mucous membranes", "reference": "Moist, pink", "notes": "Qualitative" },
+      { "name": "Gut sounds", "reference": "Present in all quadrants", "notes": "Qualitative; borborygmi in all four quadrants" },
+      { "name": "Digital pulse", "reference": "Faint / not bounding", "notes": "Qualitative; bounding pulse suggests laminitis" }
+    ]
+  },
+  {
+    "category": "Pain & GI Function",
+    "parameters": [
+      { "name": "Pain score (0–3)", "reference": "0", "notes": "Comfortable = 0" },
+      { "name": "Nasogastric reflux", "reference": "< 2 L net", "notes": "≥ 2 L is abnormal/clinically significant" },
+      { "name": "Manure passage", "reference": "Present", "notes": "Expected within ~24–48 h post-op" },
+      { "name": "Abdominal distension (0–3)", "reference": "0", "notes": "—" }
+    ]
+  },
+  {
+    "category": "Clinicopathology — Hematology",
+    "parameters": [
+      { "name": "PCV / hematocrit", "reference": "34–46 %", "notes": "" },
+      { "name": "Hemoglobin", "reference": "11.8–15.9 g/dL", "notes": "" },
+      { "name": "RBC", "reference": "6.6–9.7 ×10⁶/µL", "notes": "" },
+      { "name": "Total WBC", "reference": "5.2–10.1 ×10³/µL", "notes": "" },
+      { "name": "Neutrophils", "reference": "2.7–6.6 ×10³/µL", "notes": "" },
+      { "name": "Lymphocytes", "reference": "1.2–4.9 ×10³/µL", "notes": "" },
+      { "name": "Monocytes", "reference": "0–0.6 ×10³/µL", "notes": "" },
+      { "name": "Eosinophils", "reference": "0–1.2 ×10³/µL", "notes": "" },
+      { "name": "Platelets", "reference": "94–232 ×10³/µL", "notes": "" },
+      { "name": "Fibrinogen", "reference": "0–200 mg/dL", "notes": "" },
+      { "name": "Total protein (plasma)", "reference": "5.2–7.8 g/dL", "notes": "" }
+    ]
+  },
+  {
+    "category": "Clinicopathology — Biochemistry",
+    "parameters": [
+      { "name": "Total protein (serum)", "reference": "5.4–7.0 g/dL", "notes": "" },
+      { "name": "Albumin", "reference": "2.9–3.6 g/dL", "notes": "" },
+      { "name": "Glucose", "reference": "71–122 mg/dL", "notes": "≈ 3.9–6.8 mmol/L" },
+      { "name": "Blood lactate", "reference": "< 2.0 mmol/L", "notes": "≈ 0.5–1.8 resting adult" },
+      { "name": "Creatinine", "reference": "0.8–1.5 mg/dL", "notes": "" },
+      { "name": "Urea nitrogen (BUN)", "reference": "10–22 mg/dL", "notes": "" },
+      { "name": "Sodium", "reference": "134–142 mEq/L", "notes": "" },
+      { "name": "Potassium", "reference": "2.4–4.8 mEq/L", "notes": "serum; plasma/whole-blood often ~3.0–5.0" },
+      { "name": "Chloride", "reference": "95–104 mEq/L", "notes": "" },
+      { "name": "Calcium (total)", "reference": "10.8–12.9 mg/dL", "notes": "" },
+      { "name": "Magnesium", "reference": "1.2–1.9 mEq/L", "notes": "" },
+      { "name": "Bicarbonate (HCO₃⁻)", "reference": "24–31 mEq/L", "notes": "" },
+      { "name": "Anion gap", "reference": "12–19 mEq/L", "notes": "" }
+    ]
+  },
+  {
+    "category": "Fluids, Output & Laminitis",
+    "parameters": [
+      { "name": "Urine output", "reference": "~0.5–1.5 mL/kg/h", "notes": "Clinical adequacy target, not a lab RI" },
+      { "name": "Obel grade", "reference": "0", "notes": "Any grade ≥ 1 = laminitic lameness" },
+      { "name": "Hoof wall temperature", "reference": "Ambient/cool", "notes": "Cryotherapy target during treatment is < 10 °C" }
+    ]
+  }
+]

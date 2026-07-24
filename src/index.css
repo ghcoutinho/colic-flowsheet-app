@@ -222,8 +222,18 @@ tr:last-child td {
   border-bottom: none;
 }
 
+/* Banded Rows */
+tbody tr:nth-child(even) td {
+  background-color: #f8fafc; /* Very light slate */
+}
+
+/* Ensure fixed column gets correct background for banded rows */
+tbody tr:nth-child(even) td:first-child {
+  background-color: #f1f5f9;
+}
+
 tr:hover td {
-  background-color: var(--primary-light);
+  background-color: var(--primary-light) !important;
 }
 
 .badge {
@@ -325,19 +335,33 @@ tr:hover td {
   padding: 0.25rem;
   min-width: 80px;
 }
-.editable-cell input {
+.editable-cell input[type="text"],
+.editable-cell input[type="number"],
+.editable-cell input[type="time"] {
   width: 100%;
-  padding: 0.25rem;
-  border: 1px solid transparent;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border-color); /* Visible box by default */
   border-radius: 4px;
-  background: transparent;
-}
-.editable-cell input:hover {
-  border-color: var(--border-color);
   background: var(--bg-card);
+  transition: all 0.2s;
 }
-.editable-cell input:focus {
+.editable-cell input[type="text"]:hover,
+.editable-cell input[type="number"]:hover,
+.editable-cell input[type="time"]:hover {
+  border-color: #94a3b8;
+}
+.editable-cell input[type="text"]:focus,
+.editable-cell input[type="number"]:focus,
+.editable-cell input[type="time"]:focus {
   border-color: var(--primary-color);
-  background: var(--bg-card);
+  box-shadow: 0 0 0 2px var(--primary-light);
   outline: none;
+}
+
+/* Checkbox specific */
+.editable-cell input[type="checkbox"] {
+  width: 1.2rem;
+  height: 1.2rem;
+  cursor: pointer;
+  accent-color: var(--primary-color);
 }

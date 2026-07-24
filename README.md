@@ -1,32 +1,36 @@
-# React + TypeScript + Vite
+# CMT — Colic Monitoring Tool
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A Progressive Web App (PWA) designed for referral-hospital veterinary teams to monitor horses recovering from colic surgery (e.g., large colon volvulus/displacement) across the critical post-operative window.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Offline-First PWA:** Works on mobile and tablets without an internet connection. Data is saved locally to the device.
+- **Clinical Flowsheet Grid:** Replaces paper/Excel flowsheets with a multi-round, timeline-based electronic record.
+- **Decision Support:**
+  - **"On Ice" Engine:** Automatically computes a 0–100% score recommending prophylactic digital cryotherapy based on SIRS criteria (Heart Rate, Temperature, Lactate, WBC) and primary lesion risk.
+  - **"Call Surgeon" Alerts:** Automatically evaluates inputs against 11 clinical triggers (e.g., net reflux > 2L, fever, pain) and fires escalation alerts.
+- **Surgeon Settings (Scheduling):** Allows the attending clinician to set parameter check intervals (e.g., q2h TPR, q4h Full Exam), which dynamically labels the flowsheet for interns and nurses.
+- **Weight-Driven Dose Calculator:** An interactive calculator preloaded with typical post-operative equine medications (antibiotics, NSAIDs, fluids, CRIs).
 
-## React Compiler
+## How to Install on Mobile
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Open the [live link](https://ghcoutinho.github.io/colic-flowsheet-app/) in **Chrome** (Android) or **Safari** (iOS).
+2. Tap the browser's share or menu button.
+3. Select **Add to Home Screen** / **Install App**.
+4. The app will now appear on your home screen with its icon and can be opened offline.
 
-## Expanding the Oxlint configuration
+## Development
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+Built with React, TypeScript, and Vite.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+To build and deploy to GitHub Pages:
+```bash
+npm run deploy
+```
+
+> **Disclaimer:** This application provides clinical decision support only. It is not an autonomous order system. The attending veterinarian is responsible for all clinical decisions. Verify all doses and thresholds against your formulary.
