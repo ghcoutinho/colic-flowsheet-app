@@ -490,7 +490,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                           </td>
 
                           {/* Time Values Cells across the row with dynamic anti-misentry color scheme */}
-                          {timeSlots.map((slot) => {
+                          {timeSlots.map((slot, slotIdx) => {
                             const cell = row.values[slot];
                             const isNow = slot === nowSlot;
                             const isNextDue = slot === nextDueSlot;
@@ -502,6 +502,26 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
 
                             const dynStatus = getDynamicStatus(row.parameter, cell?.value);
                             const hasValue = cell && cell.value !== '' && cell.value !== undefined;
+
+                            // Calculate dynamic delta from previous non-empty numeric cell
+                            let calculatedDelta: string | null = null;
+                            if (hasValue && !isNaN(Number(cell.value))) {
+                              const currNum = Number(cell.value);
+                              let prevNum: number | null = null;
+                              for (let k = slotIdx - 1; k >= 0; k--) {
+                                const prevSlotVal = row.values[timeSlots[k]]?.value;
+                                if (prevSlotVal !== undefined && prevSlotVal !== '' && !isNaN(Number(prevSlotVal))) {
+                                  prevNum = Number(prevSlotVal);
+                                  break;
+                                }
+                              }
+                              if (prevNum !== null) {
+                                const diff = parseFloat((currNum - prevNum).toFixed(2));
+                                calculatedDelta = diff >= 0 ? `+${diff}` : `${diff}`;
+                              } else {
+                                calculatedDelta = '+0'; // Baseline difference
+                              }
+                            }
 
                             let cellStyleClass = colorStyles.rowCellBg;
                             if (isDiscontinued) {
@@ -546,6 +566,17 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                   </div>
                                 ) : hasValue ? (
                                   <div className={`bg-white rounded-xl p-1 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative`}>
+                                    {calculatedDelta && (
+                                      <span className={`absolute -top-2 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full border shadow-xs ${
+                                        calculatedDelta.startsWith('+') && calculatedDelta !== '+0'
+                                          ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                          : calculatedDelta.startsWith('-')
+                                          ? 'bg-sky-100 text-sky-800 border-sky-300'
+                                          : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                      }`}>
+                                        {calculatedDelta}
+                                      </span>
+                                    )}
                                     <span className="font-black text-slate-900 text-xs sm:text-sm">
                                       {cell.value}
                                     </span>
