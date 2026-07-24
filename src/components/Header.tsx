@@ -25,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [isPatientDropdownOpen, setIsPatientDropdownOpen] = React.useState(false);
 
   const tabs = [
+    { id: 'board', label: 'Patient Board', icon: FileSpreadsheet },
     { id: 'flowsheet', label: 'Flowsheet', icon: Activity },
     { id: 'patients', label: 'Patient Info', icon: HeartPulse },
     { id: 'calculator', label: 'Dose Calculator', icon: Calculator },

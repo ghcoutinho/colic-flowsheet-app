@@ -14,6 +14,7 @@ import { Header } from './components/Header';
 import { MobileNav } from './components/MobileNav';
 import { FlowsheetView } from './components/FlowsheetView';
 import { PatientDashboard } from './components/PatientDashboard';
+import { PatientBoardView } from './components/PatientBoardView';
 import { DoseCalculator } from './components/DoseCalculator';
 import { PrognosisEngine } from './components/PrognosisEngine';
 import { SurgeonSettingsView } from './components/SurgeonSettingsView';
@@ -155,6 +156,35 @@ export default function App() {
     setIsNewPatientModalOpen(false);
 
     showToast(`Registered ${newP.name}! Flowsheet reset starting at ${newSlots[0]}`);
+  };
+
+  const handleDeletePatient = (id: string) => {
+    if (patients.length <= 1) {
+      showToast("Cannot delete the last patient.");
+      return;
+    }
+    const updated = patients.filter(p => p.id !== id);
+    setPatients(updated);
+    if (activePatientId === id) {
+      setActivePatientId(updated[0].id);
+    }
+    showToast("Patient deleted successfully.");
+  };
+
+  const handleDuplicatePatient = (id: string) => {
+    const patientToCopy = patients.find(p => p.id === id);
+    if (!patientToCopy) return;
+
+    const newId = `p_${Date.now()}`;
+    const duplicate: Patient = {
+      ...patientToCopy,
+      id: newId,
+      name: `${patientToCopy.name} (Copy)`,
+      patientId: `${patientToCopy.patientId}-C`,
+    };
+    
+    setPatients(prev => [duplicate, ...prev]);
+    showToast(`Patient duplicated: ${duplicate.name}`);
   };
 
   // Update cell value directly in flowsheet
@@ -370,6 +400,17 @@ export default function App() {
             patients={patients}
             onSelectPatient={(p) => setActivePatientId(p.id)}
             onOpenNewPatientModal={handleOpenNewPatientModal}
+          />
+        )}
+
+        {activeTab === 'board' && (
+          <PatientBoardView
+            patients={patients}
+            activePatientId={activePatientId}
+            onSelectPatient={(p) => setActivePatientId(p.id)}
+            onOpenNewPatientModal={handleOpenNewPatientModal}
+            onDuplicatePatient={handleDuplicatePatient}
+            onDeletePatient={handleDeletePatient}
           />
         )}
 
