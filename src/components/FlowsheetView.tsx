@@ -554,8 +554,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
       </div>
 
       {/* Main Flowsheet Grid Container with Sticky Left Column */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto relative">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <div className="overflow-auto relative" style={{ maxHeight: 'calc(100vh - 260px)' }}>
           <table className="w-full text-left border-collapse min-w-[850px]">
             {/* Table Header Row (Sticky Top) */}
             <thead className="sticky top-0 z-30 bg-slate-800 text-white text-xs uppercase tracking-wider font-semibold border-b border-slate-700 shadow-md">
