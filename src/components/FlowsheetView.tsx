@@ -8,7 +8,7 @@ interface FlowsheetViewProps {
   patient: Patient;
   surgeonSettings?: SurgeonScheduleSettings;
   onOpenAddRound: () => void;
-  onUpdateCellValue: (rowId: string, timeSlot: string, newValue: string, status?: 'NORMAL' | 'AMBER_DUE' | 'DUE' | 'WARNING' | 'CRITICAL' | 'DONE' | 'LATE' | 'DISCONTINUED') => void;
+  onUpdateCellValue: (rowId: string, timeSlot: string, newValue: string, status?: 'NORMAL' | 'AMBER_DUE' | 'DUE' | 'WARNING' | 'CRITICAL' | 'DONE' | 'LATE' | 'DISCONTINUED' | 'PROCESSING') => void;
   onAddMedicationToFlowsheet: (medName: string, doseText: string) => void;
 }
 
@@ -670,12 +670,29 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                   <div className="bg-emerald-600 text-white font-black text-[10px] px-2 py-1 rounded-lg border border-emerald-700 shadow-xs">
                                     ✓ {cell.value || row.target}
                                   </div>
-                                ) : isLate ? (
-                                  <div className="bg-red-600 text-white font-black text-[10px] px-2 py-1 rounded-lg border border-red-700 shadow-xs animate-pulse">
-                                    LATE
+                                ) : (cell?.status === 'PROCESSING' || (cell?.isCollected && !hasValue)) ? (
+                                  <div className="bg-slate-800 text-amber-300 font-extrabold text-[10px] px-1.5 py-1.5 rounded-xl border border-amber-400/60 flex items-center justify-center gap-1 shadow-md animate-pulse">
+                                    ⏳ Processing
                                   </div>
                                 ) : isNumericRow(row) ? (
                                   <div className={`bg-white rounded-xl p-0.5 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative`}>
+                                    {row.category === 'CLINICOPATHOLOGY' && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const nextCollected = !cell?.isCollected;
+                                          const nextStatus = nextCollected && !hasValue ? 'PROCESSING' : 'NORMAL';
+                                          onUpdateCellValue(row.id, slot, cell?.value?.toString() || '', nextStatus);
+                                        }}
+                                        className={`absolute -bottom-2 text-[8px] font-black px-1.5 py-0.5 rounded-full border shadow-2xs transition-all ${
+                                          cell?.isCollected ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
+                                        }`}
+                                        title="Click to toggle sample collected status"
+                                      >
+                                        {cell?.isCollected ? '✓ Coletado' : '+ Coletar'}
+                                      </button>
+                                    )}
                                     {calculatedDelta && (
                                       <span className={`absolute -top-2 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full border shadow-xs pointer-events-none ${
                                         calculatedDelta.startsWith('+') && calculatedDelta !== '+0'
@@ -1172,6 +1189,105 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         onClick={() => setCellInputValue(opt)}
                         className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
                           cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.type === 'rectal_exam' || activeRow?.parameter.includes('Rectal') ? (
+                /* Rectal Examination 1-Click Grid */
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Select Rectal Exam Findings:</label>
+                  <div className="space-y-1.5">
+                    {[
+                      'Normal / Empty Pelvic Flexure',
+                      'Small Intestinal Distension (Tensional Loops)',
+                      'Pelvic Flexure Impaction (Firm Fecal Mass)',
+                      'Large Colon Displacement (L-Dorsal / R-Dorsal)',
+                      'Tympany / Gas Distension',
+                      'TIGHT TENSIONAL BANDS (Strangulation Risk)',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt ? 'bg-purple-700 text-white border-purple-800 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.type === 'flash_us' || activeRow?.parameter.includes('FLASH') ? (
+                /* FLASH Abdominal US 1-Click Grid */
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Select FLASH Abdominal US Findings:</label>
+                  <div className="space-y-1.5">
+                    {[
+                      'Normal Motility & Normal Wall (<3mm)',
+                      'Distended SI Loops (>4cm tensional)',
+                      'Thickened Small Intest. Wall (>3mm)',
+                      'Thickened Colon Wall (>5mm)',
+                      'Anechoic / Moderate Free Fluid',
+                      'Increased Hyperechoic Peritoneal Fluid',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt ? 'bg-blue-700 text-white border-blue-800 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.type === 'response_therapy' || activeRow?.parameter.includes('Response to') ? (
+                /* Response to Therapy 1-Click Grid */
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Response to Medical Analgesia:</label>
+                  <div className="space-y-1.5">
+                    {[
+                      'Complete Resolution',
+                      'Partial / Transient Response',
+                      'Refractory / Unresponsive to Analgesia',
+                      'Rapid Deterioration',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt
+                            ? opt.includes('Complete') ? 'bg-emerald-600 text-white font-extrabold' : 'bg-red-600 text-white font-extrabold'
+                            : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.type === 'peritoneal' || activeRow?.parameter.includes('Peritoneal Gross') ? (
+                /* Peritoneal Appearance 1-Click Grid */
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Select Peritoneal Fluid Appearance:</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      'Clear Yellow',
+                      'Turbid / Clouded',
+                      'Serosanguineous (Pink/Red)',
+                      'Frank Blood',
+                      'Enterocentesis (Feed Material)',
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setCellInputValue(opt)}
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold border text-left transition-all ${
+                          cellInputValue === opt ? 'bg-purple-700 text-white border-purple-800 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
                         }`}
                       >
                         {opt}

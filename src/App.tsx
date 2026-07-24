@@ -21,6 +21,7 @@ import { StandingOrdersView } from './components/StandingOrdersView';
 import { ReferenceRangesView } from './components/ReferenceRangesView';
 import { ASOMetadataView } from './components/ASOMetadataView';
 import { AddRoundModal } from './components/AddRoundModal';
+import { NewPatientModal } from './components/NewPatientModal';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('flowsheet');
@@ -32,6 +33,7 @@ export default function App() {
   const [surgeonSettings, setSurgeonSettings] = useState<SurgeonScheduleSettings>(DEFAULT_SURGEON_SETTINGS);
 
   const [isAddRoundOpen, setIsAddRoundOpen] = useState(false);
+  const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const activePatient = patients.find((p) => p.id === activePatientId) || patients[0];
@@ -39,6 +41,45 @@ export default function App() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Behavioral Rule 1: Auto-reset flowsheet & next full hour column alignment on new patient save
+  const handleSaveNewPatient = (newP: Patient) => {
+    const now = new Date();
+    let nextFullHour = now.getHours() + (now.getMinutes() > 0 ? 1 : 0);
+    if (nextFullHour >= 24) nextFullHour = 0;
+
+    // Generate 10 consecutive hourly time slots starting at next full hour
+    const newSlots: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const h = (nextFullHour + i) % 24;
+      newSlots.push(`${String(h).padStart(2, '0')}:00`);
+    }
+
+    // Reset flowsheet rows completely for the new patient
+    const resetRows: FlowsheetRow[] = INITIAL_FLOWSHEET_ROWS.map((r) => ({
+      ...r,
+      values: {}, // Completely fresh empty values grid
+    }));
+
+    // If initial baseline rectal exam was recorded, populate first slot
+    if (newP.rectalExamBaseline) {
+      const rectalRow = resetRows.find((r) => r.id === 'rectal_exam');
+      if (rectalRow) {
+        rectalRow.values[newSlots[0]] = {
+          value: newP.rectalExamBaseline,
+          status: 'NORMAL',
+        };
+      }
+    }
+
+    setPatients((prev) => [newP, ...prev]);
+    setActivePatientId(newP.id);
+    setTimeSlots(newSlots);
+    setFlowsheetRows(resetRows);
+    setIsNewPatientModalOpen(false);
+
+    showToast(`Registered ${newP.name}! Flowsheet reset starting at ${newSlots[0]}`);
   };
 
   // Update cell value directly in flowsheet
@@ -301,6 +342,14 @@ export default function App() {
           timeSlots={timeSlots}
           onClose={() => setIsAddRoundOpen(false)}
           onAddRoundValues={handleAddRoundValues}
+        />
+      )}
+
+      {/* New Patient Registration Modal */}
+      {isNewPatientModalOpen && (
+        <NewPatientModal
+          onClose={() => setIsNewPatientModalOpen(false)}
+          onSavePatient={handleSaveNewPatient}
         />
       )}
     </div>

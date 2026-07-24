@@ -7,6 +7,19 @@ export interface Patient {
   weightKg: number;
   ageYears: number;
   breed: string;
+  sex?: 'Stallion' | 'Mare' | 'Gelding';
+  cribBiter?: boolean;
+  lastFoalingDate?: string;
+  previousAbdominalSurgery?: string;
+  recurrentColicHistory?: string;
+  tetanusVaccinationDate?: string;
+  bodyConditionScore?: number; // 1-9
+  preAdmissionAnalgesia?: string;
+  recentDeworming?: string;
+  rectalExamBaseline?: string;
+  ownerEmergencyContact?: string;
+  referringVetContact?: string;
+  surgeryConsentStatus?: 'Full Surgical Intervention Agreed' | 'Medical Management Only' | 'Financial Ceiling Reached' | 'DNR / Euthanasia Authorized';
   diagnosis: string;
   surgicalProcedure?: string;
   surgeryTime?: string;
@@ -29,7 +42,8 @@ export interface Patient {
 export interface FlowsheetValue {
   value: string | number;
   delta?: number | string; // e.g. +2, -0.5
-  status?: 'NORMAL' | 'AMBER_DUE' | 'DUE' | 'WARNING' | 'CRITICAL' | 'DONE' | 'LATE' | 'DISCONTINUED';
+  status?: 'NORMAL' | 'AMBER_DUE' | 'DUE' | 'WARNING' | 'CRITICAL' | 'DONE' | 'LATE' | 'DISCONTINUED' | 'PROCESSING';
+  isCollected?: boolean; // Checkbox "Coletado"
   note?: string;
 }
 
@@ -45,7 +59,7 @@ export interface FlowsheetRow {
   dosePicked?: string; // e.g., "1.1 mg/kg", "6.6 mg/kg"
   isDiscontinued?: boolean;
   bandColor: 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'pink' | 'slate';
-  type?: 'numeric' | 'select' | 'text' | 'medication' | 'cri' | 'gut_sounds' | 'manure';
+  type?: 'numeric' | 'select' | 'text' | 'medication' | 'cri' | 'gut_sounds' | 'manure' | 'rectal_exam' | 'flash_us' | 'peritoneal' | 'response_therapy';
   // Mapping of time slot (e.g. "10:00", "11:00", "12:00", "13:00", "14:00", "15:00") to FlowsheetValue
   values: Record<string, FlowsheetValue>;
 }
@@ -72,6 +86,8 @@ export interface SurgeonScheduleSettings {
   tprInterval: 'q1h' | 'q2h' | 'q4h' | 'q6h' | 'q12h';
   giInterval: 'q2h' | 'q4h' | 'q6h' | 'q12h' | 'q24h';
   clinPathInterval: 'q4h' | 'q6h' | 'q12h' | 'q24h' | 'STAT';
+  fluidInterval: 'q1h' | 'q2h' | 'q4h' | 'q6h' | 'q12h';
+  laminitisInterval: 'q1h' | 'q2h' | 'q4h' | 'q6h';
 }
 
 export interface StandingOrder {

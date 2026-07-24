@@ -45,6 +45,20 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
   const liveMm = liveMmEntry ? String(liveMmEntry.val) : 'pink';
   const liveCryoOn = liveCryoEntry ? String(liveCryoEntry.val).toLowerCase().includes('yes') : true;
 
+  const liveTempEntry = getLatestEntry('temp');
+  const liveRrEntry = getLatestEntry('resp rate') || getLatestEntry('rr');
+  const livePeritonealLactateEntry = getLatestEntry('peritoneal lactate');
+  const livePflPlRatioEntry = getLatestEntry('peritoneal:plasma') || getLatestEntry('pfl:pl');
+  const liveWbcEntry = getLatestEntry('wbc');
+  const liveResponseTherapyEntry = getLatestEntry('response to medical') || getLatestEntry('response');
+
+  const liveTemp = liveTempEntry ? parseFloat(String(liveTempEntry.val)) || 38.0 : 38.0;
+  const liveRr = liveRrEntry ? parseFloat(String(liveRrEntry.val)) || 16 : 16;
+  const livePeritonealLactate = livePeritonealLactateEntry ? parseFloat(String(livePeritonealLactateEntry.val)) || 1.5 : 1.5;
+  const livePflPlRatio = livePflPlRatioEntry ? parseFloat(String(livePflPlRatioEntry.val)) || 0.8 : (livePeritonealLactate / (liveLactate || 1));
+  const liveWbc = liveWbcEntry ? parseFloat(String(liveWbcEntry.val)) || 8.0 : 8.0;
+  const liveResponseTherapy = liveResponseTherapyEntry ? String(liveResponseTherapyEntry.val) : 'Complete Resolution';
+
   const latestSlotUsed = liveHrEntry?.slot || liveLactateEntry?.slot || timeSlots[timeSlots.length - 1] || 'NOW';
 
   // Manual simulation state overrides if user turns off live sync
@@ -67,6 +81,17 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
     if (refluxLiters >= 2.0) riskScore += 15;
     if (livePain >= 2) riskScore += 12;
 
+    // Peritoneal Lactate / PFL:PL Ratio Strangulation Boost
+    if (livePflPlRatio > 1.0 || livePeritonealLactate > 3.5) riskScore += 25;
+
+    // Response to Medical Therapy Failure Boost
+    if (liveResponseTherapy.toLowerCase().includes('refractory') || liveResponseTherapy.toLowerCase().includes('deterioration')) {
+      riskScore += 22;
+    }
+
+    // WBC Leukopenia Trap Boost (Falling WBC = Neutrophil Margination / Endotoxemia)
+    if (liveWbc < 5.0 || liveWbc > 15.0) riskScore += 10;
+
     const rawSurvival = Math.max(8, Math.min(98, 96 - riskScore));
     const rawSurgical = Math.max(5, Math.min(98, riskScore * 1.25));
 
@@ -76,11 +101,13 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
     };
   };
 
-  // 2. Live ICE (Laminitis Risk) Assessment
+  // 2. Live ICE (Laminitis Risk) Assessment with SIRS Temp, RR, WBC
   const calculateIceRisk = () => {
     let icePoints = 1;
     if (hr > 60) icePoints += 1;
     if (lactate > 3.5) icePoints += 1;
+    if (liveTemp > 38.5 || liveTemp < 37.0 || liveRr > 24) icePoints += 1;
+    if (liveWbc < 5.0 || liveWbc > 15.0) icePoints += 1; // WBC trap logic
     if (liveMm.toLowerCase().includes('injected') || liveMm.toLowerCase().includes('toxic') || liveMm.toLowerCase().includes('muddy')) icePoints += 1;
     if (livePain >= 2) icePoints += 1;
     if (liveCryoOn) icePoints = Math.max(1, icePoints - 2);
