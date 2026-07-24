@@ -455,6 +455,24 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
     }, 1200);
   };
 
+  // Compute the DUE slot for clinicopathology lab collection
+  const dueLabSlot = React.useMemo(() => {
+    const labRows = rows.filter((r) => r.category === 'CLINICOPATHOLOGY');
+    for (const s of activeTimeSlots) {
+      if (labRows.some((r) => r.values[s]?.status === 'PROCESSING' || r.values[s]?.isCollected)) {
+        return s;
+      }
+    }
+    const nowIdx = activeTimeSlots.indexOf(nowSlot);
+    const startIdx = nowIdx >= 0 ? nowIdx : 0;
+    for (let i = startIdx; i < activeTimeSlots.length; i++) {
+      const s = activeTimeSlots[i];
+      const hasVals = labRows.some((r) => r.values[s]?.value !== undefined && r.values[s]?.value !== '');
+      if (!hasVals) return s;
+    }
+    return nowSlot || activeTimeSlots[0];
+  }, [rows, activeTimeSlots, nowSlot]);
+
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-20 md:pb-8">
       {/* Top Action Header */}
@@ -475,10 +493,10 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
           {/* PDF Import Button */}
           <button
             onClick={() => setIsPdfModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-extrabold text-xs shadow-md transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-extrabold text-xs shadow-md transition-all active:scale-95"
             id="import-pdf-btn"
           >
-            <FileText className="w-4 h-4 text-blue-200" />
+            <Upload className="w-4 h-4 text-blue-200" />
             Import PDF Lab Report
           </button>
 
@@ -558,12 +576,13 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                   return (
                     <th
                       key={slot}
-                      className={`p-2.5 text-center min-w-[80px] border-r border-slate-700 ${
-                        isNow ? 'bg-amber-400 text-slate-950 font-black shadow-inner border-amber-500' : ''
+                      className={`p-2.5 text-center min-w-[85px] border-r border-slate-700 transition-all ${
+                        isNow ? 'bg-amber-400 text-slate-950 font-black shadow-lg border-x-2 border-amber-500 ring-2 ring-amber-400 z-30 scale-102' : ''
                       }`}
                     >
                       {isNow && (
-                        <div className="text-[9px] leading-tight font-extrabold uppercase bg-slate-900 text-amber-300 px-1 py-0.5 rounded shadow-xs mb-0.5">
+                        <div className="text-[9px] leading-tight font-black uppercase bg-slate-950 text-amber-300 px-1.5 py-0.5 rounded shadow-sm mb-1 animate-pulse flex items-center justify-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
                           NOW ({currentClockTime})
                         </div>
                       )}
@@ -593,25 +612,30 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                       {activeTimeSlots.map((slot) => {
                         const isLabHeader = groupTitle.includes('CLINICOPATHOLOGY');
                         if (isLabHeader) {
+                          const isDueSlot = slot === dueLabSlot;
                           const isSlotCollected = categoryRows.some(
                             (r) => r.values[slot]?.isCollected || r.values[slot]?.status === 'PROCESSING'
                           );
-                          return (
-                            <td key={slot} className="p-1 bg-slate-200/90 border-r border-slate-300 text-center">
-                              <button
-                                type="button"
-                                onClick={() => handleToggleSlotCollection(categoryRows, slot)}
-                                className={`px-2 py-1 rounded-lg font-black text-[10px] shadow-xs transition-all flex items-center justify-center gap-1 mx-auto ${
-                                  isSlotCollected
-                                    ? 'bg-amber-500 text-slate-950 border border-amber-600 animate-pulse'
-                                    : 'bg-slate-800 text-amber-300 hover:bg-slate-900 border border-slate-700'
-                                }`}
-                                title="Click to mark sample as collected / processing for all lab parameters in this time slot"
-                              >
-                                {isSlotCollected ? '⏳ Coletado' : '+ Coletar'}
-                              </button>
-                            </td>
-                          );
+                          // Only render the Collect / Processing button in the DUE column or if currently processing in this slot
+                          if (isDueSlot || isSlotCollected) {
+                            return (
+                              <td key={slot} className="p-1 bg-amber-200/90 border-x-2 border-amber-500 text-center shadow-inner">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleSlotCollection(categoryRows, slot)}
+                                  className={`px-2.5 py-1 rounded-xl font-black text-[10px] shadow-md transition-all flex items-center justify-center gap-1 mx-auto active:scale-95 ${
+                                    isSlotCollected
+                                      ? 'bg-slate-900 text-amber-300 border border-amber-400 animate-pulse'
+                                      : 'bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-700 shadow-sm'
+                                  }`}
+                                  title="Click to mark sample as collected / processing for all lab parameters in this DUE time slot"
+                                >
+                                  {isSlotCollected ? '⏳ Processing' : '🧪 Collect Labs'}
+                                </button>
+                              </td>
+                            );
+                          }
+                          return <td key={slot} className="p-2 bg-slate-200/50 border-r border-slate-300/50"></td>;
                         }
                         return <td key={slot} className="p-2 bg-slate-200/50 border-r border-slate-300/50"></td>;
                       })}
