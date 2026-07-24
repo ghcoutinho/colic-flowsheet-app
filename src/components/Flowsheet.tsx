@@ -38,11 +38,15 @@ export default function Flowsheet({ patient }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<string>("Antibiotics");
   const [selectedDrugIndex, setSelectedDrugIndex] = useState<number>(0);
   const [selectedFreq, setSelectedFreq] = useState<string>('6');
+  const [customDoseRate, setCustomDoseRate] = useState<number | ''>('');
+  const [customConc, setCustomConc] = useState<number | ''>('');
 
   useEffect(() => {
     const drugTemplate = drugDatabase[selectedCategory]?.[selectedDrugIndex];
     if (drugTemplate) {
       setSelectedFreq(drugTemplate.freq || '6');
+      setCustomDoseRate(drugTemplate.doseRate);
+      setCustomConc(drugTemplate.conc);
     }
   }, [selectedCategory, selectedDrugIndex]);
 
@@ -70,7 +74,12 @@ export default function Flowsheet({ patient }: Props) {
     const drugTemplate = drugDatabase[selectedCategory][selectedDrugIndex];
     // Avoid adding the same drug twice (the schedule is keyed by drug name).
     if (rxList.some(d => d.name === drugTemplate.name)) return;
-    const newRx = { ...drugTemplate, freq: selectedFreq };
+    const newRx: DrugConfig = {
+      ...drugTemplate,
+      doseRate: Number(customDoseRate) || drugTemplate.doseRate,
+      conc: customConc !== '' ? Number(customConc) : drugTemplate.conc,
+      freq: selectedFreq
+    };
     setRxList([...rxList, newRx]);
     // Immediately project the dose schedule at the drug's own frequency.
     setRounds(prev => buildDrugSchedule(newRx.name, newRx.freq, prev));
@@ -258,9 +267,9 @@ export default function Flowsheet({ patient }: Props) {
         <h2 style={{ fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--primary-color)' }}>
           <Pill size={16} /> Add Medication to Flowsheet
         </h2>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div style={{ flex: '1 1 200px' }}>
-            <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Category</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', alignItems: 'flex-end' }}>
+          <div>
+            <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block', fontWeight: 600 }}>Category</label>
             <select 
               value={selectedCategory} 
               onChange={e => { setSelectedCategory(e.target.value); setSelectedDrugIndex(0); }}
@@ -271,20 +280,45 @@ export default function Flowsheet({ patient }: Props) {
               ))}
             </select>
           </div>
-          <div style={{ flex: '2 1 250px' }}>
-            <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Drug</label>
+          <div>
+            <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block', fontWeight: 600 }}>Drug</label>
             <select 
               value={selectedDrugIndex} 
               onChange={e => setSelectedDrugIndex(Number(e.target.value))}
               style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
             >
               {drugDatabase[selectedCategory].map((d, i) => (
-                <option key={i} value={i}>{d.name} ({d.doseRate} {d.unit} {d.freq ? `${d.freq}h` : ''})</option>
+                <option key={i} value={i}>{d.name}</option>
               ))}
             </select>
           </div>
-          <div style={{ flex: '1 1 120px' }}>
-            <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Frequency (hours)</label>
+          <div>
+            <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block', fontWeight: 600 }}>
+              Dose Rate ({drugDatabase[selectedCategory][selectedDrugIndex]?.unit})
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={customDoseRate}
+              onChange={e => setCustomDoseRate(e.target.value === '' ? '' : Number(e.target.value))}
+              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontWeight: 600 }}
+            />
+          </div>
+          <div>
+            <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block', fontWeight: 600 }}>
+              Conc ({drugDatabase[selectedCategory][selectedDrugIndex]?.concUnit || '-'})
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={customConc}
+              onChange={e => setCustomConc(e.target.value === '' ? '' : Number(e.target.value))}
+              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontWeight: 600 }}
+              placeholder="Conc..."
+            />
+          </div>
+          <div>
+            <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block', fontWeight: 600 }}>Freq (hours)</label>
             <select 
               value={selectedFreq} 
               onChange={e => setSelectedFreq(e.target.value)}
@@ -296,7 +330,7 @@ export default function Flowsheet({ patient }: Props) {
             </select>
           </div>
           <div>
-            <button className="btn btn-primary" onClick={addDrugToFlowsheet}>
+            <button className="btn btn-primary" onClick={addDrugToFlowsheet} style={{ width: '100%' }}>
               <Plus size={16} /> Add
             </button>
           </div>
@@ -673,7 +707,12 @@ export default function Flowsheet({ patient }: Props) {
                          </div>
                        </td>
                        <td style={{ fontWeight: 600, color: 'var(--primary-color)' }}>
-                          {suggestedText}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span>{suggestedText}</span>
+                            <span className="text-muted" style={{ fontSize: '0.65rem', fontWeight: 400 }}>
+                              ({drug.doseRate} {drug.unit} {drug.conc ? `@ ${drug.conc} ${drug.concUnit}` : ''})
+                            </span>
+                          </div>
                        </td>
                        {rounds.map((r, i) => {
                          const medState = r.medications?.[drug.name];
@@ -681,16 +720,19 @@ export default function Flowsheet({ patient }: Props) {
                          const isGiven = medState === 'GIVEN';
                          const isCri = medState === 'CRI';
                          if (isCri) {
-                           return <td key={i} className="med-cell med-cri" title="CRI — continuous infusion">▶</td>;
+                           return <td key={i} className="med-cell med-cri" title="CRI — continuous infusion">▶ {suggestedText}</td>;
                          }
                          if (isGiven || isDue) {
                            return (
                              <td key={i} className={`med-cell ${isGiven ? 'med-given' : 'med-due'}`} title={isGiven ? 'Given' : 'Due'}>
-                               <input
-                                 type="checkbox"
-                                 checked={isGiven}
-                                 onChange={e => updateMedicationRound(i, drug.name, e.target.checked, drug.freq)}
-                               />
+                               <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>
+                                 <input
+                                   type="checkbox"
+                                   checked={isGiven}
+                                   onChange={e => updateMedicationRound(i, drug.name, e.target.checked, drug.freq)}
+                                 />
+                                 <span>{suggestedText !== '-' ? suggestedText : ''}</span>
+                               </label>
                              </td>
                            );
                          }
