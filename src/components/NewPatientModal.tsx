@@ -179,10 +179,55 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
                 <label className="text-slate-700 block mb-1">Breed</label>
                 <input
                   type="text"
+                  list="breed-options"
                   value={formData.breed}
                   onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
                   className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                  placeholder="Select or type breed..."
                 />
+                <datalist id="breed-options">
+                  {/* Sport & Racing */}
+                  <option value="Thoroughbred" />
+                  <option value="Quarter Horse" />
+                  <option value="Arabian" />
+                  <option value="Standardbred" />
+                  <option value="Appaloosa" />
+                  <option value="Paint Horse" />
+                  <option value="Pinto" />
+                  {/* Warmbloods */}
+                  <option value="Warmblood" />
+                  <option value="Hanoverian" />
+                  <option value="KWPN (Dutch Warmblood)" />
+                  <option value="Oldenburg" />
+                  <option value="Trakehner" />
+                  <option value="Holsteiner" />
+                  <option value="Westphalian" />
+                  <option value="Selle Français" />
+                  <option value="Lusitano" />
+                  <option value="PRE (Pura Raza Española)" />
+                  {/* Draft */}
+                  <option value="Belgian Draft" />
+                  <option value="Clydesdale" />
+                  <option value="Shire" />
+                  <option value="Percheron" />
+                  {/* Gaited & Ranch */}
+                  <option value="Tennessee Walking Horse" />
+                  <option value="Missouri Fox Trotter" />
+                  <option value="Paso Fino" />
+                  <option value="Mangalarga Marchador" />
+                  <option value="Campolina" />
+                  <option value="Crioulo" />
+                  <option value="Pantaneiro" />
+                  <option value="Quarto de Milha (BRA)" />
+                  {/* Pony */}
+                  <option value="Welsh Pony" />
+                  <option value="Shetland Pony" />
+                  <option value="Connemara Pony" />
+                  <option value="Haflinger" />
+                  {/* Mixed */}
+                  <option value="Crossbred / Mixed" />
+                  <option value="Grade Horse" />
+                </datalist>
               </div>
 
               <div>
