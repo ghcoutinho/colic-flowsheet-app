@@ -736,23 +736,25 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                               >
                                 {isDiscontinued ? (
                                   <span className="line-through text-slate-500 font-bold text-[11px]">DISC</span>
-                                ) : isNextDue ? (
-                                  <div className="bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-1 rounded-lg border-2 border-amber-600 shadow-md animate-pulse">
-                                    NEXT DUE
-                                  </div>
-                                ) : isDue ? (
-                                  <div className="bg-amber-400 text-slate-950 font-black text-[10px] px-2 py-1 rounded-lg border border-amber-600 shadow-xs">
-                                    DUE
-                                  </div>
-                                ) : isDone ? (
-                                  <div className="bg-emerald-600 text-white font-black text-[10px] px-2 py-1 rounded-lg border border-emerald-700 shadow-xs">
-                                    ✓ {cell.value || row.target}
-                                  </div>
                                 ) : isNumericRow(row) ? (
-                                  <div className={`rounded-xl p-0.5 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative ${
-                                    isNow ? 'bg-amber-50/90 border-amber-400' : 'bg-white'
+                                  <div className={`rounded-xl p-0.5 shadow-xs border flex flex-col items-center justify-center min-h-[38px] relative transition-all ${
+                                    isNextDue
+                                      ? 'bg-amber-100/90 border-2 border-amber-600 ring-2 ring-amber-400'
+                                      : isDue
+                                      ? 'bg-amber-50/90 border-2 border-amber-500'
+                                      : isNow
+                                      ? 'bg-amber-50/90 border-amber-400'
+                                      : `bg-white ${colorStyles.cardBorder}`
                                   }`}>
-                                    {calculatedDelta && (
+                                    {isNextDue ? (
+                                      <span className="absolute -top-2.5 bg-amber-500 text-slate-950 text-[8px] font-black px-1.5 py-0.2 rounded-full border border-amber-700 shadow-xs uppercase animate-pulse pointer-events-none">
+                                        NEXT DUE
+                                      </span>
+                                    ) : isDue ? (
+                                      <span className="absolute -top-2.5 bg-amber-400 text-amber-950 text-[8px] font-black px-1.5 py-0.2 rounded-full border border-amber-600 shadow-xs uppercase pointer-events-none">
+                                        DUE
+                                      </span>
+                                    ) : calculatedDelta ? (
                                       <span className={`absolute -top-2 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full border shadow-xs pointer-events-none ${
                                         calculatedDelta.startsWith('+') && calculatedDelta !== '+0'
                                           ? 'bg-amber-100 text-amber-800 border-amber-300'
@@ -762,7 +764,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                       }`}>
                                         {calculatedDelta}
                                       </span>
-                                    )}
+                                    ) : null}
                                     <input
                                       id={`inline-num-input-${row.id}-${slot}`}
                                       type="number"
@@ -780,6 +782,18 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                       className="w-full text-center font-black text-slate-900 text-xs sm:text-sm bg-transparent outline-none focus:ring-2 focus:ring-blue-500 rounded-lg py-1"
                                       placeholder="—"
                                     />
+                                  </div>
+                                ) : isNextDue ? (
+                                  <div className="bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-1 rounded-lg border-2 border-amber-600 shadow-md animate-pulse">
+                                    NEXT DUE
+                                  </div>
+                                ) : isDue ? (
+                                  <div className="bg-amber-400 text-slate-950 font-black text-[10px] px-2 py-1 rounded-lg border border-amber-600 shadow-xs">
+                                    DUE
+                                  </div>
+                                ) : isDone ? (
+                                  <div className="bg-emerald-600 text-white font-black text-[10px] px-2 py-1 rounded-lg border border-emerald-700 shadow-xs">
+                                    ✓ {cell.value || row.target}
                                   </div>
                                 ) : hasValue ? (
                                   row.type === 'gut_sounds' ? (
