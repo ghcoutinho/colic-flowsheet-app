@@ -336,6 +336,28 @@ export default function Flowsheet({ patient }: Props) {
     });
   }
 
+  // Check if a parameter schedule group is DUE at a specific round time
+  const isGroupDueAtTime = (group: keyof typeof schedule, time: string) => {
+    if (!rounds || rounds.length === 0 || !time) return false;
+    const freqHours = parseFreqHours(schedule[group as keyof typeof schedule] || '');
+    if (!freqHours || freqHours <= 0) return false;
+    const startT = rounds[0].time || '08:00';
+    const dueTimes = projectDueTimes(startT, freqHours, 48);
+    return dueTimes.some(dt => dt === time || dt === ceilToHour(time));
+  };
+
+  const getDueCellStyle = (group: keyof typeof schedule, time: string, val: any) => {
+    const isEmpty = val === '' || val === null || val === undefined;
+    if (isGroupDueAtTime(group, time) && isEmpty) {
+      return {
+        backgroundColor: 'rgba(245, 158, 11, 0.18)',
+        border: '1.5px solid #f59e0b',
+        boxShadow: 'inset 0 0 4px rgba(245, 158, 11, 0.25)'
+      };
+    }
+    return {};
+  };
+
   return (
     <div className="flex-col gap-4">
       {/* Prescription Builder */}
@@ -456,20 +478,20 @@ export default function Flowsheet({ patient }: Props) {
             <tr><td colSpan={100} style={{ backgroundColor: 'var(--bg-main)', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-main)' }}>VITALS & PERFUSION <span className="badge ml-2" style={{fontSize: '0.65rem'}}>{schedule.tpr}</span></td></tr>
             <tr>
               <td>Heart Rate (bpm)</td><td className="text-muted">28–44</td>
-              {rounds.map((r, i) => <td key={i} className="editable-cell"><input type="number" value={r.hr} onChange={e => updateRound(i, 'hr', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('hr', r.hr), fontWeight: evaluateParameterColor('hr', r.hr) !== 'inherit' ? 700 : 400 }} /></td>)}
+              {rounds.map((r, i) => <td key={i} className="editable-cell" style={getDueCellStyle('tpr', r.time, r.hr)}><input type="number" value={r.hr} onChange={e => updateRound(i, 'hr', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('hr', r.hr), fontWeight: evaluateParameterColor('hr', r.hr) !== 'inherit' ? 700 : 400 }} placeholder={isGroupDueAtTime('tpr', r.time) && r.hr === '' ? 'DUE' : ''} /></td>)}
             </tr>
             <tr>
               <td>Resp Rate (/min)</td><td className="text-muted">10–24</td>
-              {rounds.map((r, i) => <td key={i} className="editable-cell"><input type="number" value={r.rr} onChange={e => updateRound(i, 'rr', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('rr', r.rr), fontWeight: evaluateParameterColor('rr', r.rr) !== 'inherit' ? 700 : 400 }} /></td>)}
+              {rounds.map((r, i) => <td key={i} className="editable-cell" style={getDueCellStyle('tpr', r.time, r.rr)}><input type="number" value={r.rr} onChange={e => updateRound(i, 'rr', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('rr', r.rr), fontWeight: evaluateParameterColor('rr', r.rr) !== 'inherit' ? 700 : 400 }} placeholder={isGroupDueAtTime('tpr', r.time) && r.rr === '' ? 'DUE' : ''} /></td>)}
             </tr>
             <tr>
               <td>Temp (°C)</td><td className="text-muted">37.2–38.5</td>
-              {rounds.map((r, i) => <td key={i} className="editable-cell"><input type="number" step="0.1" value={r.temp} onChange={e => updateRound(i, 'temp', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('temp', r.temp), fontWeight: evaluateParameterColor('temp', r.temp) !== 'inherit' ? 700 : 400 }} /></td>)}
+              {rounds.map((r, i) => <td key={i} className="editable-cell" style={getDueCellStyle('tpr', r.time, r.temp)}><input type="number" step="0.1" value={r.temp} onChange={e => updateRound(i, 'temp', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('temp', r.temp), fontWeight: evaluateParameterColor('temp', r.temp) !== 'inherit' ? 700 : 400 }} placeholder={isGroupDueAtTime('tpr', r.time) && r.temp === '' ? 'DUE' : ''} /></td>)}
             </tr>
             <tr>
               <td>Mucous membranes</td><td className="text-muted">pink</td>
               {rounds.map((r, i) => (
-                <td key={i} className="editable-cell">
+                <td key={i} className="editable-cell" style={getDueCellStyle('tpr', r.time, r.mm)}>
                   <select value={r.mm} onChange={e => updateRound(i, 'mm', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none' }}>
                     <option value=""></option><option value="pink">pink</option><option value="pale">pale</option><option value="injected">injected</option><option value="toxic line">toxic line</option><option value="purple">purple</option><option value="cyanotic">cyanotic</option><option value="icteric">icteric</option>
                   </select>
@@ -478,12 +500,12 @@ export default function Flowsheet({ patient }: Props) {
             </tr>
             <tr>
               <td>CRT (sec)</td><td className="text-muted">≤ 2</td>
-              {rounds.map((r, i) => <td key={i} className="editable-cell"><input type="number" value={r.crt} onChange={e => updateRound(i, 'crt', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('crt', r.crt), fontWeight: evaluateParameterColor('crt', r.crt) !== 'inherit' ? 700 : 400 }} /></td>)}
+              {rounds.map((r, i) => <td key={i} className="editable-cell" style={getDueCellStyle('tpr', r.time, r.crt)}><input type="number" value={r.crt} onChange={e => updateRound(i, 'crt', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('crt', r.crt), fontWeight: evaluateParameterColor('crt', r.crt) !== 'inherit' ? 700 : 400 }} placeholder={isGroupDueAtTime('tpr', r.time) && r.crt === '' ? 'DUE' : ''} /></td>)}
             </tr>
             <tr>
               <td>Mentation</td><td className="text-muted">BAR</td>
               {rounds.map((r, i) => (
-                <td key={i} className="editable-cell">
+                <td key={i} className="editable-cell" style={getDueCellStyle('tpr', r.time, r.mentation)}>
                   <select value={r.mentation} onChange={e => updateRound(i, 'mentation', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none' }}>
                     <option value=""></option><option value="BAR">BAR</option><option value="QAR">QAR</option><option value="Depressed">Depressed</option><option value="Obtunded">Obtunded</option>
                   </select>
@@ -576,26 +598,26 @@ export default function Flowsheet({ patient }: Props) {
             </tr>
             <tr>
               <td>Abdominal distension</td><td className="text-muted">0</td>
-              {rounds.map((r, i) => <td key={i} className="editable-cell"><input type="number" value={r.abDistension} onChange={e => updateRound(i, 'abDistension', e.target.value === '' ? '' : Number(e.target.value))} /></td>)}
+              {rounds.map((r, i) => <td key={i} className="editable-cell" style={getDueCellStyle('gi', r.time, r.abDistension)}><input type="number" value={r.abDistension} onChange={e => updateRound(i, 'abDistension', e.target.value === '' ? '' : Number(e.target.value))} placeholder={isGroupDueAtTime('gi', r.time) && r.abDistension === '' ? 'DUE' : ''} /></td>)}
             </tr>
 
-            {/* ClinPath */}
+            {/* Clinicopath */}
             <tr><td colSpan={100} style={{ backgroundColor: 'var(--bg-main)', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-main)' }}>CLINICOPATHOLOGY <span className="badge ml-2" style={{fontSize: '0.65rem'}}>{schedule.clinpath}</span></td></tr>
             <tr>
-              <td>PCV (%)</td><td className="text-muted">32-45</td>
-              {rounds.map((r, i) => <td key={i} className="editable-cell"><input type="number" step="1" value={r.pcv} onChange={e => updateRound(i, 'pcv', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('pcv', r.pcv), fontWeight: evaluateParameterColor('pcv', r.pcv) !== 'inherit' ? 700 : 400 }} /></td>)}
+              <td>Hematocrit (PCV %)</td><td className="text-muted">32–45</td>
+              {rounds.map((r, i) => <td key={i} className="editable-cell" style={getDueCellStyle('clinpath', r.time, r.pcv)}><input type="number" value={r.pcv} onChange={e => updateRound(i, 'pcv', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('pcv', r.pcv), fontWeight: evaluateParameterColor('pcv', r.pcv) !== 'inherit' ? 700 : 400 }} placeholder={isGroupDueAtTime('clinpath', r.time) && r.pcv === '' ? 'DUE' : ''} /></td>)}
             </tr>
             <tr>
-              <td>TP (g/dL)</td><td className="text-muted">6.0-8.0</td>
-              {rounds.map((r, i) => <td key={i} className="editable-cell"><input type="number" step="0.1" value={r.tp} onChange={e => updateRound(i, 'tp', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('tp', r.tp), fontWeight: evaluateParameterColor('tp', r.tp) !== 'inherit' ? 700 : 400 }} /></td>)}
+              <td>Total Protein (g/dL)</td><td className="text-muted">6.0–7.5</td>
+              {rounds.map((r, i) => <td key={i} className="editable-cell" style={getDueCellStyle('clinpath', r.time, r.tp)}><input type="number" step="0.1" value={r.tp} onChange={e => updateRound(i, 'tp', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('tp', r.tp), fontWeight: evaluateParameterColor('tp', r.tp) !== 'inherit' ? 700 : 400 }} placeholder={isGroupDueAtTime('clinpath', r.time) && r.tp === '' ? 'DUE' : ''} /></td>)}
             </tr>
             <tr>
-              <td>Lactate (mmol/L)</td><td className="text-muted">&lt; 2.0</td>
-              {rounds.map((r, i) => <td key={i} className="editable-cell"><input type="number" step="0.1" value={r.lactate} onChange={e => updateRound(i, 'lactate', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('lactate', r.lactate), fontWeight: evaluateParameterColor('lactate', r.lactate) !== 'inherit' ? 700 : 400 }} /></td>)}
+              <td>Blood Lactate (mmol/L)</td><td className="text-muted">&lt; 2.0</td>
+              {rounds.map((r, i) => <td key={i} className="editable-cell" style={getDueCellStyle('clinpath', r.time, r.lactate)}><input type="number" step="0.1" value={r.lactate} onChange={e => updateRound(i, 'lactate', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: evaluateParameterColor('lactate', r.lactate), fontWeight: evaluateParameterColor('lactate', r.lactate) !== 'inherit' ? 700 : 400 }} placeholder={isGroupDueAtTime('clinpath', r.time) && r.lactate === '' ? 'DUE' : ''} /></td>)}
             </tr>
             <tr>
               <td>WBC (×10³/µL)</td><td className="text-muted">5–12.5</td>
-              {rounds.map((r, i) => <td key={i} className="editable-cell"><input type="number" step="0.1" value={r.wbc} onChange={e => updateRound(i, 'wbc', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: typeof r.wbc === 'number' && (r.wbc < 5 || r.wbc > 12.5) ? 'var(--danger)' : 'inherit' }} /></td>)}
+              {rounds.map((r, i) => <td key={i} className="editable-cell" style={getDueCellStyle('clinpath', r.time, r.wbc)}><input type="number" step="0.1" value={r.wbc} onChange={e => updateRound(i, 'wbc', e.target.value === '' ? '' : Number(e.target.value))} style={{ color: typeof r.wbc === 'number' && (r.wbc < 5 || r.wbc > 12.5) ? 'var(--danger)' : 'inherit' }} placeholder={isGroupDueAtTime('clinpath', r.time) && r.wbc === '' ? 'DUE' : ''} /></td>)}
             </tr>
             <tr>
               <td>Glucose (mg/dL)</td><td className="text-muted">75-115</td>
