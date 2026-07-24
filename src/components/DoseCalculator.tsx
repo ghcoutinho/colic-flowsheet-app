@@ -198,9 +198,9 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
                     </button>
                     <input
                       type="range"
-                      min={state.doseRate > 1000 ? 1000 : 0.001}
-                      max={state.doseRate > 1000 ? 50000 : state.doseRate * 3}
-                      step={state.doseRate < 0.1 ? 0.001 : 0.1}
+                      min={0}
+                      max={item.maxDoseRate !== undefined ? item.maxDoseRate : item.defaultDoseRate}
+                      step={item.defaultDoseRate < 0.1 ? 0.001 : (item.defaultDoseRate <= 2 ? 0.1 : 1)}
                       value={state.doseRate}
                       onChange={(e) =>
                         setDrugStates((prev) => ({

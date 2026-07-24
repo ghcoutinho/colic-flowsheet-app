@@ -52,6 +52,7 @@ export interface DrugFormularyItem {
   name: string;
   category: 'Antibiotics' | 'Analgesics' | 'Sedatives' | 'CRIs' | 'Prokinetics' | 'NSAIDs' | 'Fluids';
   defaultDoseRate: number; // e.g., 6.6
+  maxDoseRate?: number; // e.g. 6.6
   doseUnit: 'mg/kg' | 'mcg/kg' | 'IU/kg' | 'mg/kg/hr' | 'mL/kg';
   defaultConcentration: number; // e.g., 100
   concentrationUnit: 'mg/mL' | 'IU/mL' | 'mcg/mL' | '%';
