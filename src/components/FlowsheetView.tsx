@@ -565,22 +565,60 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                     LATE
                                   </div>
                                 ) : hasValue ? (
-                                  <div className={`bg-white rounded-xl p-1 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative`}>
-                                    {calculatedDelta && (
-                                      <span className={`absolute -top-2 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full border shadow-xs ${
-                                        calculatedDelta.startsWith('+') && calculatedDelta !== '+0'
-                                          ? 'bg-amber-100 text-amber-800 border-amber-300'
-                                          : calculatedDelta.startsWith('-')
-                                          ? 'bg-sky-100 text-sky-800 border-sky-300'
-                                          : 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                                      }`}>
-                                        {calculatedDelta}
+                                  row.type === 'gut_sounds' ? (
+                                    (() => {
+                                      let lUp = '+', rUp = '+', lLow = '+', rLow = '+';
+                                      const strVal = String(cell.value);
+                                      if (strVal.includes('L-UP')) {
+                                        const parts = strVal.split('|').map(s => s.trim());
+                                        const getSym = (s: string) => s.split(':')[1]?.trim() || '+';
+                                        lUp = getSym(parts[0] || '');
+                                        lLow = getSym(parts[1] || '');
+                                        rUp = getSym(parts[2] || '');
+                                        rLow = getSym(parts[3] || '');
+                                      }
+
+                                      const renderSym = (sym: string) => {
+                                        if (sym === '++') return <span className="text-emerald-600 font-black text-xs tracking-tighter">++</span>;
+                                        if (sym === '+') return <span className="text-emerald-500 font-black text-sm">+</span>;
+                                        if (sym === '-') return <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-2xs" />;
+                                        if (sym === '0') return <span className="w-3 h-0.5 bg-red-600 rounded-full block" />;
+                                        return <span className="text-slate-500 font-bold text-[10px]">{sym}</span>;
+                                      };
+
+                                      return (
+                                        <div className="w-12 h-12 bg-white border border-slate-300 rounded-xl p-0.5 relative shadow-xs mx-auto flex items-center justify-center">
+                                          {/* Dark Blue Cross Dividers */}
+                                          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2.5px] bg-sky-900 rounded-full z-0"></div>
+                                          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[2.5px] bg-sky-900 rounded-full z-0"></div>
+
+                                          <div className="grid grid-cols-2 grid-rows-2 w-full h-full z-10 text-center font-black">
+                                            <div className="flex items-center justify-center">{renderSym(lUp)}</div>
+                                            <div className="flex items-center justify-center">{renderSym(rUp)}</div>
+                                            <div className="flex items-center justify-center">{renderSym(lLow)}</div>
+                                            <div className="flex items-center justify-center">{renderSym(rLow)}</div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })()
+                                  ) : (
+                                    <div className={`bg-white rounded-xl p-1 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative`}>
+                                      {calculatedDelta && (
+                                        <span className={`absolute -top-2 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full border shadow-xs ${
+                                          calculatedDelta.startsWith('+') && calculatedDelta !== '+0'
+                                            ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                            : calculatedDelta.startsWith('-')
+                                            ? 'bg-sky-100 text-sky-800 border-sky-300'
+                                            : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                        }`}>
+                                          {calculatedDelta}
+                                        </span>
+                                      )}
+                                      <span className="font-black text-slate-900 text-xs sm:text-sm">
+                                        {cell.value}
                                       </span>
-                                    )}
-                                    <span className="font-black text-slate-900 text-xs sm:text-sm">
-                                      {cell.value}
-                                    </span>
-                                  </div>
+                                    </div>
+                                  )
                                 ) : (
                                   <div className="h-7 flex items-center justify-center text-slate-400 hover:text-slate-700 text-xs font-bold">
                                     +
@@ -715,22 +753,46 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                   </div>
                 </div>
               ) : activeRow?.type === 'gut_sounds' ? (
-                /* Gut Sounds 4-Quadrant Visual Grid */
+                /* Gut Sounds 4-Quadrant Visual Grid with ++ option */
                 <div className="space-y-3">
-                  <span className="text-xs font-bold text-slate-700 block">Select Motility for Each Quadrant:</span>
-                  <div className="grid grid-cols-2 gap-3 p-3 bg-slate-100 rounded-2xl border border-slate-300">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 block">Select Motility for Each Quadrant:</span>
+                    <span className="text-[11px] font-extrabold text-blue-600">Live Preview:</span>
+                  </div>
+
+                  {/* Live Cross Widget Preview */}
+                  <div className="w-14 h-14 bg-white border-2 border-slate-400 rounded-xl p-0.5 relative shadow-md mx-auto flex items-center justify-center">
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[3px] bg-sky-900 rounded-full z-0"></div>
+                    <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[3px] bg-sky-900 rounded-full z-0"></div>
+                    <div className="grid grid-cols-2 grid-rows-2 w-full h-full z-10 text-center font-black">
+                      <div className="flex items-center justify-center">
+                        {gutSoundsQuad.lUp === '++' ? <span className="text-emerald-600 font-black text-xs">++</span> : gutSoundsQuad.lUp === '+' ? <span className="text-emerald-500 font-black text-sm">+</span> : gutSoundsQuad.lUp === '-' ? <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-xs" /> : <span className="w-3 h-0.5 bg-red-600 rounded-full block" />}
+                      </div>
+                      <div className="flex items-center justify-center">
+                        {gutSoundsQuad.rUp === '++' ? <span className="text-emerald-600 font-black text-xs">++</span> : gutSoundsQuad.rUp === '+' ? <span className="text-emerald-500 font-black text-sm">+</span> : gutSoundsQuad.rUp === '-' ? <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-xs" /> : <span className="w-3 h-0.5 bg-red-600 rounded-full block" />}
+                      </div>
+                      <div className="flex items-center justify-center">
+                        {gutSoundsQuad.lLow === '++' ? <span className="text-emerald-600 font-black text-xs">++</span> : gutSoundsQuad.lLow === '+' ? <span className="text-emerald-500 font-black text-sm">+</span> : gutSoundsQuad.lLow === '-' ? <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-xs" /> : <span className="w-3 h-0.5 bg-red-600 rounded-full block" />}
+                      </div>
+                      <div className="flex items-center justify-center">
+                        {gutSoundsQuad.rLow === '++' ? <span className="text-emerald-600 font-black text-xs">++</span> : gutSoundsQuad.rLow === '+' ? <span className="text-emerald-500 font-black text-sm">+</span> : gutSoundsQuad.rLow === '-' ? <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-xs" /> : <span className="w-3 h-0.5 bg-red-600 rounded-full block" />}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5 p-3 bg-slate-100 rounded-2xl border border-slate-300">
                     {/* Left Upper */}
-                    <div className="p-2.5 bg-white rounded-xl border text-center space-y-1">
+                    <div className="p-2 bg-white rounded-xl border text-center space-y-1">
                       <span className="text-[10px] font-black text-slate-500 uppercase block">L-UP (Left Upper)</span>
                       <div className="flex justify-center gap-1">
-                        {['+', '-', '0'].map((sym) => (
+                        {['++', '+', '-', '0'].map((sym) => (
                           <button
                             key={sym}
                             onClick={() => setGutSoundsQuad((prev) => ({ ...prev, lUp: sym }))}
-                            className={`w-7 h-7 rounded-lg font-black text-xs ${
+                            className={`w-7 h-7 rounded-lg font-black text-xs transition-all ${
                               gutSoundsQuad.lUp === sym
-                                ? sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
-                                : 'bg-slate-100 text-slate-600'
+                                ? sym === '++' || sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                           >
                             {sym}
@@ -740,17 +802,17 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                     </div>
 
                     {/* Right Upper */}
-                    <div className="p-2.5 bg-white rounded-xl border text-center space-y-1">
+                    <div className="p-2 bg-white rounded-xl border text-center space-y-1">
                       <span className="text-[10px] font-black text-slate-500 uppercase block">R-UP (Right Upper)</span>
                       <div className="flex justify-center gap-1">
-                        {['+', '-', '0'].map((sym) => (
+                        {['++', '+', '-', '0'].map((sym) => (
                           <button
                             key={sym}
                             onClick={() => setGutSoundsQuad((prev) => ({ ...prev, rUp: sym }))}
-                            className={`w-7 h-7 rounded-lg font-black text-xs ${
+                            className={`w-7 h-7 rounded-lg font-black text-xs transition-all ${
                               gutSoundsQuad.rUp === sym
-                                ? sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
-                                : 'bg-slate-100 text-slate-600'
+                                ? sym === '++' || sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                           >
                             {sym}
@@ -760,17 +822,17 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                     </div>
 
                     {/* Left Lower */}
-                    <div className="p-2.5 bg-white rounded-xl border text-center space-y-1">
+                    <div className="p-2 bg-white rounded-xl border text-center space-y-1">
                       <span className="text-[10px] font-black text-slate-500 uppercase block">L-LOW (Left Lower)</span>
                       <div className="flex justify-center gap-1">
-                        {['+', '-', '0'].map((sym) => (
+                        {['++', '+', '-', '0'].map((sym) => (
                           <button
                             key={sym}
                             onClick={() => setGutSoundsQuad((prev) => ({ ...prev, lLow: sym }))}
-                            className={`w-7 h-7 rounded-lg font-black text-xs ${
+                            className={`w-7 h-7 rounded-lg font-black text-xs transition-all ${
                               gutSoundsQuad.lLow === sym
-                                ? sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
-                                : 'bg-slate-100 text-slate-600'
+                                ? sym === '++' || sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                           >
                             {sym}
@@ -780,17 +842,17 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                     </div>
 
                     {/* Right Lower */}
-                    <div className="p-2.5 bg-white rounded-xl border text-center space-y-1">
+                    <div className="p-2 bg-white rounded-xl border text-center space-y-1">
                       <span className="text-[10px] font-black text-slate-500 uppercase block">R-LOW (Right Lower)</span>
                       <div className="flex justify-center gap-1">
-                        {['+', '-', '0'].map((sym) => (
+                        {['++', '+', '-', '0'].map((sym) => (
                           <button
                             key={sym}
                             onClick={() => setGutSoundsQuad((prev) => ({ ...prev, rLow: sym }))}
-                            className={`w-7 h-7 rounded-lg font-black text-xs ${
+                            className={`w-7 h-7 rounded-lg font-black text-xs transition-all ${
                               gutSoundsQuad.rLow === sym
-                                ? sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
-                                : 'bg-slate-100 text-slate-600'
+                                ? sym === '++' || sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                           >
                             {sym}

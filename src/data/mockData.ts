@@ -262,9 +262,9 @@ export const INITIAL_FLOWSHEET_ROWS: FlowsheetRow[] = [
     bandColor: 'purple',
     type: 'gut_sounds',
     values: {
-      '10:00': { value: 'L-UP: + | L-LOW: - | R-UP: - | R-LOW: 0', status: 'WARNING' },
+      '10:00': { value: 'L-UP: ++ | L-LOW: - | R-UP: - | R-LOW: +', status: 'WARNING' },
       '11:00': { value: 'L-UP: + | L-LOW: - | R-UP: - | R-LOW: 0', status: 'WARNING' },
-      '12:00': { value: 'L-UP: + | L-LOW: + | R-UP: - | R-LOW: -', status: 'WARNING' },
+      '12:00': { value: 'L-UP: ++ | L-LOW: + | R-UP: - | R-LOW: -', status: 'WARNING' },
       '13:00': { value: 'L-UP: + | L-LOW: + | R-UP: + | R-LOW: +', status: 'NORMAL' },
     },
   },
