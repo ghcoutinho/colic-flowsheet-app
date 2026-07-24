@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { FlowsheetRow, Patient } from '../types';
-import { Plus, Clock, FileText, Upload, CheckCircle, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
+import { FlowsheetRow, Patient, SurgeonScheduleSettings } from '../types';
+import { Plus, Clock, FileText, Upload, CheckCircle, AlertTriangle, XCircle, RefreshCw, Calendar } from 'lucide-react';
 
 interface FlowsheetViewProps {
   rows: FlowsheetRow[];
   timeSlots: string[];
   patient: Patient;
+  surgeonSettings?: SurgeonScheduleSettings;
   onOpenAddRound: () => void;
   onUpdateCellValue: (rowId: string, timeSlot: string, newValue: string, status?: 'NORMAL' | 'AMBER_DUE' | 'DUE' | 'WARNING' | 'CRITICAL' | 'DONE' | 'LATE' | 'DISCONTINUED') => void;
   onAddMedicationToFlowsheet: (medName: string, doseText: string) => void;
@@ -15,6 +16,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
   rows,
   timeSlots,
   patient,
+  surgeonSettings,
   onOpenAddRound,
   onUpdateCellValue,
 }) => {
@@ -79,6 +81,44 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
   };
 
   const nowSlot = getNowSlot(timeSlots, currentClockTime);
+
+  // Parse surgeon interval string to numerical hour step
+  const parseIntervalHours = (intervalStr?: string) => {
+    if (!intervalStr || intervalStr === 'STAT') return 1;
+    const num = parseInt(intervalStr.replace('q', '').replace('h', ''));
+    return isNaN(num) ? 1 : num;
+  };
+
+  // Surgeon Schedule Timepoint Column Filtering (Vitals, GI, Labs tabs)
+  const { activeTimeSlots, surgeonRequirementLabel } = React.useMemo(() => {
+    if (filterCategory === 'ALL' || !surgeonSettings) {
+      return { activeTimeSlots: timeSlots, surgeonRequirementLabel: null };
+    }
+
+    let intervalStr = 'q1h';
+    let labelCategory = '';
+
+    if (filterCategory === 'VITALS') {
+      intervalStr = surgeonSettings.tprInterval;
+      labelCategory = 'Vitals & Pain';
+    } else if (filterCategory === 'GI') {
+      intervalStr = surgeonSettings.giInterval;
+      labelCategory = 'GI & Motility';
+    } else if (filterCategory === 'LABS') {
+      intervalStr = surgeonSettings.clinPathInterval;
+      labelCategory = 'Clinicopathology';
+    } else {
+      return { activeTimeSlots: timeSlots, surgeonRequirementLabel: null };
+    }
+
+    const step = parseIntervalHours(intervalStr);
+    const filteredSlots = timeSlots.filter((_, idx) => idx % step === 0);
+
+    return {
+      activeTimeSlots: filteredSlots,
+      surgeonRequirementLabel: `Surgeon Order Active: ${labelCategory} scheduled every ${intervalStr}`,
+    };
+  }, [filterCategory, timeSlots, surgeonSettings]);
 
   // Auto PCV Trend Calculation
   useEffect(() => {
@@ -376,8 +416,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
       )}
 
       {/* Filter Tabs Bar */}
-      <div className="flex items-center justify-between gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200 overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-1">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
           {[
             { id: 'ALL', label: 'All Parameters' },
             { id: 'VITALS', label: 'Vitals & Pain' },
@@ -398,9 +438,16 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
             </button>
           ))}
         </div>
-        <div className="text-[11px] font-bold text-slate-500 hidden lg:block px-2">
-          💡 Tap any cell to record or edit value
-        </div>
+
+        {surgeonRequirementLabel ? (
+          <div className="bg-blue-600 text-white px-3 py-1.5 rounded-xl shadow-xs text-xs font-extrabold flex items-center gap-1.5 animate-in fade-in shrink-0">
+            <Clock className="w-3.5 h-3.5 text-blue-200" /> {surgeonRequirementLabel}
+          </div>
+        ) : (
+          <div className="text-[11px] font-bold text-slate-500 hidden lg:block px-2">
+            💡 Tap any cell to record or edit value
+          </div>
+        )}
       </div>
 
       {/* Main Flowsheet Grid Container with Sticky Left Column */}
@@ -420,8 +467,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                   </div>
                 </th>
 
-                {/* Time Slots Headers */}
-                {timeSlots.map((slot) => {
+                {/* Time Slots Headers (Filtered by Surgeon Schedule in Vitals/GI/Labs tabs) */}
+                {activeTimeSlots.map((slot) => {
                   const isNow = slot === nowSlot;
                   return (
                     <th
@@ -458,7 +505,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                           </span>
                         )}
                       </td>
-                      {timeSlots.map((slot) => (
+                      {activeTimeSlots.map((slot) => (
                         <td key={slot} className="p-2 bg-slate-200/50 border-r border-slate-300/50"></td>
                       ))}
                     </tr>
@@ -490,7 +537,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                           </td>
 
                           {/* Time Values Cells across the row with dynamic anti-misentry color scheme */}
-                          {timeSlots.map((slot, slotIdx) => {
+                          {activeTimeSlots.map((slot, slotIdx) => {
                             const cell = row.values[slot];
                             const isNow = slot === nowSlot;
                             const isNextDue = slot === nextDueSlot;

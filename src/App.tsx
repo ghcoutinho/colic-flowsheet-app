@@ -240,6 +240,7 @@ export default function App() {
             rows={flowsheetRows}
             timeSlots={timeSlots}
             patient={activePatient}
+            surgeonSettings={surgeonSettings}
             onOpenAddRound={() => setIsAddRoundOpen(true)}
             onUpdateCellValue={handleUpdateCellValue}
             onAddMedicationToFlowsheet={handleSyncToFlowsheet}
