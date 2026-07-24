@@ -373,12 +373,13 @@ export default function Flowsheet({ patient }: Props) {
       </div>
 
       {/* Grid */}
-      <div className="card table-container">
-        <div className="flex justify-between items-center mb-4">
+      <div className="card" style={{ padding: '1rem' }}>
+        <div className="flex justify-between items-center mb-3">
           <h2 className="card-title" style={{ marginBottom: 0, borderBottom: 'none' }}><Activity size={18} style={{display:'inline', marginRight: '4px'}}/> Clinical Flowsheet</h2>
           <button className="btn btn-primary" onClick={addRound}><Plus size={16} /> Add Round</button>
         </div>
-        <table className="table-fixed-col">
+        <div className="table-container" style={{ maxHeight: 'calc(100vh - 220px)', minHeight: '350px' }}>
+          <table className="table-fixed-col">
           <thead>
             <tr>
               <th>Parameter</th>
@@ -775,5 +776,6 @@ export default function Flowsheet({ patient }: Props) {
         </table>
       </div>
     </div>
-  );
+  </div>
+);
 }
