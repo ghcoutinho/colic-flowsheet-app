@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FlowsheetRow, Patient } from '../types';
-import { Plus, Clock, Filter, AlertTriangle, CheckCircle2, Play, Square, Info, ChevronRight, RefreshCw, Zap } from 'lucide-react';
+import { Plus, Clock } from 'lucide-react';
 
 interface FlowsheetViewProps {
   rows: FlowsheetRow[];
@@ -41,25 +41,70 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
     groupedRows[groupKey].push(row);
   });
 
-  const getBandBgClass = (color: FlowsheetRow['bandColor']) => {
+  // Dedicated row color banding across entire row to prevent misentry
+  const getRowColorStyles = (color: FlowsheetRow['bandColor'] | string) => {
     switch (color) {
       case 'red':
-        return 'bg-red-100/80 border-red-200 text-red-900';
+        return {
+          headerBg: 'bg-red-700 text-white font-extrabold',
+          rowCellBg: 'bg-red-100/70 hover:bg-red-100',
+          cardBorder: 'border-red-300',
+        };
       case 'orange':
-        return 'bg-amber-100/80 border-amber-200 text-amber-900';
+        return {
+          headerBg: 'bg-amber-600 text-white font-extrabold',
+          rowCellBg: 'bg-amber-100/70 hover:bg-amber-100',
+          cardBorder: 'border-amber-300',
+        };
       case 'yellow':
-        return 'bg-yellow-100/80 border-yellow-200 text-yellow-900';
+        return {
+          headerBg: 'bg-yellow-500 text-slate-950 font-extrabold',
+          rowCellBg: 'bg-yellow-100/70 hover:bg-yellow-100',
+          cardBorder: 'border-yellow-300',
+        };
       case 'green':
-        return 'bg-emerald-100/80 border-emerald-200 text-emerald-900';
+        return {
+          headerBg: 'bg-emerald-600 text-white font-extrabold',
+          rowCellBg: 'bg-emerald-100/70 hover:bg-emerald-100',
+          cardBorder: 'border-emerald-300',
+        };
       case 'blue':
-        return 'bg-sky-100/80 border-sky-200 text-sky-900';
+        return {
+          headerBg: 'bg-sky-600 text-white font-extrabold',
+          rowCellBg: 'bg-sky-100/70 hover:bg-sky-100',
+          cardBorder: 'border-sky-300',
+        };
       case 'purple':
-        return 'bg-purple-100/80 border-purple-200 text-purple-900';
+        return {
+          headerBg: 'bg-purple-600 text-white font-extrabold',
+          rowCellBg: 'bg-purple-100/70 hover:bg-purple-100',
+          cardBorder: 'border-purple-300',
+        };
       case 'pink':
-        return 'bg-pink-100/80 border-pink-200 text-pink-900';
+        return {
+          headerBg: 'bg-pink-600 text-white font-extrabold',
+          rowCellBg: 'bg-pink-100/70 hover:bg-pink-100',
+          cardBorder: 'border-pink-300',
+        };
+      case 'cyan':
+        return {
+          headerBg: 'bg-cyan-600 text-white font-extrabold',
+          rowCellBg: 'bg-cyan-100/70 hover:bg-cyan-100',
+          cardBorder: 'border-cyan-300',
+        };
+      case 'lime':
+        return {
+          headerBg: 'bg-lime-600 text-white font-extrabold',
+          rowCellBg: 'bg-lime-100/70 hover:bg-lime-100',
+          cardBorder: 'border-lime-300',
+        };
       case 'slate':
       default:
-        return 'bg-slate-100/80 border-slate-200 text-slate-800';
+        return {
+          headerBg: 'bg-slate-700 text-white font-extrabold',
+          rowCellBg: 'bg-slate-100/70 hover:bg-slate-100',
+          cardBorder: 'border-slate-300',
+        };
     }
   };
 
@@ -89,7 +134,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Color-banded ICU grid • Continuous monitoring interval • Auto delta calculation
+            Row-banded ICU grid • Anti-misentry color schemes • Real-time DUE highlights
           </p>
         </div>
 
@@ -151,7 +196,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
       {/* Main Flowsheet Grid Container with Sticky Left Column */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto relative">
-          <table className="w-full text-left border-collapse min-w-[800px]">
+          <table className="w-full text-left border-collapse min-w-[850px]">
             {/* Table Header Row */}
             <thead>
               <tr className="bg-slate-800 text-white text-xs uppercase tracking-wider font-semibold border-b border-slate-700">
@@ -169,8 +214,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                   return (
                     <th
                       key={slot}
-                      className={`p-2.5 text-center min-w-[70px] border-r border-slate-700 ${
-                        isNow ? 'bg-amber-400 text-slate-900 font-black shadow-inner' : ''
+                      className={`p-2.5 text-center min-w-[75px] border-r border-slate-700 ${
+                        isNow ? 'bg-amber-400 text-slate-950 font-black shadow-inner border-amber-500' : ''
                       }`}
                     >
                       {isNow && <div className="text-[9px] leading-tight font-extrabold uppercase">NOW</div>}
@@ -188,73 +233,67 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 return (
                   <React.Fragment key={groupTitle}>
                     {/* Category Header Row Band */}
-                    <tr className="bg-slate-100 text-slate-700 font-bold border-y border-slate-300">
-                      <td className="p-2 sticky left-0 z-10 bg-slate-100 border-r border-slate-300 uppercase tracking-wide text-[11px] shadow-sm flex items-center justify-between">
+                    <tr className="bg-slate-200 text-slate-800 font-extrabold border-y border-slate-300">
+                      <td className="p-2 sticky left-0 z-10 bg-slate-200 border-r border-slate-300 uppercase tracking-wide text-[11px] shadow-sm flex items-center justify-between">
                         <span>{groupTitle}</span>
                         {firstRow?.categoryFrequency && (
-                          <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 text-[10px] lowercase font-semibold">
+                          <span className="px-1.5 py-0.5 rounded bg-slate-300 text-slate-700 text-[10px] lowercase font-bold">
                             {firstRow.categoryFrequency}
                           </span>
                         )}
                       </td>
                       {timeSlots.map((slot) => (
-                        <td key={slot} className="p-2 bg-slate-100 border-r border-slate-200"></td>
+                        <td key={slot} className="p-2 bg-slate-200/50 border-r border-slate-300/50"></td>
                       ))}
                     </tr>
 
                     {/* Individual Parameter Rows */}
                     {categoryRows.map((row) => {
-                      const bandStyle = getBandBgClass(row.bandColor);
+                      const colorStyles = getRowColorStyles(row.bandColor);
                       return (
-                        <tr key={row.id} className="hover:bg-slate-50 transition-colors">
+                        <tr key={row.id} className="transition-colors">
                           {/* Sticky Left Title + Target Column */}
-                          <td className={`p-2.5 sticky left-0 z-10 bg-white border-r border-slate-200 shadow-sm ${bandStyle} font-semibold`}>
+                          <td className={`p-2.5 sticky left-0 z-10 border-r border-slate-300 shadow-md ${colorStyles.headerBg}`}>
                             <div className="flex items-center justify-between gap-1">
-                              <span className="truncate max-w-[140px] sm:max-w-[160px] text-slate-900">{row.parameter}</span>
-                              <span className="text-[10px] font-bold text-slate-500 bg-white/70 px-1.5 py-0.5 rounded border border-slate-300/50">
+                              <span className="truncate max-w-[140px] sm:max-w-[160px] text-white font-extrabold">{row.parameter}</span>
+                              <span className="text-[10px] font-extrabold text-slate-900 bg-white/90 px-1.5 py-0.5 rounded shadow-xs">
                                 {row.target}
                               </span>
                             </div>
                           </td>
 
-                          {/* Time Values Cells */}
+                          {/* Time Values Cells across the row with anti-misentry color scheme */}
                           {timeSlots.map((slot) => {
                             const cell = row.values[slot];
                             const isNow = slot === '14:00';
-                            const hasValue = cell && (cell.value !== '' && cell.value !== undefined);
+                            const isDue = cell?.status === 'AMBER_DUE' || cell?.status === 'DUE' || cell?.note === 'AMBER DUE' || cell?.note === 'DUE';
+                            const hasValue = cell && cell.value !== '' && cell.value !== undefined;
 
                             return (
                               <td
                                 key={slot}
                                 onClick={() => handleCellClick(row.id, slot, cell?.value?.toString() || '')}
-                                className={`p-1.5 text-center border-r border-slate-200 cursor-pointer transition-all hover:bg-blue-50/80 relative min-w-[70px] ${
-                                  isNow ? 'bg-amber-50/50' : ''
+                                className={`p-1.5 text-center border-r border-slate-200/80 cursor-pointer transition-all hover:brightness-95 relative min-w-[75px] ${colorStyles.rowCellBg} ${
+                                  isNow ? 'ring-2 ring-amber-500 z-10' : ''
                                 }`}
                               >
-                                {cell?.status === 'AMBER_DUE' ? (
-                                  <div className="bg-amber-400 text-slate-950 font-extrabold text-[10px] p-1 rounded border border-amber-500 shadow-sm animate-pulse">
-                                    AMBER DUE
+                                {isDue ? (
+                                  <div className="bg-amber-500 text-white font-black text-[10px] px-2.5 py-1 rounded-lg border border-amber-600 shadow-sm animate-pulse tracking-wider">
+                                    DUE
                                   </div>
                                 ) : hasValue ? (
-                                  <div className="flex flex-col items-center justify-center">
-                                    {/* Delta Badge if present */}
+                                  <div className={`bg-white rounded-xl p-1 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative`}>
                                     {cell.delta && (
-                                      <span className="text-[9px] font-extrabold text-blue-600 bg-blue-100 px-1 rounded-full leading-none mb-0.5">
+                                      <span className="absolute -top-1.5 -right-1 text-[8px] font-black text-emerald-700 bg-emerald-100 px-1 rounded-full border border-emerald-300">
                                         {cell.delta}
                                       </span>
                                     )}
-
-                                    {/* Main Cell Value */}
-                                    <span className={`font-bold ${
-                                      cell.status === 'WARNING' ? 'text-amber-700 bg-amber-100 px-1 rounded' :
-                                      cell.status === 'CRITICAL' ? 'text-red-700 bg-red-100 px-1 rounded font-black' :
-                                      row.type === 'medication' ? 'text-purple-700 font-extrabold' : 'text-slate-900'
-                                    }`}>
+                                    <span className="font-black text-slate-900 text-xs sm:text-sm">
                                       {cell.value}
                                     </span>
                                   </div>
                                 ) : (
-                                  <div className="h-6 flex items-center justify-center text-slate-300 hover:text-slate-500 text-[10px]">
+                                  <div className="h-7 flex items-center justify-center text-slate-400 hover:text-slate-700 text-xs font-bold">
                                     +
                                   </div>
                                 )}
