@@ -50,14 +50,18 @@ export interface FlowsheetRow {
 export interface DrugFormularyItem {
   id: string;
   name: string;
-  category: 'Antibiotics' | 'Analgesics' | 'Sedatives' | 'CRIs' | 'Prokinetics' | 'NSAIDs' | 'Fluids';
+  brand?: string;
+  category: string;
   defaultDoseRate: number; // e.g., 6.6
   maxDoseRate?: number; // e.g. 6.6
-  doseUnit: 'mg/kg' | 'mcg/kg' | 'IU/kg' | 'mg/kg/hr' | 'mL/kg';
+  doseUnit: string; // e.g. 'mg/kg', 'mcg/kg', 'IU/kg', 'mg/kg/hr', 'mL/kg', 'g/kg'
   defaultConcentration: number; // e.g., 100
-  concentrationUnit: 'mg/mL' | 'IU/mL' | 'mcg/mL' | '%';
+  concentrationUnit: string; // e.g. 'mg/mL', 'IU/mL', 'mcg/mL', '%', 'mg/mL'
   route: string;
   defaultFrequency: string; // e.g. "q24h", "q6h", "CRI"
+  indications?: string[];
+  cautions?: string;
+  sourceConfidence?: string;
   notes?: string;
 }
 

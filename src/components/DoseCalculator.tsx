@@ -33,11 +33,12 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
     return initial;
   });
 
-  const categories = ['ALL', 'Antibiotics', 'Analgesics', 'Sedatives', 'CRIs', 'Prokinetics'];
+  const categories = ['ALL', ...Array.from(new Set(formulary.map((f) => f.category)))];
 
   const filteredFormulary = formulary.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchTerm.toLowerCase());
+      item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.brand && item.brand.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCat = selectedCategory === 'ALL' || item.category === selectedCategory;
     return matchesSearch && matchesCat;
   });
@@ -169,14 +170,28 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
               {/* Drug Title Header */}
               <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">{item.category}</span>
+                    {item.brand && (
+                      <span className="text-xs font-bold text-amber-300 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/30">
+                        {item.brand}
+                      </span>
+                    )}
                     <span className="text-slate-500">•</span>
                     <span className="text-xs text-slate-400 font-medium">{item.route}</span>
                   </div>
                   <h3 className="text-lg font-extrabold text-white mt-0.5">{item.name}</h3>
+                  {item.indications && item.indications.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                      {item.indications.map((ind, i) => (
+                        <span key={i} className="text-[10px] font-semibold text-slate-300 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
+                          {ind}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <span className="px-2.5 py-1 bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg border border-slate-700">
+                <span className="px-2.5 py-1 bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg border border-slate-700 shrink-0">
                   {item.defaultFrequency}
                 </span>
               </div>
@@ -268,9 +283,15 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
                 )}
               </button>
 
+              {item.cautions && (
+                <div className="text-[11px] text-amber-200 bg-amber-950/40 p-2.5 rounded-lg border border-amber-800/60 font-medium">
+                  ⚠️ <strong>Cautions / Warnings:</strong> {item.cautions}
+                </div>
+              )}
+
               {item.notes && (
-                <div className="text-[11px] text-slate-400 italic bg-slate-800/40 p-2.5 rounded-lg border border-slate-800">
-                  💡 Clinical Note: {item.notes}
+                <div className="text-[11px] text-slate-300 italic bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
+                  💡 <strong>Clinical Note:</strong> {item.notes}
                 </div>
               )}
             </div>
