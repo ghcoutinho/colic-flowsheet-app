@@ -114,42 +114,6 @@ export const ASOMetadataView: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* App Icon & Marketing Screenshots Package Deliverables */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
-        <h2 className="text-base font-extrabold text-slate-900 border-b pb-2 flex items-center justify-between">
-          <span>4. Marketing Assets & Deliverables</span>
-          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-            5 Assets Package Ready
-          </span>
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* App Icon Box */}
-          <div className="p-4 rounded-xl bg-slate-900 text-white flex items-center gap-4 border border-slate-800">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-900 p-2.5 flex items-center justify-center shrink-0 border border-blue-400/40 shadow-lg">
-              <svg viewBox="0 0 100 100" className="w-full h-full text-white fill-none stroke-current stroke-[7] stroke-linecap-round stroke-linejoin-round">
-                <path d="M 15 50 H 30 L 38 25 L 48 75 L 58 40 L 65 50 H 85" />
-                <path d="M 45 20 C 50 10, 65 10, 75 25 C 80 35, 75 48, 65 55 C 60 58, 55 68, 52 85" />
-              </svg>
-            </div>
-            <div>
-              <div className="font-black text-sm text-white">Premium App Icon</div>
-              <div className="text-[11px] text-slate-400 mt-0.5">1024x1024 Brand Mark • Minimalist Equine-Pulse Symbol on Deep Navy Gradient</div>
-            </div>
-          </div>
-
-          {/* Deliverables List */}
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
-            <div className="font-extrabold text-slate-900 mb-1">Deliverables Breakdown:</div>
-            {ASO_REPORT.deliverables.map((item, idx) => (
-              <div key={idx} className="text-slate-700 font-medium">
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
