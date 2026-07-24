@@ -301,6 +301,41 @@ export default function Flowsheet({ patient }: Props) {
     }));
   };
 
+
+  // Current system time in HH:MM
+  const [nowTime, setNowTime] = useState(() => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const d = new Date();
+      setNowTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Find index of round closest to current system time
+  let closestNowIndex = -1;
+  if (rounds.length > 0) {
+    const [nh, nm] = nowTime.split(':').map(Number);
+    const nowTotalMins = (nh || 0) * 60 + (nm || 0);
+    
+    let minDiff = Infinity;
+    rounds.forEach((r, idx) => {
+      if (!r.time) return;
+      const [rh, rm] = r.time.split(':').map(Number);
+      if (isNaN(rh)) return;
+      const rTotalMins = rh * 60 + (rm || 0);
+      const diff = Math.abs(nowTotalMins - rTotalMins);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestNowIndex = idx;
+      }
+    });
+  }
+
   return (
     <div className="flex-col gap-4">
       {/* Prescription Builder */}
@@ -390,20 +425,30 @@ export default function Flowsheet({ patient }: Props) {
             <tr>
               <th>Parameter</th>
               <th>Target</th>
-              {rounds.map((r, i) => (
-                <th key={i} style={{ minWidth: '130px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.2rem' }}>
-                    <input type="time" value={r.time} onChange={e => updateRound(i, 'time', e.target.value)} style={{ background: 'transparent', border: 'none', fontWeight: 600, color: 'inherit', width: '100%' }} />
-                    <button
-                      type="button"
-                      className="med-remove"
-                      title={`Delete round at ${r.time}`}
-                      onClick={() => deleteRound(i)}
-                      style={{ opacity: 0.6, fontSize: '1.1rem', padding: '0 2px', lineHeight: 1 }}
-                    >×</button>
-                  </div>
-                </th>
-              ))}
+              {rounds.map((r, i) => {
+                const isNow = i === closestNowIndex;
+                return (
+                  <th key={i} style={{ minWidth: '130px', backgroundColor: isNow ? 'rgba(59, 130, 246, 0.15)' : undefined, borderBottom: isNow ? '3px solid var(--primary-color)' : undefined }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      {isNow && (
+                        <span className="badge" style={{ backgroundColor: 'var(--primary-color)', color: 'white', fontSize: '0.62rem', padding: '1px 5px', width: 'fit-content', alignSelf: 'center', fontWeight: 800, letterSpacing: '0.05em' }}>
+                          NOW ({nowTime})
+                        </span>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.2rem' }}>
+                        <input type="time" value={r.time} onChange={e => updateRound(i, 'time', e.target.value)} style={{ background: 'transparent', border: 'none', fontWeight: 700, color: isNow ? 'var(--primary-color)' : 'inherit', width: '100%' }} />
+                        <button
+                          type="button"
+                          className="med-remove"
+                          title={`Delete round at ${r.time}`}
+                          onClick={() => deleteRound(i)}
+                          style={{ opacity: 0.6, fontSize: '1.1rem', padding: '0 2px', lineHeight: 1 }}
+                        >×</button>
+                      </div>
+                    </div>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>

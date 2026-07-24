@@ -89,13 +89,24 @@ export default function Identification({ patient, setPatient }: Props) {
           </div>
           
           <div>
-            <label className="text-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Surgeon</label>
+            <label className="text-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Surgeon Name</label>
             <input 
               type="text" 
               value={patient.surgeon} 
               onChange={e => setPatient({...patient, surgeon: e.target.value})} 
               style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', background: 'var(--bg-card)', fontWeight: 600 }} 
               placeholder="Surgeon name..." 
+            />
+          </div>
+
+          <div>
+            <label className="text-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Resident Name</label>
+            <input 
+              type="text" 
+              value={patient.resident || ''} 
+              onChange={e => setPatient({...patient, resident: e.target.value})} 
+              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', background: 'var(--bg-card)', fontWeight: 600 }} 
+              placeholder="Resident name..." 
             />
           </div>
           
@@ -110,25 +121,58 @@ export default function Identification({ patient, setPatient }: Props) {
           </div>
           
           <div>
-            <label className="text-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Lesion / procedure</label>
-            <input 
-              type="text" 
+            <label className="text-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Colic Lesion</label>
+            <select 
               value={patient.lesion} 
               onChange={e => setPatient({...patient, lesion: e.target.value})} 
               style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', background: 'var(--bg-card)', fontWeight: 600 }} 
-              placeholder="e.g. LCV" 
-            />
+            >
+              <option value="Large Colon Volvulus / Torsion">Large Colon Volvulus / Torsion</option>
+              <option value="Pelvic Flexure Impaction">Pelvic Flexure Impaction</option>
+              <option value="Small Intestinal Strangulation (Lipoma)">Small Intestinal Strangulation (Lipoma)</option>
+              <option value="Epiploic Foramen Entrapment">Epiploic Foramen Entrapment</option>
+              <option value="Nephrosplenic Entrapment (LDD)">Nephrosplenic Entrapment (LDD)</option>
+              <option value="Right Dorsal Displacement">Right Dorsal Displacement</option>
+              <option value="Cecal Impaction / Dysfunction">Cecal Impaction / Dysfunction</option>
+              <option value="Small Intestinal Intussusception">Small Intestinal Intussusception</option>
+              <option value="Anterior Enteritis (DPJ)">Anterior Enteritis (DPJ)</option>
+              <option value="Non-strangulating Infarction">Non-strangulating Infarction</option>
+              <option value="Peritonitis / Rupture">Peritonitis / Rupture</option>
+              <option value="Other Lesion">Other Lesion</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Surgical Procedure</label>
+            <select 
+              value={patient.procedure || 'Enterotomy & Decompression'} 
+              onChange={e => setPatient({...patient, procedure: e.target.value})} 
+              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', background: 'var(--bg-card)', fontWeight: 600 }} 
+            >
+              <option value="Enterotomy & Decompression">Enterotomy & Decompression</option>
+              <option value="Small Intestinal Resection & Anastomosis">Small Intestinal Resection & Anastomosis</option>
+              <option value="Manual Reduction / Repositioning">Manual Reduction / Repositioning</option>
+              <option value="Typhlotomy">Typhlotomy</option>
+              <option value="Abdominal Lavage & Drainage">Abdominal Lavage & Drainage</option>
+              <option value="Exploratory Celiotomy (No Resection)">Exploratory Celiotomy (No Resection)</option>
+              <option value="Euthanasia Intra-op">Euthanasia Intra-op</option>
+              <option value="Medical / Conservative (No Surgery)">Medical / Conservative (No Surgery)</option>
+              <option value="Other Procedure">Other Procedure</option>
+            </select>
           </div>
           
           <div>
-            <label className="text-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Resection? (Y/N/%)</label>
-            <input 
-              type="text" 
-              value={patient.resection} 
+            <label className="text-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Resection Performed?</label>
+            <select 
+              value={patient.resection || 'No'} 
               onChange={e => setPatient({...patient, resection: e.target.value})} 
               style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', background: 'var(--bg-card)', fontWeight: 600 }} 
-              placeholder="Y/N/Type..." 
-            />
+            >
+              <option value="No">No</option>
+              <option value="Yes (Small Intestinal)">Yes (Small Intestinal)</option>
+              <option value="Yes (Large Colon)">Yes (Large Colon)</option>
+              <option value="Yes (Jejunocaecostomy)">Yes (Jejunocaecostomy)</option>
+            </select>
           </div>
           
           <div>
@@ -143,31 +187,55 @@ export default function Identification({ patient, setPatient }: Props) {
           </div>
           
           <div>
-            <label className="text-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Sheet page __ of __</label>
-            <input 
-              type="text" 
-              value={patient.sheetPage} 
-              onChange={e => setPatient({...patient, sheetPage: e.target.value})} 
-              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', background: 'var(--bg-card)', fontWeight: 600 }} 
-              placeholder="e.g. 1 of 2" 
-            />
+            <label className="text-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>High Laminitis Risk?</label>
+            <select 
+              value={patient.highLaminitisRisk ? 'Yes' : 'No'} 
+              onChange={e => setPatient({...patient, highLaminitisRisk: e.target.value === 'Yes'})} 
+              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', background: 'var(--bg-card)', fontWeight: 700, color: patient.highLaminitisRisk ? 'var(--danger)' : 'inherit' }} 
+            >
+              <option value="Yes">Yes (LCV / Colitis / Sepsis)</option>
+              <option value="No">No</option>
+            </select>
           </div>
-          
-          <div style={{ gridColumn: '1 / -1', padding: '1rem', background: 'var(--danger-light)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <input 
-              type="checkbox" 
-              checked={patient.highLaminitisRisk} 
-              onChange={e => setPatient({...patient, highLaminitisRisk: e.target.checked})} 
-              id="laminitisRisk" 
-              style={{ width: '1.5rem', height: '1.5rem', cursor: 'pointer', accentColor: 'var(--danger)' }}
-            />
-            <div>
-              <label htmlFor="laminitisRisk" style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--danger)', cursor: 'pointer' }}>
-                High laminitis risk? (LCV/colitis/sepsis)
-              </label>
-              <p className="text-muted" style={{ fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
-                Drives the auto 'on ice?' recommendation below. Set Y/N.
-              </p>
+        </div>
+
+        {/* Attending Veterinary Team & Signature Block */}
+        <div style={{ marginTop: '2rem', padding: '1.25rem', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'var(--bg-main)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--primary-color)' }}>
+              Attending Veterinary Clinicians & Official Signatures
+            </h3>
+            <button 
+              type="button" 
+              className="btn btn-ghost"
+              style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              onClick={() => {
+                const newSurgeon = prompt('Enter Surgeon Name:', patient.surgeon || '');
+                const newResident = prompt('Enter Resident Name:', patient.resident || '');
+                setPatient({
+                  ...patient,
+                  surgeon: newSurgeon !== null ? newSurgeon : patient.surgeon,
+                  resident: newResident !== null ? newResident : (patient.resident || '')
+                });
+              }}
+            >
+              <User size={14} /> + Add / Switch Clinicians
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', marginTop: '1rem' }}>
+            <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-card)', borderRadius: '6px', border: '1px border var(--border-color)' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Attending Surgeon</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, marginTop: '0.25rem' }}>Dr. {patient.surgeon || '____________________'}</div>
+              <div style={{ marginTop: '1.5rem', borderBottom: '1px dashed #94a3b8', width: '80%' }}></div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Signature, DVM / DACVS</div>
+            </div>
+
+            <div style={{ padding: '0.75rem', backgroundColor: 'var(--bg-card)', borderRadius: '6px', border: '1px border var(--border-color)' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Attending Resident</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, marginTop: '0.25rem' }}>Dr. {patient.resident || '____________________'}</div>
+              <div style={{ marginTop: '1.5rem', borderBottom: '1px dashed #94a3b8', width: '80%' }}></div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Signature, DVM / Resident</div>
             </div>
           </div>
         </div>

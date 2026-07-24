@@ -3,23 +3,32 @@ import { Plus, Trash2 } from 'lucide-react';
 import type { PatientProfile, DrugConfig } from '../utils/algorithms';
 import { drugDatabase } from '../utils/algorithms';
 
-export default function DoseCalculator() {
-  const [patientWeight, setPatientWeight] = useState<number | ''>(500);
+type Props = {
+  patient?: PatientProfile;
+  setPatient?: (p: PatientProfile) => void;
+};
+
+export default function DoseCalculator({ patient, setPatient }: Props) {
+  const [patientWeight, setPatientWeight] = useState<number | ''>(() => {
+    return patient?.weight !== undefined && patient.weight !== '' ? patient.weight : 450;
+  });
+
+  useEffect(() => {
+    if (patient?.weight !== undefined && patient.weight !== '') {
+      setPatientWeight(patient.weight);
+    }
+  }, [patient?.weight]);
+
+  const handleWeightChange = (newW: number | '') => {
+    setPatientWeight(newW);
+    if (patient && setPatient) {
+      setPatient({ ...patient, weight: newW });
+    }
+  };
+
   const [selectedCategory, setSelectedCategory] = useState<string>("Antibiotics");
   const [selectedDrugIndex, setSelectedDrugIndex] = useState<number>(0);
-  
   const [rxList, setRxList] = useState<DrugConfig[]>([]);
-
-  // Load weight from Patient Profile on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('cmt_patient');
-    if (saved) {
-      try {
-        const p: PatientProfile = JSON.parse(saved);
-        if (p.weight) setPatientWeight(p.weight);
-      } catch (e) {}
-    }
-  }, []);
 
   // Load rxList from local storage on mount
   useEffect(() => {
@@ -64,7 +73,7 @@ export default function DoseCalculator() {
             <input 
               type="number" 
               value={patientWeight} 
-              onChange={(e) => setPatientWeight(e.target.value === '' ? '' : Number(e.target.value))} 
+              onChange={(e) => handleWeightChange(e.target.value === '' ? '' : Number(e.target.value))} 
               style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontWeight: 600, color: 'var(--primary-color)' }}
               placeholder="e.g. 500"
             />

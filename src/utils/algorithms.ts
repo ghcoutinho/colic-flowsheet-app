@@ -3,10 +3,12 @@ export type PatientProfile = {
   date: string;
   weight: number | '';
   surgeon: string;
+  resident?: string;
   sxDate: string;
   lesion: string;
+  procedure?: string;
   resection: string;
-  sheetPage: string;
+  sheetPage?: string;
   demeanor: string;
   highLaminitisRisk: boolean;
 };
@@ -16,10 +18,11 @@ export const defaultPatient: PatientProfile = {
   date: new Date().toISOString().split('T')[0],
   weight: 450,
   surgeon: '',
+  resident: '',
   sxDate: '',
-  lesion: '',
-  resection: '',
-  sheetPage: '',
+  lesion: 'Large Colon Volvulus / Torsion',
+  procedure: 'Enterotomy & Decompression',
+  resection: 'No',
   demeanor: '',
   highLaminitisRisk: true
 };
@@ -252,6 +255,8 @@ export function checkAlerts(round: RoundData): Alert[] {
   
   if (typeof round.temp === 'number' && round.temp > 38.9) {
     alerts.push({ id: '3', trigger: 'Fever > 38.9°C', message: 'Full exam; consider ultrasound; notify surgeon urgently' });
+  } else if (typeof round.temp === 'number' && round.temp < 37.0 && round.temp > 0) {
+    alerts.push({ id: '3b', trigger: 'Hypothermia < 37.0°C', message: 'Active rewarming; check perfusion & sepsis parameters' });
   }
   
   if (typeof round.lactate === 'number' && round.lactate > 4) {
@@ -261,9 +266,29 @@ export function checkAlerts(round: RoundData): Alert[] {
   if (typeof round.pcv === 'number' && round.pcv > 50) {
     alerts.push({ id: '5', trigger: 'PCV > 50%', message: 'Increase fluids; consider colloids/plasma; notify surgeon' });
   }
+
+  if (round.pulseFront === 'bounding' || round.hoofHeat === 'increased' || (typeof round.obelGrade === 'number' && round.obelGrade >= 1)) {
+    alerts.push({ id: '6', trigger: 'Digital Pulses / Feet Sign', message: 'Confirm continuous digital cryotherapy on forefeet; foot support; notify surgeon' });
+  }
   
   if (typeof round.painScore === 'number' && round.painScore >= 2) {
     alerts.push({ id: '8', trigger: 'Pain Score ≥ 2', message: 'Reassess; analgesia per orders; if unresponsive, notify surgeon' });
+  }
+
+  if (round.gutSounds === 'absent') {
+    alerts.push({ id: '9', trigger: 'Gut Sounds Absent', message: 'Check distension & reflux; maintain NGT decompression; notify surgeon' });
+  }
+
+  if (typeof round.creatinine === 'number' && round.creatinine > 2.0) {
+    alerts.push({ id: '10', trigger: 'Creatinine > 2.0 mg/dL', message: 'Verify fluid delivery & catheter; review NSAID dosing; notify surgeon' });
+  }
+
+  if (round.incision && round.incision !== 'clean' && round.incision !== 'normal') {
+    alerts.push({ id: '11', trigger: 'Incision Abnormality', message: `Incision noted as ${round.incision}; clean & document; notify surgeon` });
+  }
+
+  if (round.ivCath && round.ivCath !== 'clean' && round.ivCath !== 'normal') {
+    alerts.push({ id: '12', trigger: 'IV Catheter Site Issue', message: `Catheter site noted as ${round.ivCath}; inspect site & consider replacing` });
   }
 
   return alerts;
