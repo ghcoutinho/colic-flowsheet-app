@@ -557,11 +557,11 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto relative">
           <table className="w-full text-left border-collapse min-w-[850px]">
-            {/* Table Header Row */}
-            <thead>
-              <tr className="bg-slate-800 text-white text-xs uppercase tracking-wider font-semibold border-b border-slate-700">
+            {/* Table Header Row (Sticky Top) */}
+            <thead className="sticky top-0 z-30 bg-slate-800 text-white text-xs uppercase tracking-wider font-semibold border-b border-slate-700 shadow-md">
+              <tr className="bg-slate-800">
                 {/* Sticky Header Title */}
-                <th className="p-3 sticky left-0 z-20 bg-slate-800 w-60 sm:w-72 border-r border-slate-700 shadow-md">
+                <th className="p-3 sticky top-0 left-0 z-40 bg-slate-800 w-60 sm:w-72 border-r border-slate-700 shadow-md">
                   <div className="flex items-center justify-between">
                     <span className="font-black text-amber-300">
                       {filterCategory === 'MEDS' ? 'Medications and CRIs' : 'Parameter'}
@@ -577,7 +577,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                     <th
                       key={slot}
                       className={`p-2.5 text-center min-w-[85px] border-r border-slate-700 transition-all ${
-                        isNow ? 'bg-amber-400 text-slate-950 font-black shadow-lg border-x-2 border-amber-500 ring-2 ring-amber-400 z-30 scale-102' : ''
+                        isNow ? 'bg-amber-400 text-slate-950 font-black shadow-lg border-x-2 border-amber-600 ring-2 ring-amber-400 z-30 scale-102' : ''
                       }`}
                     >
                       {isNow && (
@@ -611,15 +611,16 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                       </td>
                       {activeTimeSlots.map((slot) => {
                         const isLabHeader = groupTitle.includes('CLINICOPATHOLOGY');
+                        const isNowCol = slot === nowSlot;
                         if (isLabHeader) {
                           const isDueSlot = slot === dueLabSlot;
                           const isSlotCollected = categoryRows.some(
                             (r) => r.values[slot]?.isCollected || r.values[slot]?.status === 'PROCESSING'
                           );
-                          // Only render the Collect / Processing button in the DUE column or if currently processing in this slot
+                          // Render Collect / Processing button in the DUE column on the category header row
                           if (isDueSlot || isSlotCollected) {
                             return (
-                              <td key={slot} className="p-1 bg-amber-200/90 border-x-2 border-amber-500 text-center shadow-inner">
+                              <td key={slot} className={`p-1 text-center shadow-inner ${isNowCol ? 'bg-amber-300/90 border-x-2 border-amber-600' : 'bg-amber-200/90 border-x-2 border-amber-500'}`}>
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlotCollection(categoryRows, slot)}
@@ -628,16 +629,20 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                       ? 'bg-slate-900 text-amber-300 border border-amber-400 animate-pulse'
                                       : 'bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-700 shadow-sm'
                                   }`}
-                                  title="Click to mark sample as collected / processing for all lab parameters in this DUE time slot"
+                                  title="Click to mark sample as collected / processing for this DUE time slot"
                                 >
                                   {isSlotCollected ? '⏳ Processing' : '🧪 Collect Labs'}
                                 </button>
                               </td>
                             );
                           }
-                          return <td key={slot} className="p-2 bg-slate-200/50 border-r border-slate-300/50"></td>;
+                          return (
+                            <td key={slot} className={`p-2 border-r border-slate-300/50 ${isNowCol ? 'bg-amber-200/60 border-x-2 border-amber-500/80' : 'bg-slate-200/50'}`}></td>
+                          );
                         }
-                        return <td key={slot} className="p-2 bg-slate-200/50 border-r border-slate-300/50"></td>;
+                        return (
+                          <td key={slot} className={`p-2 border-r border-slate-300/50 ${isNowCol ? 'bg-amber-200/60 border-x-2 border-amber-500/80' : 'bg-slate-200/50'}`}></td>
+                        );
                       })}
                     </tr>
 
@@ -667,7 +672,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                             </div>
                           </td>
 
-                          {/* Time Values Cells across the row with dynamic anti-misentry color scheme */}
+                          {/* Time Values Cells across the row with continuous NOW column background highlight */}
                           {activeTimeSlots.map((slot, slotIdx) => {
                             const cell = row.values[slot];
                             const isNow = slot === nowSlot;
@@ -716,13 +721,18 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                               else cellStyleClass = colorStyles.rowCellBg;
                             }
 
+                            // Continuous NOW column background highlight styling
+                            const nowColumnHighlight = isNow
+                              ? 'bg-amber-100/70 border-x-2 border-amber-500/80 shadow-xs z-10'
+                              : 'border-r border-slate-200/80';
+
                             return (
                               <td
                                 key={slot}
                                 onClick={() => handleCellClick(row.id, slot, cell?.value?.toString() || '')}
-                                className={`p-1.5 text-center border-r border-slate-200/80 cursor-pointer transition-all hover:brightness-95 relative min-w-[80px] ${cellStyleClass} ${
-                                  isNextDue ? 'ring-4 ring-amber-500 z-20' : isNow ? 'ring-2 ring-amber-500 z-10' : ''
-                                }`}
+                                className={`p-1.5 text-center cursor-pointer transition-all hover:brightness-95 relative min-w-[80px] ${nowColumnHighlight} ${
+                                  !isNow ? cellStyleClass : ''
+                                } ${isNextDue ? 'ring-4 ring-amber-500 z-20' : ''}`}
                               >
                                 {isDiscontinued ? (
                                   <span className="line-through text-slate-500 font-bold text-[11px]">DISC</span>
@@ -738,12 +748,10 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                   <div className="bg-emerald-600 text-white font-black text-[10px] px-2 py-1 rounded-lg border border-emerald-700 shadow-xs">
                                     ✓ {cell.value || row.target}
                                   </div>
-                                ) : (cell?.status === 'PROCESSING' || (cell?.isCollected && !hasValue)) ? (
-                                  <div className="bg-slate-800 text-amber-300 font-extrabold text-[10px] px-1.5 py-1.5 rounded-xl border border-amber-400/60 flex items-center justify-center gap-1 shadow-md animate-pulse">
-                                    ⏳ Processing
-                                  </div>
                                 ) : isNumericRow(row) ? (
-                                  <div className={`bg-white rounded-xl p-0.5 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative`}>
+                                  <div className={`rounded-xl p-0.5 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative ${
+                                    isNow ? 'bg-amber-50/90 border-amber-400' : 'bg-white'
+                                  }`}>
                                     {calculatedDelta && (
                                       <span className={`absolute -top-2 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full border shadow-xs pointer-events-none ${
                                         calculatedDelta.startsWith('+') && calculatedDelta !== '+0'
