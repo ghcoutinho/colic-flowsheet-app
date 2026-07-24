@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Patient, FlowsheetRow, FlowsheetValue, DrugFormularyItem, SurgeonScheduleSettings } from './types';
 import {
   INITIAL_PATIENTS,
@@ -22,25 +22,93 @@ import { ReferenceRangesView } from './components/ReferenceRangesView';
 import { ASOMetadataView } from './components/ASOMetadataView';
 import { AddRoundModal } from './components/AddRoundModal';
 import { NewPatientModal } from './components/NewPatientModal';
+import { exportPatientDataToExcel, SHAREPOINT_BACKUP_URL } from './utils/excelExporter';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('flowsheet');
-  const [patients, setPatients] = useState<Patient[]>(INITIAL_PATIENTS);
-  const [activePatientId, setActivePatientId] = useState<string>('p1');
-  const [timeSlots, setTimeSlots] = useState<string[]>(INITIAL_TIME_SLOTS);
-  const [flowsheetRows, setFlowsheetRows] = useState<FlowsheetRow[]>(INITIAL_FLOWSHEET_ROWS);
+
+  // Persistent localStorage state - no data lost on reload
+  const [patients, setPatients] = useState<Patient[]>(() => {
+    try {
+      const saved = localStorage.getItem('equine_colic_patients');
+      return saved ? JSON.parse(saved) : INITIAL_PATIENTS;
+    } catch {
+      return INITIAL_PATIENTS;
+    }
+  });
+
+  const [activePatientId, setActivePatientId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('equine_colic_active_patient_id') || INITIAL_PATIENTS[0].id;
+    } catch {
+      return INITIAL_PATIENTS[0].id;
+    }
+  });
+
+  const [timeSlots, setTimeSlots] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('equine_colic_time_slots');
+      return saved ? JSON.parse(saved) : INITIAL_TIME_SLOTS;
+    } catch {
+      return INITIAL_TIME_SLOTS;
+    }
+  });
+
+  const [flowsheetRows, setFlowsheetRows] = useState<FlowsheetRow[]>(() => {
+    try {
+      const saved = localStorage.getItem('equine_colic_flowsheet_rows');
+      return saved ? JSON.parse(saved) : INITIAL_FLOWSHEET_ROWS;
+    } catch {
+      return INITIAL_FLOWSHEET_ROWS;
+    }
+  });
+
   const [formulary, setFormulary] = useState<DrugFormularyItem[]>(INITIAL_FORMULARY);
-  const [surgeonSettings, setSurgeonSettings] = useState<SurgeonScheduleSettings>(DEFAULT_SURGEON_SETTINGS);
+
+  const [surgeonSettings, setSurgeonSettings] = useState<SurgeonScheduleSettings>(() => {
+    try {
+      const saved = localStorage.getItem('equine_colic_surgeon_settings');
+      return saved ? JSON.parse(saved) : DEFAULT_SURGEON_SETTINGS;
+    } catch {
+      return DEFAULT_SURGEON_SETTINGS;
+    }
+  });
 
   const [isAddRoundOpen, setIsAddRoundOpen] = useState(false);
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Sync to localStorage on every state mutation
+  useEffect(() => {
+    localStorage.setItem('equine_colic_patients', JSON.stringify(patients));
+  }, [patients]);
+
+  useEffect(() => {
+    localStorage.setItem('equine_colic_active_patient_id', activePatientId);
+  }, [activePatientId]);
+
+  useEffect(() => {
+    localStorage.setItem('equine_colic_time_slots', JSON.stringify(timeSlots));
+  }, [timeSlots]);
+
+  useEffect(() => {
+    localStorage.setItem('equine_colic_flowsheet_rows', JSON.stringify(flowsheetRows));
+  }, [flowsheetRows]);
+
+  useEffect(() => {
+    localStorage.setItem('equine_colic_surgeon_settings', JSON.stringify(surgeonSettings));
+  }, [surgeonSettings]);
+
   const activePatient = patients.find((p) => p.id === activePatientId) || patients[0];
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleExportExcelBackup = () => {
+    exportPatientDataToExcel(activePatient, patients, flowsheetRows, timeSlots);
+    showToast(`Excel backup downloaded! Click top banner to upload to SharePoint.`);
   };
 
   // Behavioral Rule 1: Auto-reset flowsheet & next full hour column alignment on new patient save
@@ -272,6 +340,7 @@ export default function App() {
         patients={patients}
         onSelectPatient={(p) => setActivePatientId(p.id)}
         onOpenNewPatientModal={handleOpenNewPatientModal}
+        onExportExcelBackup={handleExportExcelBackup}
       />
 
       {/* Main Content Area */}

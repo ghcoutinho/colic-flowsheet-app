@@ -1,6 +1,7 @@
 import React from 'react';
 import { Patient } from '../types';
-import { Heart, Activity, AlertTriangle, Clock, Droplets, Thermometer, ShieldAlert, UserCheck, ChevronRight, Scale, Calendar } from 'lucide-react';
+import { exportPatientDataToExcel, SHAREPOINT_BACKUP_URL } from '../utils/excelExporter';
+import { Heart, Activity, AlertTriangle, Clock, Droplets, Thermometer, ShieldAlert, UserCheck, ChevronRight, Scale, Calendar, FileSpreadsheet, ExternalLink } from 'lucide-react';
 
 interface PatientDashboardProps {
   patient: Patient;
@@ -17,6 +18,42 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
 }) => {
   return (
     <div className="space-y-5 max-w-3xl mx-auto pb-20 md:pb-8">
+      {/* Backup & Data Protection Banner */}
+      <div className="bg-slate-900 text-white rounded-2xl p-4 shadow-md border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-emerald-500/20 text-emerald-300 rounded-xl border border-emerald-500/30">
+            <FileSpreadsheet className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
+              Excel Backup & Data Persistence
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Auto-Saved</span>
+            </h3>
+            <p className="text-[11px] text-slate-400">
+              Data is preserved across reloads. Export `.xlsx` to back up to your UFMG SharePoint folder.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => exportPatientDataToExcel(patient, patients, [], [])}
+            className="flex-1 sm:flex-none px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold rounded-xl shadow-md flex items-center justify-center gap-1.5 transition-all"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>Export Excel</span>
+          </button>
+          <a
+            href={SHAREPOINT_BACKUP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 sm:flex-none px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold rounded-xl shadow-md flex items-center justify-center gap-1 transition-all"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>SharePoint</span>
+          </a>
+        </div>
+      </div>
       {/* Patient Header */}
       <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
