@@ -18,6 +18,21 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
 }) => {
   return (
     <div className="space-y-5 max-w-3xl mx-auto pb-20 md:pb-8">
+      {/* Top Patient Management & Backup Header Bar */}
+      <div className="flex items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+          <h2 className="text-base font-extrabold text-slate-900">ICU Patient Management</h2>
+          <p className="text-xs text-slate-500 font-medium">Register equine patients, view clinical signalment & auto-sync backups</p>
+        </div>
+
+        <button
+          onClick={onOpenNewPatientModal}
+          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl shadow-md flex items-center gap-1.5 transition-all active:scale-95 shrink-0"
+        >
+          <span>🐴 + Register New Patient</span>
+        </button>
+      </div>
+
       {/* Backup & Data Protection Banner */}
       <div className="bg-slate-900 text-white rounded-2xl p-4 shadow-md border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -26,11 +41,11 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
           </div>
           <div>
             <h3 className="font-extrabold text-sm text-white flex items-center gap-2">
-              Excel Backup & Data Persistence
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Auto-Saved</span>
+              SharePoint Backup & Auto-Sync (Every 6h)
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Auto 6h Active</span>
             </h3>
             <p className="text-[11px] text-slate-400">
-              Data is preserved across reloads. Export `.xlsx` to back up to your UFMG SharePoint folder.
+              Full patient & flowsheet data is auto-backed up every 6 hours and stored in browser memory across reloads.
             </p>
           </div>
         </div>
@@ -41,7 +56,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
             className="flex-1 sm:flex-none px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold rounded-xl shadow-md flex items-center justify-center gap-1.5 transition-all"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Export Excel</span>
+            <span>Generate Backup</span>
           </button>
           <a
             href={SHAREPOINT_BACKUP_URL}
@@ -50,7 +65,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
             className="flex-1 sm:flex-none px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold rounded-xl shadow-md flex items-center justify-center gap-1 transition-all"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            <span>SharePoint</span>
+            <span>Open SharePoint</span>
           </a>
         </div>
       </div>

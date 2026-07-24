@@ -95,16 +95,23 @@ export default function App() {
     localStorage.setItem('equine_colic_flowsheet_rows', JSON.stringify(flowsheetRows));
   }, [flowsheetRows]);
 
-  useEffect(() => {
-    localStorage.setItem('equine_colic_surgeon_settings', JSON.stringify(surgeonSettings));
-  }, [surgeonSettings]);
-
   const activePatient = patients.find((p) => p.id === activePatientId) || patients[0];
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
+
+  // Automatic 6-hour scheduled backup timer
+  useEffect(() => {
+    const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+    const backupTimer = setInterval(() => {
+      exportPatientDataToExcel(activePatient, patients, flowsheetRows, timeSlots);
+      showToast('⏰ Scheduled 6-Hour Auto-Backup Generated! Click top banner to upload to SharePoint.');
+    }, SIX_HOURS_MS);
+
+    return () => clearInterval(backupTimer);
+  }, [activePatient, patients, flowsheetRows, timeSlots]);
 
   const handleExportExcelBackup = () => {
     exportPatientDataToExcel(activePatient, patients, flowsheetRows, timeSlots);
