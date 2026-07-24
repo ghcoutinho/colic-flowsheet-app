@@ -324,40 +324,11 @@ export default function App() {
     showToast(`Updated ${activePatient.name}'s weight to ${newWeightKg} kg`);
   };
 
-  // Add new patient handler
+  // Open the full New Patient Registration Modal
   const handleOpenNewPatientModal = () => {
-    const newName = prompt('Enter New ICU Horse Name:', 'Shadow');
-    if (!newName) return;
-    const newWeight = parseInt(prompt('Enter Weight in kg:', '500') || '500');
-
-    const newP: Patient = {
-      id: `p_${Date.now()}`,
-      name: newName,
-      patientId: `#Horse_${Math.floor(100 + Math.random() * 900)}`,
-      weightKg: newWeight,
-      ageYears: 7,
-      breed: 'Warmblood Cross',
-      diagnosis: 'Acute Colic / Monitoring',
-      status: 'MONITORING',
-      onIceScore: '1/5 (Low Risk)',
-      survivalPrognosisPercent: 88,
-      surgicalIndicationPercent: 20,
-      netFluidBalanceLiters: 0.0,
-      nextDueRoundTime: '15:00 PM',
-      assignedSurgeon: 'Dr. A. Smith',
-      nextShiftSurgeon: 'Dr. B. Jones',
-      callSurgeonTriggers: {
-        heartRateBpm: 80,
-        painScore: 7,
-        refluxLiters: 2.0,
-        respRateBpmin: 30,
-      },
-    };
-
-    setPatients((prev) => [...prev, newP]);
-    setActivePatientId(newP.id);
-    showToast(`Added New ICU Patient: ${newName}`);
+    setIsNewPatientModalOpen(true);
   };
+
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-500 selection:text-white">
