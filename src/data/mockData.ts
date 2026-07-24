@@ -1,0 +1,787 @@
+import { Patient, FlowsheetRow, DrugFormularyItem, SurgeonScheduleSettings, StandingOrder, ReferenceRangeCategory, ASOMetadataReport } from '../types';
+
+export const INITIAL_PATIENTS: Patient[] = [
+  {
+    id: 'p1',
+    name: 'Thunder',
+    patientId: '#Horse_123',
+    weightKg: 520,
+    ageYears: 9,
+    breed: 'Thoroughbred Gelding',
+    diagnosis: 'Post-Op Small Intestinal Volvulus',
+    surgicalProcedure: 'Celiotomy & Jejunojejunostomy Resection',
+    surgeryTime: '2026-07-24 04:30',
+    status: 'CRITICAL',
+    onIceScore: '3/5 (High Risk)',
+    survivalPrognosisPercent: 75,
+    surgicalIndicationPercent: 40,
+    netFluidBalanceLiters: -2.0,
+    nextDueRoundTime: '14:00 PM',
+    assignedSurgeon: 'Dr. A. Smith (On Call until 18:00)',
+    nextShiftSurgeon: 'Dr. B. Jones (Next Shift 18:00)',
+    callSurgeonTriggers: {
+      heartRateBpm: 80,
+      painScore: 7,
+      refluxLiters: 2.0,
+      respRateBpmin: 30,
+    },
+  },
+  {
+    id: 'p2',
+    name: 'Bella',
+    patientId: '#Horse_456',
+    weightKg: 480,
+    ageYears: 12,
+    breed: 'Quarter Horse Mare',
+    diagnosis: 'Pelvic Flexure Impaction Colic',
+    surgicalProcedure: 'Medical Management / Conservative',
+    status: 'STABLE',
+    onIceScore: '1/5 (Low Risk)',
+    survivalPrognosisPercent: 92,
+    surgicalIndicationPercent: 15,
+    netFluidBalanceLiters: +1.5,
+    nextDueRoundTime: '15:00 PM',
+    assignedSurgeon: 'Dr. A. Smith',
+    nextShiftSurgeon: 'Dr. B. Jones',
+    callSurgeonTriggers: {
+      heartRateBpm: 70,
+      painScore: 5,
+      refluxLiters: 3.0,
+      respRateBpmin: 28,
+    },
+  },
+  {
+    id: 'p3',
+    name: 'Duke',
+    patientId: '#Horse_789',
+    weightKg: 540,
+    ageYears: 16,
+    breed: 'Warmblood Stallion',
+    diagnosis: 'Post-Op Strangulating Pedunculated Lipoma',
+    surgicalProcedure: 'Exploratory Laparotomy & Ileal Bypass',
+    surgeryTime: '2026-07-23 21:00',
+    status: 'MONITORING',
+    onIceScore: '2/5 (Moderate Risk)',
+    survivalPrognosisPercent: 82,
+    surgicalIndicationPercent: 25,
+    netFluidBalanceLiters: -0.5,
+    nextDueRoundTime: '16:00 PM',
+    assignedSurgeon: 'Dr. C. Miller',
+    nextShiftSurgeon: 'Dr. A. Smith',
+    callSurgeonTriggers: {
+      heartRateBpm: 75,
+      painScore: 6,
+      refluxLiters: 2.5,
+      respRateBpmin: 30,
+    },
+  },
+];
+
+export const INITIAL_TIME_SLOTS = [
+  '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'
+];
+
+export const INITIAL_FLOWSHEET_ROWS: FlowsheetRow[] = [
+  // --- VITALS & PERFUSION ---
+  {
+    id: 'hr',
+    category: 'VITALS',
+    categoryLabel: 'VITALS & PERFUSION',
+    categoryFrequency: 'q4h',
+    parameter: 'Heart Rate (bpm)',
+    target: '28–44',
+    bandColor: 'red',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 48, delta: '+2', status: 'NORMAL' },
+      '11:00': { value: 48, delta: '+2', status: 'NORMAL' },
+      '12:00': { value: 48, delta: '+2', status: 'NORMAL' },
+      '13:00': { value: 48, delta: '+2', status: 'NORMAL' },
+      '14:00': { value: '', status: 'NORMAL' },
+      '15:00': { value: '', status: 'AMBER_DUE', note: 'AMBER DUE' },
+      '16:00': { value: '', status: 'AMBER_DUE', note: 'AMBER DUE' },
+    },
+  },
+  {
+    id: 'temp',
+    category: 'VITALS',
+    parameter: 'Temp (°C)',
+    target: '37.2–38.5',
+    bandColor: 'orange',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 38.1, delta: '+0', status: 'NORMAL' },
+      '11:00': { value: 38.1, delta: '+0', status: 'NORMAL' },
+      '12:00': { value: 38.1, delta: '+0', status: 'NORMAL' },
+      '13:00': { value: 38.1, delta: '+0', status: 'NORMAL' },
+      '14:00': { value: '', status: 'NORMAL' },
+      '15:00': { value: '38.1', status: 'NORMAL' },
+      '16:00': { value: '', status: 'AMBER_DUE', note: 'AMBER DUE' },
+    },
+  },
+  {
+    id: 'pcv_vital',
+    category: 'VITALS',
+    parameter: 'PCV (%)',
+    target: '35',
+    bandColor: 'yellow',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 35, delta: '+0', status: 'NORMAL' },
+      '11:00': { value: 35, delta: '+0', status: 'NORMAL' },
+      '12:00': { value: 35, delta: '+0', status: 'NORMAL' },
+      '13:00': { value: 35, delta: '+0', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'rr',
+    category: 'VITALS',
+    parameter: 'Resp Rate (/min)',
+    target: '10–24',
+    bandColor: 'green',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 12, delta: '+0', status: 'NORMAL' },
+      '11:00': { value: 12, delta: '+0', status: 'NORMAL' },
+      '12:00': { value: 12, delta: '+0', status: 'NORMAL' },
+      '13:00': { value: 12, delta: '+0', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'mm',
+    category: 'VITALS',
+    parameter: 'Mucous membranes',
+    target: 'pink',
+    bandColor: 'blue',
+    type: 'select',
+    values: {
+      '10:00': { value: 'pink', status: 'NORMAL' },
+      '11:00': { value: 'pink', status: 'NORMAL' },
+      '12:00': { value: 'pink', status: 'NORMAL' },
+      '13:00': { value: 'pink', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'crt',
+    category: 'VITALS',
+    parameter: 'CRT (sec)',
+    target: '≤ 2',
+    bandColor: 'blue',
+    type: 'numeric',
+    values: {
+      '10:00': { value: '1.5', status: 'NORMAL' },
+      '11:00': { value: '1.5', status: 'NORMAL' },
+      '12:00': { value: '2.0', status: 'NORMAL' },
+      '13:00': { value: '2.0', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'mentation',
+    category: 'VITALS',
+    parameter: 'Mentation',
+    target: 'BAR',
+    bandColor: 'blue',
+    type: 'select',
+    values: {
+      '10:00': { value: 'BAR', status: 'NORMAL' },
+      '11:00': { value: 'BAR', status: 'NORMAL' },
+      '12:00': { value: 'QAR', status: 'WARNING' },
+      '13:00': { value: 'QAR', status: 'WARNING' },
+    },
+  },
+
+  // --- PAIN ASSESSMENT ---
+  {
+    id: 'pain_score',
+    category: 'PAIN',
+    categoryLabel: 'PAIN ASSESSMENT',
+    parameter: 'Pain score (0-3)',
+    target: '0',
+    bandColor: 'blue',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 2, delta: '+0', status: 'WARNING' },
+      '11:00': { value: 2, delta: '+0', status: 'WARNING' },
+      '12:00': { value: 2, delta: '+0', status: 'WARNING' },
+      '13:00': { value: 2, delta: '+0', status: 'WARNING' },
+    },
+  },
+  {
+    id: 'pain_behavior',
+    category: 'PAIN',
+    parameter: 'Pain behavior',
+    target: 'none',
+    bandColor: 'blue',
+    type: 'text',
+    values: {
+      '10:00': { value: 'Mild flank watch', status: 'WARNING' },
+      '11:00': { value: 'Mild flank watch', status: 'WARNING' },
+      '12:00': { value: 'Quiet / Resting', status: 'NORMAL' },
+      '13:00': { value: 'Resting', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'analgesia_given',
+    category: 'PAIN',
+    parameter: 'Analgesia given?',
+    target: '-',
+    bandColor: 'blue',
+    type: 'select',
+    values: {
+      '10:00': { value: 'Flunixin 1.1mg/kg', status: 'NORMAL' },
+      '11:00': { value: '-', status: 'NORMAL' },
+      '12:00': { value: 'Buprenorphine', status: 'NORMAL' },
+      '13:00': { value: '-', status: 'NORMAL' },
+    },
+  },
+
+  // --- TREND SUMMARY ROW ---
+  {
+    id: 'pcv_trend_row',
+    category: 'CLINICOPATHOLOGY',
+    categoryLabel: 'TREND CALCULATOR',
+    parameter: 'PCV Trend',
+    target: 'Stable',
+    bandColor: 'purple',
+    type: 'text',
+    values: {
+      '10:00': { value: '↑ -0.1:-0.5 → ↔' },
+      '11:00': { value: 'Dose Calc: Pending' },
+      '12:00': { value: 'Dose Calc: Pending' },
+    },
+  },
+
+  // --- GI FUNCTION ---
+  {
+    id: 'gut_sounds',
+    category: 'GI',
+    categoryLabel: 'GI FUNCTION',
+    categoryFrequency: 'q4h',
+    parameter: 'Gut sounds (0-4)',
+    target: 'all quad',
+    bandColor: 'purple',
+    type: 'select',
+    values: {
+      '10:00': { value: '1/4 Hypo', status: 'WARNING' },
+      '11:00': { value: '1/4 Hypo', status: 'WARNING' },
+      '12:00': { value: '2/4 Hypo', status: 'WARNING' },
+      '13:00': { value: '2/4 Hypo', status: 'WARNING' },
+    },
+  },
+  {
+    id: 'reflux_vol',
+    category: 'GI',
+    parameter: 'Reflux Vol (L)',
+    target: '< 2 L',
+    bandColor: 'purple',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 0.5, delta: '+0', status: 'NORMAL' },
+      '11:00': { value: 0.5, delta: '+0', status: 'NORMAL' },
+      '12:00': { value: 0.5, delta: '+0', status: 'NORMAL' },
+      '13:00': { value: 0.5, delta: '+0', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'reflux_app',
+    category: 'GI',
+    parameter: 'Reflux appearance',
+    target: 'clear',
+    bandColor: 'purple',
+    type: 'text',
+    values: {
+      '10:00': { value: 'Yellow / Fluid', status: 'NORMAL' },
+      '11:00': { value: 'Yellow / Fluid', status: 'NORMAL' },
+      '12:00': { value: 'Yellow / Fluid', status: 'NORMAL' },
+      '13:00': { value: 'Clear', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'ngt_in_place',
+    category: 'GI',
+    parameter: 'NGT left in place?',
+    target: 'N',
+    bandColor: 'purple',
+    type: 'select',
+    values: {
+      '10:00': { value: 'Y', status: 'NORMAL' },
+      '11:00': { value: 'Y', status: 'NORMAL' },
+      '12:00': { value: 'Y', status: 'NORMAL' },
+      '13:00': { value: 'Y', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'manure_passed',
+    category: 'GI',
+    parameter: 'Manure passed?',
+    target: 'Y',
+    bandColor: 'purple',
+    type: 'select',
+    values: {
+      '10:00': { value: 'N', status: 'WARNING' },
+      '11:00': { value: 'N', status: 'WARNING' },
+      '12:00': { value: 'Y (Small)', status: 'NORMAL' },
+      '13:00': { value: 'Y', status: 'NORMAL' },
+    },
+  },
+
+  // --- MEDICATIONS & CRIs ---
+  {
+    id: 'med_buprenorphine',
+    category: 'MEDICATIONS',
+    categoryLabel: 'MEDICATIONS & CRIs',
+    parameter: 'Buprenorphine (0.006mg/kg)',
+    target: '0.9 mL',
+    bandColor: 'pink',
+    type: 'medication',
+    values: {
+      '12:00': { value: '0.9 mL', status: 'NORMAL' },
+      '13:00': { value: 'Dose Calc: 0.9 mL', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'med_gentamicin',
+    category: 'MEDICATIONS',
+    parameter: 'Gentamicin (6.6mg/kg)',
+    target: '34.3 mL',
+    bandColor: 'blue',
+    type: 'medication',
+    values: {
+      '10:00': { value: '34.3 mL', status: 'NORMAL' },
+      '12:00': { value: 'Dose Calc: 6.6 mL', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'med_metronidazole',
+    category: 'MEDICATIONS',
+    parameter: 'Metronidazole (15mg/kg)',
+    target: '15 mL',
+    bandColor: 'green',
+    type: 'medication',
+    values: {
+      '10:00': { value: '15 mL', status: 'NORMAL' },
+      '12:00': { value: 'Dose Calc: 15 mL', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'cri_lidocaine',
+    category: 'MEDICATIONS',
+    parameter: 'CRI: Lidocaine',
+    target: '2 mg/kg/hr',
+    bandColor: 'purple',
+    type: 'cri',
+    values: {
+      '10:00': { value: '2 mg/kg/hr ON', status: 'NORMAL' },
+      '11:00': { value: '2 mg/kg/hr ON', status: 'NORMAL' },
+      '12:00': { value: '2 mg/kg/hr ON', status: 'NORMAL' },
+      '13:00': { value: '2 mg/kg/hr ON', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'cri_dobutamine',
+    category: 'MEDICATIONS',
+    parameter: 'CRI: Dobutamine',
+    target: '2 mg/kg/hr',
+    bandColor: 'purple',
+    type: 'cri',
+    values: {
+      '10:00': { value: '2 mg/kg/hr ON', status: 'NORMAL' },
+      '11:00': { value: '2 mg/kg/hr ON', status: 'NORMAL' },
+      '12:00': { value: '2 mg/kg/hr ON', status: 'NORMAL' },
+      '13:00': { value: '2 mg/kg/hr ON', status: 'NORMAL' },
+    },
+  },
+
+  // --- CLINICOPATHOLOGY ---
+  {
+    id: 'ht_pcv',
+    category: 'CLINICOPATHOLOGY',
+    categoryLabel: 'CLINICOPATHOLOGY',
+    categoryFrequency: 'q12h',
+    parameter: 'Hematocrit (PCV %)',
+    target: '32–45',
+    bandColor: 'blue',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 48, status: 'WARNING' },
+      '12:00': { value: 45, status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'tp',
+    category: 'CLINICOPATHOLOGY',
+    parameter: 'Total Protein (g/dL)',
+    target: '6.0–7.5',
+    bandColor: 'blue',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 6.8, status: 'NORMAL' },
+      '12:00': { value: 6.5, status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'lactate',
+    category: 'CLINICOPATHOLOGY',
+    parameter: 'Blood Lactate (mmol/L)',
+    target: '< 2.0',
+    bandColor: 'blue',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 4.2, status: 'WARNING' },
+      '12:00': { value: 2.8, status: 'WARNING' },
+    },
+  },
+  {
+    id: 'wbc',
+    category: 'CLINICOPATHOLOGY',
+    parameter: 'WBC (×10³/µL)',
+    target: '5–12.5',
+    bandColor: 'blue',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 7.5, status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'glucose',
+    category: 'CLINICOPATHOLOGY',
+    parameter: 'Glucose (mg/dL)',
+    target: '75-115',
+    bandColor: 'blue',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 102, status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'creatinine',
+    category: 'CLINICOPATHOLOGY',
+    parameter: 'Creatinine (mg/dL)',
+    target: '< 1.8',
+    bandColor: 'blue',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 1.4, status: 'NORMAL' },
+    },
+  },
+
+  // --- LAMINITIS & CRYOTHERAPY ---
+  {
+    id: 'pulse_front',
+    category: 'LAMINITIS',
+    categoryLabel: 'LAMINITIS & CRYOTHERAPY',
+    categoryFrequency: 'q6h',
+    parameter: 'Digital pulse LF/RF',
+    target: 'normal',
+    bandColor: 'slate',
+    type: 'select',
+    values: {
+      '10:00': { value: 'Slight bound', status: 'WARNING' },
+      '12:00': { value: 'Normal', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'obel_grade',
+    category: 'LAMINITIS',
+    parameter: 'Obel Grade (0-4)',
+    target: '0',
+    bandColor: 'slate',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 0, status: 'NORMAL' },
+      '12:00': { value: 0, status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'cryo_on',
+    category: 'LAMINITIS',
+    parameter: 'Cryotherapy ON?',
+    target: 'Y/N',
+    bandColor: 'slate',
+    type: 'select',
+    values: {
+      '10:00': { value: 'Y (Ice boots)', status: 'NORMAL' },
+      '12:00': { value: 'Y (Ice boots)', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'hoof_temp',
+    category: 'LAMINITIS',
+    parameter: 'Hoof Temp Achieved',
+    target: '<10°C',
+    bandColor: 'slate',
+    type: 'text',
+    values: {
+      '10:00': { value: '8.5°C', status: 'NORMAL' },
+      '12:00': { value: '9.0°C', status: 'NORMAL' },
+    },
+  },
+
+  // --- INCISION & CATHETER ---
+  {
+    id: 'incision_status',
+    category: 'INCISION',
+    categoryLabel: 'INCISION & CATHETER',
+    categoryFrequency: 'q12h',
+    parameter: 'Incision status',
+    target: 'clean',
+    bandColor: 'slate',
+    type: 'text',
+    values: {
+      '10:00': { value: 'Clean, dry, intact', status: 'NORMAL' },
+    },
+  },
+  {
+    id: 'cath_site',
+    category: 'INCISION',
+    parameter: 'IV Cath Site',
+    target: 'clean',
+    bandColor: 'slate',
+    type: 'text',
+    values: {
+      '10:00': { value: 'No swelling or heat', status: 'NORMAL' },
+    },
+  },
+];
+
+export const INITIAL_FORMULARY: DrugFormularyItem[] = [
+  {
+    id: 'gentamicin',
+    name: 'Gentamicin',
+    category: 'Antibiotics',
+    defaultDoseRate: 6.6,
+    doseUnit: 'mg/kg',
+    defaultConcentration: 100,
+    concentrationUnit: 'mg/mL',
+    route: 'IV q24h',
+    defaultFrequency: 'q24h',
+    notes: 'Aminoglycoside antibiotic. Monitor renal function & hydration.',
+  },
+  {
+    id: 'potassium_penicillin',
+    name: 'Potassium Penicillin G',
+    category: 'Antibiotics',
+    defaultDoseRate: 22000,
+    doseUnit: 'IU/kg',
+    defaultConcentration: 1000000,
+    concentrationUnit: 'IU/mL',
+    route: 'IV q6h',
+    defaultFrequency: 'q6h',
+    notes: 'Broad-spectrum beta-lactam. Administer slowly IV.',
+  },
+  {
+    id: 'metronidazole',
+    name: 'Metronidazole',
+    category: 'Antibiotics',
+    defaultDoseRate: 15,
+    doseUnit: 'mg/kg',
+    defaultConcentration: 500,
+    concentrationUnit: 'mg/mL',
+    route: 'PO / Rectal q8h',
+    defaultFrequency: 'q8h',
+    notes: 'Anaerobic antimicrobial & anti-inflammatory GI agent.',
+  },
+  {
+    id: 'flunixin',
+    name: 'Flunixin Meglumine',
+    category: 'Analgesics',
+    defaultDoseRate: 1.1,
+    doseUnit: 'mg/kg',
+    defaultConcentration: 50,
+    concentrationUnit: 'mg/mL',
+    route: 'IV q12h',
+    defaultFrequency: 'q12h',
+    notes: 'NSAID choice for visceral abdominal pain in horses.',
+  },
+  {
+    id: 'buprenorphine',
+    name: 'Buprenorphine',
+    category: 'Analgesics',
+    defaultDoseRate: 0.006,
+    doseUnit: 'mg/kg',
+    defaultConcentration: 0.3,
+    concentrationUnit: 'mg/mL',
+    route: 'IV q6-8h',
+    defaultFrequency: 'q6h',
+    notes: 'Partial mu-opioid agonist for severe somatic/visceral pain.',
+  },
+  {
+    id: 'detomidine',
+    name: 'Detomidine HCl',
+    category: 'Sedatives',
+    defaultDoseRate: 0.01,
+    doseUnit: 'mg/kg',
+    defaultConcentration: 10,
+    concentrationUnit: 'mg/mL',
+    route: 'IV / IM as needed',
+    defaultFrequency: 'PRN',
+    notes: 'Alpha-2 agonist sedative with intense visceral analgesia.',
+  },
+  {
+    id: 'cri_lidocaine',
+    name: 'Lidocaine CRI',
+    category: 'CRIs',
+    defaultDoseRate: 2.0,
+    doseUnit: 'mg/kg/hr',
+    defaultConcentration: 20,
+    concentrationUnit: 'mg/mL',
+    route: 'IV Constant Rate Infusion',
+    defaultFrequency: 'CRI',
+    notes: 'Loading dose 1.3 mg/kg IV, followed by 0.05 mg/kg/min (2 mg/kg/hr). Anti-inflammatory, prokinetic, visceral analgesic.',
+  },
+  {
+    id: 'cri_dobutamine',
+    name: 'Dobutamine CRI',
+    category: 'CRIs',
+    defaultDoseRate: 2.0,
+    doseUnit: 'mcg/kg', // 2.0 mcg/kg/min
+    defaultConcentration: 12.5,
+    concentrationUnit: 'mg/mL',
+    route: 'IV Continuous Infusion',
+    defaultFrequency: 'CRI',
+    notes: 'Inotropic support for post-op equine hypotension.',
+  },
+  {
+    id: 'neostigmine',
+    name: 'Neostigmine',
+    category: 'Prokinetics',
+    defaultDoseRate: 0.02,
+    doseUnit: 'mg/kg',
+    defaultConcentration: 1.0,
+    concentrationUnit: 'mg/mL',
+    route: 'SQ / IV slow',
+    defaultFrequency: 'q4-6h',
+    notes: 'Acetylcholinesterase inhibitor for cecal/large colon motility.',
+  },
+];
+
+export const DEFAULT_SURGEON_SETTINGS: SurgeonScheduleSettings = {
+  tprInterval: 'q2h',
+  giInterval: 'q4h',
+  clinPathInterval: 'q6h',
+};
+
+export const STANDING_ORDERS: StandingOrder[] = [
+  {
+    id: 'so_fluids',
+    category: 'Fluid Therapy',
+    title: 'Maintenance + Replacement (LRS/Normosol-R)',
+    description: 'Calculate fluid deficit based on PCV/TP and body weight (50 mL/kg/day baseline maintenance).',
+    protocolDetails: [
+      'Maintenance rate: 2–3 mL/kg/hr LRS',
+      'Replacement rate: % dehydration × Weight (kg) over 6–12 hours',
+      'Add 20 mEq/L KCl if anorexic for >24h and renal function normal',
+      'Monitor net fluid balance and urine production q4h'
+    ],
+    type: 'hospital',
+  },
+  {
+    id: 'so_prokinetics',
+    category: 'Prokinetic Protocols',
+    title: 'Post-Operative Ileus (POI) Reflux Protocol',
+    description: 'Standardized escalation for post-op gastric reflux > 2 Liters.',
+    protocolDetails: [
+      'Pass NGT q2h to q4h; keep tube capped if left in place',
+      'Initiate Lidocaine CRI loading (1.3 mg/kg) then 0.05 mg/kg/min',
+      'If reflux persists >12h, add Metoclopramide CRI (0.04 mg/kg/hr) or Erythromycin',
+      'NPO (Nothing per os) until reflux ceases for 12 consecutive hours'
+    ],
+    type: 'hospital',
+  },
+  {
+    id: 'so_analgesics',
+    category: 'Analgesic CRIs',
+    title: 'Multi-Modal Equine Pain Management',
+    description: 'Layered analgesia for visceral pain and post-incisional discomfort.',
+    protocolDetails: [
+      'Flunixin Meglumine 1.1 mg/kg IV q12h (or 0.25 mg/kg IV q8h for endotoxemia)',
+      'Buprenorphine 0.006 mg/kg IV q6h PRN for breakthrough pain score >3',
+      'Lidocaine CRI continuously for anti-inflammatory & analgesia benefits',
+      'Avoid high-dose alpha-2 sedatives if ileus is present'
+    ],
+    type: 'surgeon',
+  },
+  {
+    id: 'so_endotoxemia',
+    category: 'Endotoxemia Management',
+    title: 'SIRS & Endotoxemia Protection',
+    description: 'For patients with strangulating intestinal lesions or dark mucous membranes.',
+    protocolDetails: [
+      'Hyperimmune Plasma (Polymyxin B enriched) 1–2 Liters IV',
+      'Polymyxin B 1,000–6,000 IU/kg IV q12h diluted in 1L fluids over 30 min',
+      'Low-dose Flunixin (0.25 mg/kg IV q8h)',
+      'Cryotherapy (Ice boots) continuously on all 4 feet for laminitis prevention'
+    ],
+    type: 'surgeon',
+  },
+];
+
+export const REFERENCE_RANGES: ReferenceRangeCategory[] = [
+  {
+    category: 'Vitals & Physical Exam',
+    items: [
+      { parameter: 'Heart Rate', range: '28–44 bpm', note: 'Normal adult equine at rest' },
+      { parameter: 'Respiratory Rate', range: '8–16 brpm', note: 'Clean, costal-abdominal' },
+      { parameter: 'Temperature', range: '99.0–101.5 °F (37.2–38.5 °C)', note: 'Rectal' },
+      { parameter: 'Capillary Refill Time (CRT)', range: '< 2 seconds', note: 'Gingival mucosa' },
+      { parameter: 'Mucous Membranes', range: 'Pink, Moist', note: 'No toxic line or hyperemic ring' },
+      { parameter: 'Gut Sounds (Auscultation)', range: 'All 4 quadrants active (2-3/min)', note: 'Borborygmi present' },
+    ],
+  },
+  {
+    category: 'Hematology & Chemistry',
+    items: [
+      { parameter: 'Packed Cell Volume (PCV)', range: '32–45 %', note: '>50% indicates severe hemoconcentration/dehydration' },
+      { parameter: 'Total Protein (TP)', range: '6.0–7.5 g/dL', note: '<5.5 g/dL suggests protein loss or severe third-spacing' },
+      { parameter: 'Blood Lactate', range: '< 2.0 mmol/L', note: '>4.0 mmol/L indicates tissue hypoperfusion/ischemia' },
+      { parameter: 'White Blood Cell Count (WBC)', range: '5.0–12.5 ×10³/µL', note: 'Leukopenia or left shift indicates SIRS/endotoxemia' },
+      { parameter: 'Blood Glucose', range: '75–115 mg/dL', note: 'Hyperglycemia common in acute pain/stress' },
+      { parameter: 'Creatinine', range: '0.9–1.8 mg/dL', note: 'Elevated in pre-renal azotemia' },
+    ],
+  },
+  {
+    category: 'Peritoneal Fluid (Abdominocentesis)',
+    items: [
+      { parameter: 'Color / Clarity', range: 'Clear to pale yellow', note: 'Sanguineous or turbid is abnormal' },
+      { parameter: 'Total Protein', range: '< 2.0 g/dL', note: '>2.5 g/dL indicates peritoneal inflammation' },
+      { parameter: 'Total Nucleated Cell Count (TNCC)', range: '< 5,000 /µL', note: '>10,000 /µL indicates peritonitis or devitalized bowel' },
+      { parameter: 'Peritoneal Lactate', range: 'Equal or lower than blood lactate', note: 'Peritoneal lactate > blood lactate indicates bowel strangulation' },
+    ],
+  },
+];
+
+export const ASO_REPORT: ASOMetadataReport = {
+  appName: 'CMT: Equine Colic Monitor',
+  subtitle: 'Advanced Post-Op Equine Care',
+  category: 'Medical / Health & Fitness',
+  shortDescription: 'Real-time ICU flowsheet and clinical tracking for post-operative equine care.',
+  longDescription: `Precision Monitoring for Every Second That Counts.
+
+The Colic Monitoring Tool (CMT) is the definitive clinical companion for veterinary surgeons and ICU staff managing post-operative horses. Designed for high-stakes environments, CMT replaces paper flowsheets with a high-density digital interface optimized for medical accuracy and rapid data entry.
+
+Key Features:
+• Interactive Clinical Flowsheet: A color-banded grid designed to prevent data entry errors. Track heart rate, temperature, PCV, pain scores, and reflux with automated trend indicators and delta values.
+• Smart Dose Calculator: Weight-synced calculations for antibiotics, analgesics, and CRIs. Reduce manual math and ensure patient safety with high-visibility dosing results.
+• Prognosis & Surgical Risk Engine: Data-driven survival probability and surgical indication analysis using validated clinical variables.
+• Customizable Monitoring Schedules: Set TPR, GI, and Clinicopathology intervals (q1h to q24h) with automated "DUE" alerts to ensure zero missed rounds.
+• Standardized ICU Protocols: Access your hospital's Standing Orders library and equine reference ranges instantly.
+
+Designed for Veterinary Professionals:
+Developed in collaboration with equine surgeons, CMT prioritizes high-contrast visibility and mission-critical reliability. Whether in the stall or the surgery suite, CMT ensures your team has the data they need to make life-saving decisions.
+
+Optimized for Equine Veterinary Hospitals, University ICUs, and Specialized Surgical Centers.`,
+  keywords: 'equine,colic,veterinary,icu,horse,surgeon,flowsheet,vet,medical,dose,calculator,postop,monitoring,clinician',
+  whatsNew: 'Initial release of the CMT suite featuring the radical color-banded flowsheet, weight-synced dose calculator, and data-driven prognosis analysis.',
+  deliverables: [
+    '1. Premium App Icon: 1024x1024 brand mark featuring equine-pulse symbol on deep navy gradient.',
+    '2. Marketing Screenshot 1 ("The Hook"): Interactive Clinical Flowsheet within realistic smartphone frame.',
+    '3. Marketing Screenshot 2 ("Precision Tools"): Interactive Dose Calculator with weight-synced clinical math.',
+    '4. Marketing Screenshot 3 ("Advanced Analytics"): Prognosis & Surgical Risk Analysis with survival probabilities.',
+    '5. ASO Metadata Report: Fully optimized title, subtitle, keywords, and release notes for veterinary medical stores.',
+  ],
+  designRationale: [
+    'Visual Continuity: All marketing assets use a unified Apple-style aesthetic with "Titanium" device frames and a medical-grade color palette.',
+    'Clarity & Authority: Bold, concise headlines designed to capture attention in the App Store feed.',
+    'Professionalism: Skeuomorphic-minimalism conveying precision, reliability, and medical rigor.',
+  ],
+};

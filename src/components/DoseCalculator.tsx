@@ -1,209 +1,280 @@
-import { useState, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
-import type { PatientProfile, DrugConfig } from '../utils/algorithms';
-import { drugDatabase } from '../utils/algorithms';
+import React, { useState } from 'react';
+import { DrugFormularyItem, Patient } from '../types';
+import { Search, Calculator, Check, Plus, RefreshCw, Sliders, ShieldCheck, Sparkles } from 'lucide-react';
 
-type Props = {
-  patient?: PatientProfile;
-  setPatient?: (p: PatientProfile) => void;
-};
+interface DoseCalculatorProps {
+  patient: Patient;
+  formulary: DrugFormularyItem[];
+  onSyncToFlowsheet: (drugName: string, calculatedDoseText: string) => void;
+  onUpdatePatientWeight: (newWeightKg: number) => void;
+}
 
-export default function DoseCalculator({ patient, setPatient }: Props) {
-  const [patientWeight, setPatientWeight] = useState<number | ''>(() => {
-    return patient?.weight !== undefined && patient.weight !== '' ? patient.weight : 450;
+export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
+  patient,
+  formulary,
+  onSyncToFlowsheet,
+  onUpdatePatientWeight,
+}) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [syncedDrugId, setSyncedDrugId] = useState<string | null>(null);
+
+  // Local state for interactive dose modifications per drug
+  const [drugStates, setDrugStates] = useState<{
+    [id: string]: { doseRate: number; concentration: number };
+  }>(() => {
+    const initial: { [id: string]: { doseRate: number; concentration: number } } = {};
+    formulary.forEach((item) => {
+      initial[item.id] = {
+        doseRate: item.defaultDoseRate,
+        concentration: item.defaultConcentration,
+      };
+    });
+    return initial;
   });
 
-  useEffect(() => {
-    if (patient?.weight !== undefined && patient.weight !== '') {
-      setPatientWeight(patient.weight);
-    }
-  }, [patient?.weight]);
+  const categories = ['ALL', 'Antibiotics', 'Analgesics', 'Sedatives', 'CRIs', 'Prokinetics'];
 
-  const handleWeightChange = (newW: number | '') => {
-    setPatientWeight(newW);
-    if (patient && setPatient) {
-      setPatient({ ...patient, weight: newW });
-    }
+  const filteredFormulary = formulary.filter((item) => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCat = selectedCategory === 'ALL' || item.category === selectedCategory;
+    return matchesSearch && matchesCat;
+  });
+
+  const handleDoseRateChange = (drugId: string, delta: number) => {
+    setDrugStates((prev) => {
+      const current = prev[drugId] || { doseRate: 1, concentration: 1 };
+      const nextRate = Math.max(0.001, parseFloat((current.doseRate + delta).toFixed(3)));
+      return { ...prev, [drugId]: { ...current, doseRate: nextRate } };
+    });
   };
 
-  const [selectedCategory, setSelectedCategory] = useState<string>("Antibiotics");
-  const [selectedDrugIndex, setSelectedDrugIndex] = useState<number>(0);
-  const [rxList, setRxList] = useState<DrugConfig[]>([]);
-
-  // Load rxList from local storage on mount
-  useEffect(() => {
-    const savedRx = localStorage.getItem('cmt_rxList');
-    if (savedRx) {
-      try {
-        setRxList(JSON.parse(savedRx));
-      } catch(e) {}
-    }
-  }, []);
-
-  // Save rxList to local storage on change
-  useEffect(() => {
-    localStorage.setItem('cmt_rxList', JSON.stringify(rxList));
-  }, [rxList]);
-
-  const addDrug = () => {
-    const drugTemplate = drugDatabase[selectedCategory][selectedDrugIndex];
-    setRxList([...rxList, { ...drugTemplate }]);
+  const handleConcentrationChange = (drugId: string, val: number) => {
+    setDrugStates((prev) => {
+      const current = prev[drugId] || { doseRate: 1, concentration: 1 };
+      return { ...prev, [drugId]: { ...current, concentration: Math.max(0.001, val) } };
+    });
   };
 
-  const removeDrug = (index: number) => {
-    setRxList(rxList.filter((_, i) => i !== index));
+  const calculateVolume = (weightKg: number, doseRate: number, concentration: number) => {
+    if (!concentration || concentration <= 0) return 0;
+    const totalDose = weightKg * doseRate;
+    const volume = totalDose / concentration;
+    return parseFloat(volume.toFixed(2));
   };
 
-  const updateDrug = (index: number, field: keyof DrugConfig, value: any) => {
-    const newList = [...rxList];
-    newList[index] = { ...newList[index], [field]: value };
-    setRxList(newList);
+  const handleSync = (item: DrugFormularyItem) => {
+    const state = drugStates[item.id] || { doseRate: item.defaultDoseRate, concentration: item.defaultConcentration };
+    const volume = calculateVolume(patient.weightKg, state.doseRate, state.concentration);
+    const doseText = `${volume} mL (${state.doseRate} ${item.doseUnit})`;
+
+    onSyncToFlowsheet(item.name, doseText);
+    setSyncedDrugId(item.id);
+    setTimeout(() => setSyncedDrugId(null), 2500);
   };
 
   return (
-    <div className="flex-col gap-4">
-      
-      {/* Rx Builder UI */}
-      <div className="card">
-        <h2 className="card-title">Prescription Builder</h2>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+    <div className="space-y-5 max-w-4xl mx-auto pb-20 md:pb-8">
+      {/* Top Header Card */}
+      <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-lg border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Patient Weight (kg)</label>
-            <input 
-              type="number" 
-              value={patientWeight} 
-              onChange={(e) => handleWeightChange(e.target.value === '' ? '' : Number(e.target.value))} 
-              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontWeight: 600, color: 'var(--primary-color)' }}
-              placeholder="e.g. 500"
+            <div className="flex items-center gap-2">
+              <Calculator className="w-6 h-6 text-blue-400" />
+              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">Interactive Dose Calculator</h1>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Weight-synced clinical math for equine antibiotics, analgesics, and CRIs
+            </p>
+          </div>
+
+          {/* Patient Weight Sync Pill */}
+          <div className="bg-slate-800/90 border border-slate-700 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-inner">
+            <div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Weight</div>
+              <div className="text-base font-extrabold text-white flex items-center gap-1.5">
+                <span>Patient: {patient.name}</span>
+                <span className="text-blue-400 font-black">{patient.weightKg} kg</span>
+                <span className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded font-bold border border-blue-500/30">Synced</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onUpdatePatientWeight(Math.max(50, patient.weightKg - 10))}
+                className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center text-sm"
+                title="Decrease Weight"
+              >
+                -
+              </button>
+              <button
+                onClick={() => onUpdatePatientWeight(patient.weightKg + 10)}
+                className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center text-sm"
+                title="Increase Weight"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Search & Category Filters */}
+        <div className="mt-5 space-y-3">
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search Formulary (Antibiotics, Analgesics, Sedatives, CRIs)..."
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400"
             />
-            <span style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>Pulled from Flowsheet Profile</span>
           </div>
 
-          <div>
-            <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Category</label>
-            <select 
-              value={selectedCategory} 
-              onChange={e => { setSelectedCategory(e.target.value); setSelectedDrugIndex(0); }}
-              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
-            >
-              {Object.keys(drugDatabase).map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Drug</label>
-            <select 
-              value={selectedDrugIndex} 
-              onChange={e => setSelectedDrugIndex(Number(e.target.value))}
-              style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
-            >
-              {drugDatabase[selectedCategory].map((d, i) => (
-                <option key={i} value={i}>{d.name} ({d.doseRate} {d.unit})</option>
-              ))}
-            </select>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-            <button className="btn btn-primary" style={{ width: '100%' }} onClick={addDrug}>
-              <Plus size={16} /> Add to Rx
-            </button>
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+                  selectedCategory === cat
+                    ? 'bg-blue-600 text-white font-bold shadow-sm'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="card table-container">
-        <h2 className="card-title">Medication Administration Record (MAR)</h2>
-        <p className="text-muted mb-4" style={{ fontSize: '0.875rem' }}>
-          * Clinical decision support only. Verify all auto-calculated doses and rates against your formulary.
-        </p>
-        
-        {rxList.length === 0 ? (
-          <div className="text-muted text-center py-4">No drugs added. Build a prescription above.</div>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Drug / Fluid</th>
-                <th>Dose Rate</th>
-                <th>Total Dose</th>
-                <th>Concentration</th>
-                <th>Final Volume</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {rxList.map((drug, idx) => {
-                const w = Number(patientWeight) || 0;
-                const rate = Number(drug.doseRate) || 0;
-                const conc = drug.conc !== '' ? Number(drug.conc) : null;
-                
-                let totalDose = w > 0 ? (w * rate) : 0;
-                let volumeStr = '-';
-                let doseStr = '-';
+      {/* Drug Formulary Calculator Cards */}
+      <div className="space-y-4">
+        {filteredFormulary.map((item) => {
+          const state = drugStates[item.id] || {
+            doseRate: item.defaultDoseRate,
+            concentration: item.defaultConcentration,
+          };
+          const calcVol = calculateVolume(patient.weightKg, state.doseRate, state.concentration);
+          const isSynced = syncedDrugId === item.id;
 
-                if (totalDose > 0) {
-                  if (drug.type === 'fluid') {
-                    doseStr = '-';
-                    volumeStr = `${totalDose.toLocaleString()} ${drug.unit.includes('/h') ? 'mL/h' : 'mL'}`;
-                  } else {
-                    doseStr = `${totalDose.toLocaleString()} ${drug.unit.split('/')[0]}`;
-                    if (conc && conc > 0) {
-                      const vol = totalDose / conc;
-                      volumeStr = `${vol.toLocaleString(undefined, {maximumFractionDigits: 2})} ${drug.type === 'cri' ? 'mL/h' : drug.concUnit.includes('tablet') ? 'tabs' : 'mL'}`;
-                    }
-                  }
-                }
+          return (
+            <div
+              key={item.id}
+              className="bg-slate-900 text-white rounded-2xl border border-slate-800 shadow-md p-5 space-y-4 transition-all hover:border-slate-700"
+            >
+              {/* Drug Title Header */}
+              <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">{item.category}</span>
+                    <span className="text-slate-500">•</span>
+                    <span className="text-xs text-slate-400 font-medium">{item.route}</span>
+                  </div>
+                  <h3 className="text-lg font-extrabold text-white mt-0.5">{item.name}</h3>
+                </div>
+                <span className="px-2.5 py-1 bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg border border-slate-700">
+                  {item.defaultFrequency}
+                </span>
+              </div>
 
-                return (
-                  <tr key={idx}>
-                    <td style={{ fontWeight: 500 }}>
-                      {drug.name} <br/> 
-                      <input 
-                        type="text" 
-                        value={drug.freq || ''} 
-                        onChange={e => updateDrug(idx, 'freq', e.target.value)}
-                        placeholder="freq"
-                        style={{ fontSize: '0.75rem', width: '60px', padding: '2px', border: '1px solid var(--border-color)' }}
-                      />
-                    </td>
-                    <td className="editable-cell">
-                      <input 
-                        type="number" 
-                        step="0.01"
-                        value={drug.doseRate} 
-                        onChange={e => updateDrug(idx, 'doseRate', Number(e.target.value))}
-                      />
-                      <span className="text-muted ml-1" style={{fontSize:'0.75rem'}}>{drug.unit}</span>
-                    </td>
-                    <td style={{ fontWeight: 600, color: 'var(--primary-color)' }}>{doseStr}</td>
-                    <td className="editable-cell">
-                      {drug.type !== 'fluid' && (
-                        <>
-                          <input 
-                            type="number" 
-                            value={drug.conc} 
-                            onChange={e => updateDrug(idx, 'conc', e.target.value === '' ? '' : Number(e.target.value))}
-                          />
-                          <span className="text-muted ml-1" style={{fontSize:'0.75rem'}}>{drug.concUnit}</span>
-                        </>
-                      )}
-                    </td>
-                    <td style={{ fontWeight: 600, fontSize: '1.1rem' }}>{volumeStr}</td>
-                    <td>
-                      <button onClick={() => removeDrug(idx)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
+              {/* Controls Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Dose Rate Slider / Stepper */}
+                <div className="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+                    <span>Dose Rate</span>
+                    <span className="text-blue-400 font-extrabold text-sm">
+                      {state.doseRate} {item.doseUnit}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleDoseRateChange(item.id, -0.1)}
+                      className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 font-bold text-white flex items-center justify-center text-sm"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="range"
+                      min={state.doseRate > 1000 ? 1000 : 0.001}
+                      max={state.doseRate > 1000 ? 50000 : state.doseRate * 3}
+                      step={state.doseRate < 0.1 ? 0.001 : 0.1}
+                      value={state.doseRate}
+                      onChange={(e) =>
+                        setDrugStates((prev) => ({
+                          ...prev,
+                          [item.id]: { ...state, doseRate: parseFloat(e.target.value) },
+                        }))
+                      }
+                      className="w-full accent-blue-500 cursor-pointer"
+                    />
+                    <button
+                      onClick={() => handleDoseRateChange(item.id, +0.1)}
+                      className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 font-bold text-white flex items-center justify-center text-sm"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Concentration Input */}
+                <div className="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+                    <span>Concentration</span>
+                    <span className="text-slate-400 text-[11px]">{item.concentrationUnit}</span>
+                  </div>
+                  <input
+                    type="number"
+                    value={state.concentration}
+                    onChange={(e) => handleConcentrationChange(item.id, parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white font-extrabold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Prominent Calculated Output Box (Matches Screenshot) */}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-4 text-center border border-blue-400/40 shadow-inner">
+                <div className="text-xs font-bold uppercase tracking-wider text-blue-100">Calculated Volume</div>
+                <div className="text-2xl sm:text-3xl font-black text-white mt-1">
+                  {calcVol} mL
+                </div>
+                <div className="text-[11px] text-blue-200 mt-0.5">
+                  ({patient.weightKg} kg × {state.doseRate} {item.doseUnit} ÷ {state.concentration} {item.concentrationUnit})
+                </div>
+              </div>
+
+              {/* Sync to Flowsheet Button */}
+              <button
+                onClick={() => handleSync(item)}
+                className={`w-full py-3 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 ${
+                  isSynced
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                }`}
+                id={`sync-btn-${item.id}`}
+              >
+                {isSynced ? (
+                  <>
+                    <Check className="w-5 h-5" /> Synced to Flowsheet!
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4" /> Sync to Flowsheet
+                  </>
+                )}
+              </button>
+
+              {item.notes && (
+                <div className="text-[11px] text-slate-400 italic bg-slate-800/40 p-2.5 rounded-lg border border-slate-800">
+                  💡 Clinical Note: {item.notes}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
-}
+};

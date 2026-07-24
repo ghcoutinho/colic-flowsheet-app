@@ -1,0 +1,151 @@
+import React from 'react';
+import { Patient } from '../types';
+import { Heart, Activity, AlertTriangle, Clock, Droplets, Thermometer, ShieldAlert, UserCheck, ChevronRight, Scale, Calendar } from 'lucide-react';
+
+interface PatientDashboardProps {
+  patient: Patient;
+  patients: Patient[];
+  onSelectPatient: (p: Patient) => void;
+  onOpenNewPatientModal: () => void;
+}
+
+export const PatientDashboard: React.FC<PatientDashboardProps> = ({
+  patient,
+  patients,
+  onSelectPatient,
+  onOpenNewPatientModal,
+}) => {
+  return (
+    <div className="space-y-5 max-w-3xl mx-auto pb-20 md:pb-8">
+      {/* Patient Header */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🐴</span>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Patient ID: {patient.patientId}
+            </h1>
+            <span className={`px-2.5 py-1 text-xs font-black rounded-lg ${
+              patient.status === 'CRITICAL' ? 'bg-red-500 text-white animate-pulse' : 'bg-emerald-500 text-white'
+            }`}>
+              {patient.status}
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            {patient.name} • {patient.weightKg} kg • {patient.breed} ({patient.ageYears} yrs)
+          </p>
+          <div className="text-xs text-slate-700 mt-2 font-bold bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+            Diagnosis: <span className="text-blue-700">{patient.diagnosis}</span>
+            {patient.surgicalProcedure && (
+              <div className="text-[11px] text-slate-500 font-normal mt-0.5">
+                Procedure: {patient.surgicalProcedure}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <button
+          onClick={onOpenNewPatientModal}
+          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-md transition-all self-start sm:self-auto"
+        >
+          + Add New Patient
+        </button>
+      </div>
+
+      {/* 4 Summary Cards Grid (Matches Screenshot 4/7 Exactly) */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        {/* Card 1: On Ice Score (Blue) */}
+        <div className="bg-sky-400 text-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-sky-100">
+            <Thermometer className="w-4 h-4" /> On Ice Score
+          </div>
+          <div className="text-xl sm:text-2xl font-black">{patient.onIceScore}</div>
+        </div>
+
+        {/* Card 2: Survival Prognosis (Green) */}
+        <div className="bg-emerald-400 text-white rounded-2xl p-4 sm:p-5 shadow-sm space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-100">
+            <Heart className="w-4 h-4" /> Survival Prognosis %
+          </div>
+          <div className="text-xl sm:text-2xl font-black">{patient.survivalPrognosisPercent}%</div>
+        </div>
+
+        {/* Card 3: Net Fluid Balance (Yellow) */}
+        <div className="bg-amber-300 text-amber-950 rounded-2xl p-4 sm:p-5 shadow-sm space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-amber-800">
+            <Droplets className="w-4 h-4" /> Net Fluid Balance
+          </div>
+          <div className="text-xl sm:text-2xl font-black">
+            {patient.netFluidBalanceLiters > 0 ? `+${patient.netFluidBalanceLiters}` : patient.netFluidBalanceLiters} Liters
+          </div>
+        </div>
+
+        {/* Card 4: Next Due Round (Purple) */}
+        <div className="bg-purple-300 text-purple-950 rounded-2xl p-4 sm:p-5 shadow-sm space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-purple-800">
+            <Clock className="w-4 h-4" /> Next Due Round
+          </div>
+          <div className="text-xl sm:text-2xl font-black">{patient.nextDueRoundTime}</div>
+        </div>
+      </div>
+
+      {/* Call Surgeon Triggers Section (Matches Screenshot 4/7) */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
+        <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+          🚩 Call Surgeon Triggers 🚩
+        </h3>
+
+        <div className="space-y-2 text-xs font-bold text-slate-800">
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3">
+            <span className="text-base">🚩</span>
+            <span>Heart Rate &gt; {patient.callSurgeonTriggers.heartRateBpm} bpm</span>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3">
+            <span className="text-base">🚩</span>
+            <span>Pain Score &gt; {patient.callSurgeonTriggers.painScore}</span>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3">
+            <span className="text-base">🚩</span>
+            <span>Reflux &gt; {patient.callSurgeonTriggers.refluxLiters}L</span>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3">
+            <span className="text-base">🚩</span>
+            <span>Respiratory Rate &gt; {patient.callSurgeonTriggers.respRateBpmin}/min</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Current Surgeon Schedule */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-2">
+        <h3 className="text-sm font-extrabold text-slate-900">Current Surgeon Monitoring Schedule</h3>
+        <p className="text-xs font-bold text-slate-800">
+          {patient.assignedSurgeon}, {patient.nextShiftSurgeon}
+        </p>
+      </div>
+
+      {/* All ICU Patients Switcher Card */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
+        <h3 className="text-sm font-extrabold text-slate-900">Switch Patient</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {patients.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => onSelectPatient(p)}
+              className={`p-3 rounded-xl border text-left transition-all ${
+                p.id === patient.id
+                  ? 'bg-blue-50 border-blue-500 font-bold shadow-xs'
+                  : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <div className="font-extrabold text-slate-900 text-xs">{p.name}</div>
+              <div className="text-[11px] text-slate-500">{p.weightKg} kg • {p.status}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};

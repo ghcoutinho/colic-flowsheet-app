@@ -1,176 +1,257 @@
-import { useState, useEffect, type CSSProperties } from 'react';
-import { Calculator, FileText, BookOpen, Stethoscope, AlertTriangle, User, Users } from 'lucide-react';
-import './index.css';
+import React, { useState } from 'react';
+import { Patient, FlowsheetRow, DrugFormularyItem, SurgeonScheduleSettings } from './types';
+import {
+  INITIAL_PATIENTS,
+  INITIAL_TIME_SLOTS,
+  INITIAL_FLOWSHEET_ROWS,
+  INITIAL_FORMULARY,
+  DEFAULT_SURGEON_SETTINGS,
+  STANDING_ORDERS,
+  REFERENCE_RANGES,
+} from './data/mockData';
 
-// Components
-import Flowsheet from './components/Flowsheet';
-import DoseCalculator from './components/DoseCalculator';
-import ReferenceIntervals from './components/ReferenceIntervals';
-import PrognosisCalculator from './components/PrognosisCalculator';
-import DecisionTriggers from './components/DecisionTriggers';
-import ExpandableText from './components/ExpandableText';
-import Identification from './components/Identification';
-import PatientManager from './components/PatientManager';
-import { defaultPatient } from './utils/algorithms';
-import type { PatientProfile } from './utils/algorithms';
-import data from './data.json';
+import { Header } from './components/Header';
+import { MobileNav } from './components/MobileNav';
+import { FlowsheetView } from './components/FlowsheetView';
+import { PatientDashboard } from './components/PatientDashboard';
+import { DoseCalculator } from './components/DoseCalculator';
+import { PrognosisEngine } from './components/PrognosisEngine';
+import { SurgeonSettingsView } from './components/SurgeonSettingsView';
+import { StandingOrdersView } from './components/StandingOrdersView';
+import { ReferenceRangesView } from './components/ReferenceRangesView';
+import { ASOMetadataView } from './components/ASOMetadataView';
+import { AddRoundModal } from './components/AddRoundModal';
 
-const appData = data as Record<string, any>;
+export default function App() {
+  const [activeTab, setActiveTab] = useState<string>('flowsheet');
+  const [patients, setPatients] = useState<Patient[]>(INITIAL_PATIENTS);
+  const [activePatientId, setActivePatientId] = useState<string>('p1');
+  const [timeSlots, setTimeSlots] = useState<string[]>(INITIAL_TIME_SLOTS);
+  const [flowsheetRows, setFlowsheetRows] = useState<FlowsheetRow[]>(INITIAL_FLOWSHEET_ROWS);
+  const [formulary, setFormulary] = useState<DrugFormularyItem[]>(INITIAL_FORMULARY);
+  const [surgeonSettings, setSurgeonSettings] = useState<SurgeonScheduleSettings>(DEFAULT_SURGEON_SETTINGS);
 
-const HorseIcon = ({ size = 18, color = "currentColor" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M10.87 3.09C11.53 2.37 12.72 2 14.15 2c1.78 0 3.2 1.34 3.4 3 .2.1 1.05.5 2 1 1 1 2.22 2.65 2.22 3.65 0 .5-.2.5-1.22 1.5a7 7 0 0 1-1.63 1.15c-.24 2.26-1.57 3.55-3.32 4.1a5 5 0 0 1-1.6.3v4.3L12 22l-2-2v-4.3c-.5-.1-1-.25-1.47-.45-2.04-1-3.15-2.9-3.48-5.25L4 8l3-3a6.83 6.83 0 0 1 3.87-1.91z"/>
-  </svg>
-);
+  const [isAddRoundOpen, setIsAddRoundOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-// Per-tab colour identity (dermatograma-style): c = accent, d = darker, l = light tint
-const TAB_THEME: Record<string, { c: string; d: string; l: string }> = {
-  'Patients':        { c: '#3A7373', d: '#2f5f5f', l: '#e4eeee' },
-  'Identification':  { c: '#557C67', d: '#456654', l: '#e7f0ea' },
-  'Flowsheet':       { c: '#2C3E50', d: '#212f3d', l: '#e6eaef' },
-  'Prognosis':       { c: '#D27357', d: '#b45c41', l: '#f6e6df' },
-  'Dose Calculator': { c: '#C9922F', d: '#a97a22', l: '#f6edd8' },
-  'Standing Orders': { c: '#7A5AA6', d: '#5f4685', l: '#ece4f4' },
-  'References':      { c: '#3A7373', d: '#2f5f5f', l: '#e4eeee' },
-  'Triggers':        { c: '#C0392B', d: '#a12f23', l: '#f7e0dd' },
-};
+  const activePatient = patients.find((p) => p.id === activePatientId) || patients[0];
 
-function App() {
-  const [activeTab, setActiveTab] = useState('Patients');
-  const [sessionId, setSessionId] = useState<number>(Date.now());
-  const [patient, setPatient] = useState<PatientProfile>(() => {
-    const saved = localStorage.getItem('cmt_patient');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
-    }
-    return defaultPatient;
-  });
-
-  const handleSessionChange = (newPatient: PatientProfile) => {
-    setPatient(newPatient);
-    setSessionId(Date.now()); // trigger remounts
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
-  useEffect(() => {
-    localStorage.setItem('cmt_patient', JSON.stringify(patient));
-  }, [patient]);
-  
-  const tabs = [
-    { id: 'Patients', icon: <Users size={18} />, label: 'Patients' },
-    { id: 'Identification', icon: <User size={18} />, label: 'Patient ID' },
-    { id: 'Flowsheet', icon: <HorseIcon size={18} />, label: 'Flowsheet' },
-    { id: 'Prognosis', icon: <Calculator size={18} />, label: 'Prognosis' },
-    { id: 'Dose Calculator', icon: <Calculator size={18} />, label: 'Dose Calculator' },
-    { id: 'Standing Orders', icon: <FileText size={18} />, label: 'Orders' },
-    { id: 'References', icon: <BookOpen size={18} />, label: 'References' },
-    { id: 'Triggers', icon: <AlertTriangle size={18} />, label: 'Triggers' },
-  ];
-
-  const renderTable = (sheetName: string) => {
-    const sheet = appData[sheetName];
-    if (!sheet || !sheet.data) return <div className="card"><p>No data available for {sheetName}.</p></div>;
-    
-    const validData = sheet.data.filter((row: any) => {
-      const firstColValue = row[sheet.columns[0]];
-      return firstColValue !== null && firstColValue !== undefined && firstColValue !== '';
-    });
-
-    return (
-      <div className="card table-container">
-        <table>
-          <thead>
-            <tr>
-              {sheet.columns.map((col: string, idx: number) => (
-                <th key={idx}>{col.startsWith('Unnamed:') ? '' : col}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {validData.map((row: any, rowIdx: number) => (
-              <tr key={rowIdx}>
-                {sheet.columns.map((col: string, colIdx: number) => (
-                  <td key={colIdx}><ExpandableText text={row[col] !== null ? String(row[col]) : ''} maxLength={80} /></td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+  // Update cell value directly in flowsheet
+  const handleUpdateCellValue = (rowId: string, timeSlot: string, newValue: string) => {
+    setFlowsheetRows((prev) =>
+      prev.map((row) => {
+        if (row.id === rowId) {
+          return {
+            ...row,
+            values: {
+              ...row.values,
+              [timeSlot]: {
+                value: newValue,
+                status: 'NORMAL',
+              },
+            },
+          };
+        }
+        return row;
+      })
     );
+    showToast(`Updated ${rowId} for time ${timeSlot}`);
   };
 
-  const theme = TAB_THEME[activeTab] || TAB_THEME['Patients'];
-  const themeVars = {
-    '--primary-color': theme.c,
-    '--primary-hover': theme.d,
-    '--primary-light': theme.l,
-  } as CSSProperties;
+  // Add round values from modal
+  const handleAddRoundValues = (timeSlot: string, roundData: { [rowId: string]: string }) => {
+    setFlowsheetRows((prev) =>
+      prev.map((row) => {
+        if (roundData[row.id] !== undefined) {
+          return {
+            ...row,
+            values: {
+              ...row.values,
+              [timeSlot]: {
+                value: roundData[row.id],
+                status: 'NORMAL',
+              },
+            },
+          };
+        }
+        return row;
+      })
+    );
+    showToast(`Added Vitals Round for ${timeSlot}`);
+  };
+
+  // Sync drug order directly from Dose Calculator to Flowsheet
+  const handleSyncToFlowsheet = (drugName: string, doseText: string) => {
+    const existingIndex = flowsheetRows.findIndex(
+      (r) => r.parameter.toLowerCase().includes(drugName.toLowerCase())
+    );
+
+    if (existingIndex >= 0) {
+      setFlowsheetRows((prev) =>
+        prev.map((row, idx) => {
+          if (idx === existingIndex) {
+            return {
+              ...row,
+              values: {
+                ...row.values,
+                '14:00': { value: doseText, status: 'NORMAL' },
+              },
+            };
+          }
+          return row;
+        })
+      );
+    } else {
+      // Create new medication row
+      const newRow: FlowsheetRow = {
+        id: `med_${Date.now()}`,
+        category: 'MEDICATIONS',
+        categoryLabel: 'MEDICATIONS & CRIs',
+        parameter: `${drugName}`,
+        target: doseText,
+        bandColor: 'pink',
+        type: 'medication',
+        values: {
+          '14:00': { value: doseText, status: 'NORMAL' },
+        },
+      };
+      setFlowsheetRows((prev) => [...prev, newRow]);
+    }
+
+    showToast(`Synced ${drugName} order to ${activePatient.name}'s Flowsheet!`);
+  };
+
+  // Update patient weight
+  const handleUpdatePatientWeight = (newWeightKg: number) => {
+    setPatients((prev) =>
+      prev.map((p) => (p.id === activePatient.id ? { ...p, weightKg: newWeightKg } : p))
+    );
+    showToast(`Updated ${activePatient.name}'s weight to ${newWeightKg} kg`);
+  };
+
+  // Add new patient handler
+  const handleOpenNewPatientModal = () => {
+    const newName = prompt('Enter New ICU Horse Name:', 'Shadow');
+    if (!newName) return;
+    const newWeight = parseInt(prompt('Enter Weight in kg:', '500') || '500');
+
+    const newP: Patient = {
+      id: `p_${Date.now()}`,
+      name: newName,
+      patientId: `#Horse_${Math.floor(100 + Math.random() * 900)}`,
+      weightKg: newWeight,
+      ageYears: 7,
+      breed: 'Warmblood Cross',
+      diagnosis: 'Acute Colic / Monitoring',
+      status: 'MONITORING',
+      onIceScore: '1/5 (Low Risk)',
+      survivalPrognosisPercent: 88,
+      surgicalIndicationPercent: 20,
+      netFluidBalanceLiters: 0.0,
+      nextDueRoundTime: '15:00 PM',
+      assignedSurgeon: 'Dr. A. Smith',
+      nextShiftSurgeon: 'Dr. B. Jones',
+      callSurgeonTriggers: {
+        heartRateBpm: 80,
+        painScore: 7,
+        refluxLiters: 2.0,
+        respRateBpmin: 30,
+      },
+    };
+
+    setPatients((prev) => [...prev, newP]);
+    setActivePatientId(newP.id);
+    showToast(`Added New ICU Patient: ${newName}`);
+  };
 
   return (
-    <div className="app-container" style={themeVars}>
-      {/* Header */}
-      <header className="header">
-        <div className="header-title">
-          <Stethoscope />
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
-            <span>CMT — Colic Monitoring Tool</span>
-            <span className="header-sub">Post-op equine acute abdomen · {activeTab}</span>
-          </div>
+    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-500 selection:text-white">
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div className="fixed top-16 right-4 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-2xl border border-slate-700 animate-in fade-in slide-in-from-top-3 duration-200 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <span>{toastMessage}</span>
         </div>
-      </header>
+      )}
 
-      {/* Main Layout */}
-      <main className="main-content">
-        {/* Navigation (Sidebar on Desktop, Bottom bar on Mobile) */}
-        <nav className="nav-container">
-          <div className="text-muted mb-2" style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0 0.5rem', display: 'none' }} id="nav-label">
-            Menu
-          </div>
-          {tabs.map((tab, i) => {
-            const t = TAB_THEME[tab.id] || TAB_THEME['Patients'];
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                className={`nav-item ${isActive ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                <span
-                  className="nav-badge"
-                  style={{ background: isActive ? t.c : t.l, color: isActive ? '#fff' : t.d }}
-                >{i + 1}</span>
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </nav>
+      {/* App Header */}
+      <Header
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        activePatient={activePatient}
+        patients={patients}
+        onSelectPatient={(p) => setActivePatientId(p.id)}
+        onOpenNewPatientModal={handleOpenNewPatientModal}
+      />
 
-        {/* Content Area */}
-        <section className="content-area">
-          <div className="mb-4">
-            <h1 className="text-xl mb-2">{activeTab}</h1>
-            <p className="text-muted" style={{ fontSize: '0.875rem' }}>
-              {activeTab === 'Dose Calculator' 
-                ? 'Interactive weight-based calculator. Verfiy all rates against your formulary.' 
-                : activeTab === 'Flowsheet'
-                ? 'Record rounds and monitor clinical parameters. Ice score and alerts calculate automatically.'
-                : 'Review standard protocols.'}
-            </p>
-          </div>
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 space-y-6">
+        {activeTab === 'flowsheet' && (
+          <FlowsheetView
+            rows={flowsheetRows}
+            timeSlots={timeSlots}
+            patient={activePatient}
+            onOpenAddRound={() => setIsAddRoundOpen(true)}
+            onUpdateCellValue={handleUpdateCellValue}
+            onAddMedicationToFlowsheet={handleSyncToFlowsheet}
+          />
+        )}
 
-          {activeTab === 'Patients' && <PatientManager currentPatient={patient} onSessionChange={handleSessionChange} />}
-          {activeTab === 'Identification' && <Identification key={sessionId} patient={patient} setPatient={setPatient} />}
-          {activeTab === 'Flowsheet' && <Flowsheet key={sessionId} patient={patient} />}
-          {activeTab === 'Prognosis' && <PrognosisCalculator key={`${sessionId}_prognosis`} />}
-          {activeTab === 'Dose Calculator' && <DoseCalculator patient={patient} setPatient={setPatient} />}
-          {activeTab === 'Standing Orders' && renderTable('Standing Orders')}
-          {activeTab === 'References' && <ReferenceIntervals />}
-          {activeTab === 'Triggers' && <DecisionTriggers />}
-          
-        </section>
+        {activeTab === 'patients' && (
+          <PatientDashboard
+            patient={activePatient}
+            patients={patients}
+            onSelectPatient={(p) => setActivePatientId(p.id)}
+            onOpenNewPatientModal={handleOpenNewPatientModal}
+          />
+        )}
+
+        {activeTab === 'calculator' && (
+          <DoseCalculator
+            patient={activePatient}
+            formulary={formulary}
+            onSyncToFlowsheet={handleSyncToFlowsheet}
+            onUpdatePatientWeight={handleUpdatePatientWeight}
+          />
+        )}
+
+        {activeTab === 'prognosis' && <PrognosisEngine patient={activePatient} />}
+
+        {activeTab === 'schedule' && (
+          <SurgeonSettingsView
+            patient={activePatient}
+            settings={surgeonSettings}
+            onSaveSettings={(s) => {
+              setSurgeonSettings(s);
+              showToast('Surgeon Monitoring Settings Saved!');
+            }}
+          />
+        )}
+
+        {activeTab === 'orders' && <StandingOrdersView orders={STANDING_ORDERS} />}
+
+        {activeTab === 'references' && <ReferenceRangesView categories={REFERENCE_RANGES} />}
+
+        {activeTab === 'aso' && <ASOMetadataView />}
       </main>
+
+      {/* Mobile Navigation Bar */}
+      <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
+
+      {/* Add Round Modal */}
+      {isAddRoundOpen && (
+        <AddRoundModal
+          patient={activePatient}
+          timeSlots={timeSlots}
+          onClose={() => setIsAddRoundOpen(false)}
+          onAddRoundValues={handleAddRoundValues}
+        />
+      )}
     </div>
   );
 }
-
-export default App;
