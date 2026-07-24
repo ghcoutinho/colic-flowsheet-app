@@ -22,6 +22,45 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
   const [editingCell, setEditingCell] = useState<{ rowId: string; timeSlot: string; currentValue: string } | null>(null);
   const [cellInputValue, setCellInputValue] = useState<string>('');
 
+  // Real-time system clock monitor
+  const [currentClockTime, setCurrentClockTime] = useState<string>(() => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  });
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      const d = new Date();
+      setCurrentClockTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
+    }, 10000); // update every 10s
+    return () => clearInterval(timer);
+  }, []);
+
+  // Determine the time slot closest to the current system clock
+  const getNowSlot = (slots: string[], clockStr: string) => {
+    if (!slots || slots.length === 0) return '';
+    const [ch, cm] = clockStr.split(':').map(Number);
+    const clockMins = (ch || 0) * 60 + (cm || 0);
+
+    let closestSlot = slots[0];
+    let minDiff = Infinity;
+
+    slots.forEach((slot) => {
+      const [sh, sm] = slot.split(':').map(Number);
+      if (isNaN(sh)) return;
+      const slotMins = sh * 60 + (sm || 0);
+      const diff = Math.abs(clockMins - slotMins);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestSlot = slot;
+      }
+    });
+
+    return closestSlot;
+  };
+
+  const nowSlot = getNowSlot(timeSlots, currentClockTime);
+
   const filteredRows = rows.filter((row) => {
     if (filterCategory === 'ALL') return true;
     if (filterCategory === 'VITALS') return row.category === 'VITALS' || row.category === 'PAIN';
@@ -210,7 +249,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
 
                 {/* Time Slots Headers */}
                 {timeSlots.map((slot) => {
-                  const isNow = slot === '14:00';
+                  const isNow = slot === nowSlot;
                   return (
                     <th
                       key={slot}
@@ -218,7 +257,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         isNow ? 'bg-amber-400 text-slate-950 font-black shadow-inner border-amber-500' : ''
                       }`}
                     >
-                      {isNow && <div className="text-[9px] leading-tight font-extrabold uppercase">NOW</div>}
+                      {isNow && <div className="text-[9px] leading-tight font-extrabold uppercase bg-slate-900 text-amber-300 px-1 py-0.5 rounded shadow-xs mb-0.5">NOW ({currentClockTime})</div>}
                       <div>{slot}</div>
                     </th>
                   );
@@ -265,7 +304,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                           {/* Time Values Cells across the row with anti-misentry color scheme */}
                           {timeSlots.map((slot) => {
                             const cell = row.values[slot];
-                            const isNow = slot === '14:00';
+                            const isNow = slot === nowSlot;
                             const isDue = cell?.status === 'AMBER_DUE' || cell?.status === 'DUE' || cell?.note === 'AMBER DUE' || cell?.note === 'DUE';
                             const hasValue = cell && cell.value !== '' && cell.value !== undefined;
 
