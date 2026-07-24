@@ -30,6 +30,7 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
     diagnosis: 'Acute Abdominal Pain (Colic)',
     surgicalProcedure: 'Pre-op / Medical Evaluation',
     status: 'CRITICAL',
+    surgeryTime: '',
     assignedSurgeon: 'Dr. Gustavo Coutinho',
     nextShiftSurgeon: 'Dr. On Call',
     intern: '',
@@ -77,6 +78,7 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
       surgicalIndicationPercent: 20,
       netFluidBalanceLiters: 0,
       nextDueRoundTime: 'NOW',
+      surgeryTime: formData.surgeryTime,
       assignedSurgeon: formData.assignedSurgeon || 'Dr. Attending',
       nextShiftSurgeon: formData.nextShiftSurgeon || 'Dr. On-Call',
       intern: formData.intern,
@@ -323,6 +325,16 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
                   onChange={(e) => setFormData({ ...formData, surgicalProcedure: e.target.value })}
                   className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
                   placeholder="e.g. Exploratory Celiotomy"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-700 block mb-1">Surgery Date &amp; Time</label>
+                <input
+                  type="datetime-local"
+                  value={formData.surgeryTime}
+                  onChange={(e) => setFormData({ ...formData, surgeryTime: e.target.value })}
+                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
                 />
               </div>
 

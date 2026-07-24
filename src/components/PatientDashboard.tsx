@@ -84,13 +84,24 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1 font-medium">
-            {patient.name} • {patient.weightKg} kg • {patient.breed} ({patient.ageYears} yrs)
+            {patient.name} • {patient.weightKg} kg • {patient.breed} ({patient.ageYears} yrs) • {patient.sex || 'Unknown sex'}
           </p>
           <div className="text-xs text-slate-700 mt-2 font-bold bg-slate-50 p-2.5 rounded-xl border border-slate-200">
             Diagnosis: <span className="text-blue-700">{patient.diagnosis}</span>
             {patient.surgicalProcedure && (
               <div className="text-[11px] text-slate-500 font-normal mt-0.5">
                 Procedure: {patient.surgicalProcedure}
+              </div>
+            )}
+            {patient.surgeryTime && (
+              <div className="text-[11px] text-slate-500 font-normal mt-0.5">
+                Surgery: {new Date(patient.surgeryTime).toLocaleString()}
+              </div>
+            )}
+            {(patient.facility || patient.intern) && (
+              <div className="text-[11px] text-slate-400 font-normal mt-0.5">
+                {patient.facility && <span>🏥 {patient.facility}</span>}
+                {patient.intern && <span className="ml-2">👨‍⚕️ Intern: {patient.intern}</span>}
               </div>
             )}
           </div>
