@@ -31,6 +31,8 @@ export interface Patient {
   nextDueRoundTime: string;
   assignedSurgeon: string;
   nextShiftSurgeon: string;
+  intern?: string;
+  facility?: string;
   callSurgeonTriggers: {
     heartRateBpm: number;
     painScore: number;

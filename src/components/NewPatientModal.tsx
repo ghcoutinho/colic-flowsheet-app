@@ -32,6 +32,8 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
     status: 'CRITICAL',
     assignedSurgeon: 'Dr. Gustavo Coutinho',
     nextShiftSurgeon: 'Dr. On Call',
+    intern: '',
+    facility: 'UFMG Veterinary Hospital',
     callSurgeonTriggers: {
       heartRateBpm: 60,
       painScore: 2,
@@ -77,6 +79,8 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
       nextDueRoundTime: 'NOW',
       assignedSurgeon: formData.assignedSurgeon || 'Dr. Attending',
       nextShiftSurgeon: formData.nextShiftSurgeon || 'Dr. On-Call',
+      intern: formData.intern,
+      facility: formData.facility || 'UFMG Veterinary Hospital',
       callSurgeonTriggers: formData.callSurgeonTriggers || {
         heartRateBpm: 60,
         painScore: 2,
@@ -360,13 +364,52 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
               </div>
 
               <div>
+                <label className="text-slate-700 block mb-1">Facility / Hospital</label>
+                <input
+                  type="text"
+                  list="facility-options"
+                  value={formData.facility}
+                  onChange={(e) => setFormData({ ...formData, facility: e.target.value })}
+                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                  placeholder="e.g. UFMG Veterinary Hospital"
+                />
+                <datalist id="facility-options">
+                  <option value="UFMG Veterinary Hospital" />
+                  <option value="Private Equine Clinic" />
+                </datalist>
+              </div>
+
+              <div>
                 <label className="text-slate-700 block mb-1">Attending Surgeon</label>
                 <input
                   type="text"
+                  list="surgeon-options"
                   value={formData.assignedSurgeon}
                   onChange={(e) => setFormData({ ...formData, assignedSurgeon: e.target.value })}
                   className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                  placeholder="Select or enter surgeon..."
                 />
+                <datalist id="surgeon-options">
+                  <option value="Dr. Gustavo Coutinho" />
+                  <option value="Dr. On Call" />
+                  <option value="Dr. Attending" />
+                </datalist>
+              </div>
+
+              <div>
+                <label className="text-slate-700 block mb-1">Intern / Resident</label>
+                <input
+                  type="text"
+                  list="intern-options"
+                  value={formData.intern}
+                  onChange={(e) => setFormData({ ...formData, intern: e.target.value })}
+                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                  placeholder="Select or enter intern..."
+                />
+                <datalist id="intern-options">
+                  <option value="Resident A" />
+                  <option value="Intern B" />
+                </datalist>
               </div>
 
               <div>
