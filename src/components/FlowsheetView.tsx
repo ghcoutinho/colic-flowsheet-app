@@ -161,15 +161,37 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
     return true;
   });
 
-  // Group rows by categoryLabel for structured color banding
+  // Group rows by categoryLabel for structured color banding with normalized Clinicopathology header
   const groupedRows: { [key: string]: FlowsheetRow[] } = {};
   filteredRows.forEach((row) => {
-    const groupKey = row.categoryLabel || row.category;
+    let groupKey = row.categoryLabel || row.category;
+    if (row.category === 'CLINICOPATHOLOGY' || groupKey.includes('CLINICOPATHOLOGY')) {
+      groupKey = 'CLINICOPATHOLOGY & LABS';
+    }
     if (!groupedRows[groupKey]) {
       groupedRows[groupKey] = [];
     }
     groupedRows[groupKey].push(row);
   });
+
+  // Toggle collection / processing status for all lab rows in a time slot
+  const handleToggleSlotCollection = (categoryRows: FlowsheetRow[], timeSlot: string) => {
+    const isSlotCollected = categoryRows.some(
+      (r) => r.values[timeSlot]?.isCollected || r.values[timeSlot]?.status === 'PROCESSING'
+    );
+
+    categoryRows.forEach((row) => {
+      const cell = row.values[timeSlot];
+      const hasVal = cell && cell.value !== '' && cell.value !== undefined;
+      if (!hasVal) {
+        if (!isSlotCollected) {
+          onUpdateCellValue(row.id, timeSlot, '', 'PROCESSING');
+        } else {
+          onUpdateCellValue(row.id, timeSlot, '', 'NORMAL');
+        }
+      }
+    });
+  };
 
   // Dynamic status evaluation based on JSON dataset thresholds
   const getDynamicStatus = (param: string, value: any): 'NORMAL' | 'WARNING' | 'CRITICAL' => {
@@ -568,9 +590,31 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                           </span>
                         )}
                       </td>
-                      {activeTimeSlots.map((slot) => (
-                        <td key={slot} className="p-2 bg-slate-200/50 border-r border-slate-300/50"></td>
-                      ))}
+                      {activeTimeSlots.map((slot) => {
+                        const isLabHeader = groupTitle.includes('CLINICOPATHOLOGY');
+                        if (isLabHeader) {
+                          const isSlotCollected = categoryRows.some(
+                            (r) => r.values[slot]?.isCollected || r.values[slot]?.status === 'PROCESSING'
+                          );
+                          return (
+                            <td key={slot} className="p-1 bg-slate-200/90 border-r border-slate-300 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleSlotCollection(categoryRows, slot)}
+                                className={`px-2 py-1 rounded-lg font-black text-[10px] shadow-xs transition-all flex items-center justify-center gap-1 mx-auto ${
+                                  isSlotCollected
+                                    ? 'bg-amber-500 text-slate-950 border border-amber-600 animate-pulse'
+                                    : 'bg-slate-800 text-amber-300 hover:bg-slate-900 border border-slate-700'
+                                }`}
+                                title="Click to mark sample as collected / processing for all lab parameters in this time slot"
+                              >
+                                {isSlotCollected ? '⏳ Coletado' : '+ Coletar'}
+                              </button>
+                            </td>
+                          );
+                        }
+                        return <td key={slot} className="p-2 bg-slate-200/50 border-r border-slate-300/50"></td>;
+                      })}
                     </tr>
 
                     {/* Individual Parameter Rows */}
@@ -676,23 +720,6 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                   </div>
                                 ) : isNumericRow(row) ? (
                                   <div className={`bg-white rounded-xl p-0.5 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative`}>
-                                    {row.category === 'CLINICOPATHOLOGY' && (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          const nextCollected = !cell?.isCollected;
-                                          const nextStatus = nextCollected && !hasValue ? 'PROCESSING' : 'NORMAL';
-                                          onUpdateCellValue(row.id, slot, cell?.value?.toString() || '', nextStatus);
-                                        }}
-                                        className={`absolute -bottom-2 text-[8px] font-black px-1.5 py-0.5 rounded-full border shadow-2xs transition-all ${
-                                          cell?.isCollected ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
-                                        }`}
-                                        title="Click to toggle sample collected status"
-                                      >
-                                        {cell?.isCollected ? '✓ Coletado' : '+ Coletar'}
-                                      </button>
-                                    )}
                                     {calculatedDelta && (
                                       <span className={`absolute -top-2 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full border shadow-xs pointer-events-none ${
                                         calculatedDelta.startsWith('+') && calculatedDelta !== '+0'
