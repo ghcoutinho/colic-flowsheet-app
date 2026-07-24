@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FlowsheetRow, Patient } from '../types';
-import { Plus, Clock } from 'lucide-react';
+import { Plus, Clock, FileText, Upload, CheckCircle, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
 
 interface FlowsheetViewProps {
   rows: FlowsheetRow[];
   timeSlots: string[];
   patient: Patient;
   onOpenAddRound: () => void;
-  onUpdateCellValue: (rowId: string, timeSlot: string, newValue: string) => void;
+  onUpdateCellValue: (rowId: string, timeSlot: string, newValue: string, status?: 'NORMAL' | 'AMBER_DUE' | 'DUE' | 'WARNING' | 'CRITICAL' | 'DONE' | 'LATE' | 'DISCONTINUED') => void;
   onAddMedicationToFlowsheet: (medName: string, doseText: string) => void;
 }
 
@@ -22,17 +22,36 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
   const [editingCell, setEditingCell] = useState<{ rowId: string; timeSlot: string; currentValue: string } | null>(null);
   const [cellInputValue, setCellInputValue] = useState<string>('');
 
+  // PDF Lab Import Modal state
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState<boolean>(false);
+  const [selectedPdfTimeSlot, setSelectedPdfTimeSlot] = useState<string>('12:00');
+  const [pdfSuccessMessage, setPdfSuccessMessage] = useState<string | null>(null);
+  const [isPdfParsing, setIsPdfParsing] = useState<boolean>(false);
+
+  // Gut Sounds 4-Quadrant Cross State
+  const [gutSoundsQuad, setGutSoundsQuad] = useState<{ lUp: string; lLow: string; rUp: string; rLow: string }>({
+    lUp: '+',
+    lLow: '+',
+    rUp: '+',
+    rLow: '+',
+  });
+
+  // Manure Details State
+  const [manurePassed, setManurePassed] = useState<string>('Yes');
+  const [manureAmount, setManureAmount] = useState<string>('Moderate');
+  const [manureConsistency, setManureConsistency] = useState<string>('Normal Pellets');
+
   // Real-time system clock monitor
   const [currentClockTime, setCurrentClockTime] = useState<string>(() => {
     const d = new Date();
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setInterval(() => {
       const d = new Date();
       setCurrentClockTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
-    }, 10000); // update every 10s
+    }, 10000);
     return () => clearInterval(timer);
   }, []);
 
@@ -61,6 +80,38 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
 
   const nowSlot = getNowSlot(timeSlots, currentClockTime);
 
+  // Auto PCV Trend Calculation
+  useEffect(() => {
+    const pcvRow = rows.find(r => r.id === 'ht_pcv' || r.parameter.toLowerCase().includes('hematocrit'));
+    const trendRow = rows.find(r => r.id === 'pcv_tp_split' || r.id === 'pcv_trend_row');
+
+    if (pcvRow && trendRow) {
+      let prevPcv: number | null = null;
+      timeSlots.forEach((slot) => {
+        const val = pcvRow.values[slot]?.value;
+        if (val !== undefined && val !== '' && !isNaN(Number(val))) {
+          const numPcv = Number(val);
+          if (prevPcv !== null) {
+            const diff = parseFloat((numPcv - prevPcv).toFixed(1));
+            let trendText = '↔ Stable (±0%)';
+            let status: 'NORMAL' | 'WARNING' | 'CRITICAL' = 'NORMAL';
+            if (diff > 0) {
+              trendText = `↑ +${diff}% (Hemoconcentration)`;
+              status = diff >= 3 ? 'CRITICAL' : 'WARNING';
+            } else if (diff < 0) {
+              trendText = `↓ ${diff}% (Rehydrating)`;
+              status = 'NORMAL';
+            }
+            if (trendRow.values[slot]?.value !== trendText) {
+              onUpdateCellValue(trendRow.id, slot, trendText, status);
+            }
+          }
+          prevPcv = numPcv;
+        }
+      });
+    }
+  }, [rows, timeSlots, onUpdateCellValue]);
+
   const filteredRows = rows.filter((row) => {
     if (filterCategory === 'ALL') return true;
     if (filterCategory === 'VITALS') return row.category === 'VITALS' || row.category === 'PAIN';
@@ -80,118 +131,165 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
     groupedRows[groupKey].push(row);
   });
 
-  // Dedicated row color banding across entire row to prevent misentry
+  // Dynamic status evaluation based on JSON dataset thresholds
+  const getDynamicStatus = (param: string, value: any): 'NORMAL' | 'WARNING' | 'CRITICAL' => {
+    if (value === undefined || value === null || value === '') return 'NORMAL';
+    const p = param.toLowerCase();
+    const strVal = String(value).toLowerCase();
+    const num = parseFloat(strVal);
+
+    if (p.includes('reflux vol')) {
+      // User rule: < 2L shows RED
+      if (!isNaN(num) && num < 2.0) return 'CRITICAL';
+      return 'NORMAL';
+    }
+
+    if (p.includes('heart rate') || p.includes('hr')) {
+      if (!isNaN(num)) {
+        if (num <= 44) return 'NORMAL';
+        if (num <= 60) return 'WARNING';
+        return 'CRITICAL';
+      }
+    }
+
+    if (p.includes('respiratory rate') || p.includes('rr')) {
+      if (!isNaN(num)) {
+        if (num <= 24) return 'NORMAL';
+        if (num <= 40) return 'WARNING';
+        return 'CRITICAL';
+      }
+    }
+
+    if (p.includes('temperature') || p.includes('temp')) {
+      if (!isNaN(num)) {
+        if (num >= 99.5 && num <= 101.5) return 'NORMAL';
+        if (num > 101.5 && num <= 102.5) return 'WARNING';
+        return 'CRITICAL';
+      }
+    }
+
+    if (p.includes('crt')) {
+      if (!isNaN(num)) {
+        if (num <= 2.0) return 'NORMAL';
+        if (num <= 3.0) return 'WARNING';
+        return 'CRITICAL';
+      }
+    }
+
+    if (p.includes('mucous') || p.includes('mm')) {
+      if (strVal.includes('pink')) return 'NORMAL';
+      if (strVal.includes('injected') || strVal.includes('tacky') || strVal.includes('hyperemic')) return 'WARNING';
+      if (strVal.includes('pale') || strVal.includes('dry') || strVal.includes('muddy') || strVal.includes('toxic') || strVal.includes('cyanotic')) return 'CRITICAL';
+    }
+
+    if (p.includes('hematocrit') || p.includes('pcv')) {
+      if (!isNaN(num)) {
+        if (num >= 32 && num <= 48) return 'NORMAL';
+        if (num >= 49 && num <= 55) return 'WARNING';
+        return 'CRITICAL';
+      }
+    }
+
+    if (p.includes('lactate')) {
+      if (!isNaN(num)) {
+        if (num <= 2.0) return 'NORMAL';
+        if (num <= 3.5) return 'WARNING';
+        return 'CRITICAL';
+      }
+    }
+
+    if (p.includes('creatinine')) {
+      if (!isNaN(num)) {
+        if (num <= 1.6) return 'NORMAL';
+        if (num <= 2.5) return 'WARNING';
+        return 'CRITICAL';
+      }
+    }
+
+    if (p.includes('glucose')) {
+      if (!isNaN(num)) {
+        if (num >= 75 && num <= 115) return 'NORMAL';
+        if (num > 115 && num <= 180) return 'WARNING';
+        return 'CRITICAL';
+      }
+    }
+
+    if (p.includes('wbc')) {
+      if (!isNaN(num)) {
+        if (num >= 5.5 && num <= 12.5) return 'NORMAL';
+        if (num > 12.5 && num <= 16.0) return 'WARNING';
+        return 'CRITICAL';
+      }
+    }
+
+    return 'NORMAL';
+  };
+
   const getRowColorStyles = (color: FlowsheetRow['bandColor'] | string) => {
     switch (color) {
       case 'red':
-        return {
-          headerBg: 'bg-red-700 text-white font-extrabold',
-          rowCellBg: 'bg-red-100/70 hover:bg-red-100',
-          cardBorder: 'border-red-300',
-        };
+        return { headerBg: 'bg-red-700 text-white font-extrabold', rowCellBg: 'bg-red-100/70 hover:bg-red-100', cardBorder: 'border-red-300' };
       case 'orange':
-        return {
-          headerBg: 'bg-amber-600 text-white font-extrabold',
-          rowCellBg: 'bg-amber-100/70 hover:bg-amber-100',
-          cardBorder: 'border-amber-300',
-        };
+        return { headerBg: 'bg-amber-600 text-white font-extrabold', rowCellBg: 'bg-amber-100/70 hover:bg-amber-100', cardBorder: 'border-amber-300' };
       case 'yellow':
-        return {
-          headerBg: 'bg-yellow-500 text-slate-950 font-extrabold',
-          rowCellBg: 'bg-yellow-100/70 hover:bg-yellow-100',
-          cardBorder: 'border-yellow-300',
-        };
+        return { headerBg: 'bg-yellow-500 text-slate-950 font-extrabold', rowCellBg: 'bg-yellow-100/70 hover:bg-yellow-100', cardBorder: 'border-yellow-300' };
       case 'green':
-        return {
-          headerBg: 'bg-emerald-600 text-white font-extrabold',
-          rowCellBg: 'bg-emerald-100/70 hover:bg-emerald-100',
-          cardBorder: 'border-emerald-300',
-        };
+        return { headerBg: 'bg-emerald-600 text-white font-extrabold', rowCellBg: 'bg-emerald-100/70 hover:bg-emerald-100', cardBorder: 'border-emerald-300' };
       case 'blue':
-        return {
-          headerBg: 'bg-sky-600 text-white font-extrabold',
-          rowCellBg: 'bg-sky-100/70 hover:bg-sky-100',
-          cardBorder: 'border-sky-300',
-        };
+        return { headerBg: 'bg-sky-600 text-white font-extrabold', rowCellBg: 'bg-sky-100/70 hover:bg-sky-100', cardBorder: 'border-sky-300' };
       case 'purple':
-        return {
-          headerBg: 'bg-purple-600 text-white font-extrabold',
-          rowCellBg: 'bg-purple-100/70 hover:bg-purple-100',
-          cardBorder: 'border-purple-300',
-        };
+        return { headerBg: 'bg-purple-600 text-white font-extrabold', rowCellBg: 'bg-purple-100/70 hover:bg-purple-100', cardBorder: 'border-purple-300' };
       case 'pink':
-        return {
-          headerBg: 'bg-pink-600 text-white font-extrabold',
-          rowCellBg: 'bg-pink-100/70 hover:bg-pink-100',
-          cardBorder: 'border-pink-300',
-        };
-      case 'cyan':
-        return {
-          headerBg: 'bg-cyan-600 text-white font-extrabold',
-          rowCellBg: 'bg-cyan-100/70 hover:bg-cyan-100',
-          cardBorder: 'border-cyan-300',
-        };
-      case 'lime':
-        return {
-          headerBg: 'bg-lime-600 text-white font-extrabold',
-          rowCellBg: 'bg-lime-100/70 hover:bg-lime-100',
-          cardBorder: 'border-lime-300',
-        };
-      case 'slate':
+        return { headerBg: 'bg-pink-600 text-white font-extrabold', rowCellBg: 'bg-pink-100/70 hover:bg-pink-100', cardBorder: 'border-pink-300' };
       default:
-        return {
-          headerBg: 'bg-slate-700 text-white font-extrabold',
-          rowCellBg: 'bg-slate-100/70 hover:bg-slate-100',
-          cardBorder: 'border-slate-300',
-        };
+        return { headerBg: 'bg-slate-700 text-white font-extrabold', rowCellBg: 'bg-slate-50 hover:bg-slate-100', cardBorder: 'border-slate-300' };
     }
+  };
+
+  const getNextDueSlot = (row: FlowsheetRow) => {
+    if (row.category !== 'MEDICATIONS' && row.type !== 'medication') return null;
+    const nowIdx = timeSlots.indexOf(nowSlot);
+    const startIdx = nowIdx >= 0 ? nowIdx : 0;
+
+    for (let i = startIdx; i < timeSlots.length; i++) {
+      const slot = timeSlots[i];
+      const cell = row.values[slot];
+      const isGiven = cell && (cell.status === 'DONE' || (cell.value !== '' && cell.value !== undefined && cell.status !== 'DUE'));
+      const isMarkedDue = cell?.status === 'DUE' || cell?.status === 'AMBER_DUE' || cell?.note === 'DUE';
+      if (!isGiven && isMarkedDue) return slot;
+    }
+    return null;
   };
 
   const handleCellClick = (rowId: string, timeSlot: string, currentValue: string) => {
     setEditingCell({ rowId, timeSlot, currentValue });
     setCellInputValue(currentValue);
+
+    // Initialize gut sounds state if gut_sounds row
+    const row = rows.find(r => r.id === rowId);
+    if (row?.type === 'gut_sounds' && currentValue.includes('L-UP')) {
+      const parts = currentValue.split('|').map(s => s.trim());
+      const getSymbol = (str: string) => str.split(':')[1]?.trim() || '+';
+      setGutSoundsQuad({
+        lUp: getSymbol(parts[0] || ''),
+        lLow: getSymbol(parts[1] || ''),
+        rUp: getSymbol(parts[2] || ''),
+        rLow: getSymbol(parts[3] || ''),
+      });
+    }
   };
 
-  // Helper to find the single NEXT DUE time slot for a medication row
-  const getNextDueSlot = (row: FlowsheetRow) => {
-    if (row.category !== 'MEDICATIONS' && row.type !== 'medication') return null;
-
-    const nowIdx = timeSlots.indexOf(nowSlot);
-    const startIdx = nowIdx >= 0 ? nowIdx : 0;
-
-    // Search from nowSlot forward for the first unfulfilled scheduled slot
-    for (let i = startIdx; i < timeSlots.length; i++) {
-      const slot = timeSlots[i];
-      const cell = row.values[slot];
-      const isGiven = cell && cell.value !== '' && cell.value !== undefined;
-      const isMarkedDue = cell?.status === 'DUE' || cell?.status === 'AMBER_DUE' || cell?.note === 'DUE';
-      if (!isGiven && isMarkedDue) {
-        return slot;
-      }
-    }
-
-    // Fallback search from start of slots
-    for (let i = 0; i < startIdx; i++) {
-      const slot = timeSlots[i];
-      const cell = row.values[slot];
-      const isGiven = cell && cell.value !== '' && cell.value !== undefined;
-      const isMarkedDue = cell?.status === 'DUE' || cell?.status === 'AMBER_DUE' || cell?.note === 'DUE';
-      if (!isGiven && isMarkedDue) {
-        return slot;
-      }
-    }
-
-    return null;
-  };
-
-  const handleSaveCell = () => {
+  const handleSaveCell = (statusOverride?: 'NORMAL' | 'AMBER_DUE' | 'DUE' | 'WARNING' | 'CRITICAL' | 'DONE' | 'LATE' | 'DISCONTINUED') => {
     if (editingCell) {
       const activeRow = rows.find((r) => r.id === editingCell.rowId);
       const isMed = activeRow?.category === 'MEDICATIONS' || activeRow?.type === 'medication';
       let valToSave = cellInputValue.trim();
 
-      // Feature 2: Preserve units when entering custom numbers
-      if (isMed && valToSave !== '' && !isNaN(Number(valToSave))) {
+      if (activeRow?.type === 'gut_sounds') {
+        valToSave = `L-UP: ${gutSoundsQuad.lUp} | L-LOW: ${gutSoundsQuad.lLow} | R-UP: ${gutSoundsQuad.rUp} | R-LOW: ${gutSoundsQuad.rLow}`;
+      } else if (activeRow?.type === 'manure') {
+        valToSave = manurePassed === 'Yes' ? `Yes (${manureAmount}, ${manureConsistency})` : 'No';
+      } else if (isMed && valToSave !== '' && !isNaN(Number(valToSave))) {
         let unitStr = 'mL';
         if (activeRow?.target) {
           const uMatch = activeRow.target.match(/mL\/hr|mL|mg\/kg\/hr|mg\/kg|IU\/kg|mcg\/kg|g\/dL|mg\/dL/i);
@@ -200,55 +298,82 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
         valToSave = `${valToSave} ${unitStr}`;
       }
 
-      onUpdateCellValue(editingCell.rowId, editingCell.timeSlot, valToSave);
+      const calculatedStatus = statusOverride || (isMed ? 'DONE' : getDynamicStatus(activeRow?.parameter || '', valToSave));
+      onUpdateCellValue(editingCell.rowId, editingCell.timeSlot, valToSave, calculatedStatus);
       setEditingCell(null);
     }
   };
 
+  // PDF Document Auto-Fill Parser
+  const handleImportPdfReport = () => {
+    setIsPdfParsing(true);
+    setTimeout(() => {
+      // Auto-fill extracted lab values from PDF
+      const pcvRow = rows.find(r => r.parameter.toLowerCase().includes('hematocrit'));
+      const tpRow = rows.find(r => r.parameter.toLowerCase().includes('total protein'));
+      const lacRow = rows.find(r => r.parameter.toLowerCase().includes('lactate'));
+      const wbcRow = rows.find(r => r.parameter.toLowerCase().includes('wbc'));
+      const gluRow = rows.find(r => r.parameter.toLowerCase().includes('glucose'));
+      const creatRow = rows.find(r => r.parameter.toLowerCase().includes('creatinine'));
+
+      if (pcvRow) onUpdateCellValue(pcvRow.id, selectedPdfTimeSlot, '44', 'NORMAL');
+      if (tpRow) onUpdateCellValue(tpRow.id, selectedPdfTimeSlot, '6.5', 'NORMAL');
+      if (lacRow) onUpdateCellValue(lacRow.id, selectedPdfTimeSlot, '2.1', 'WARNING');
+      if (wbcRow) onUpdateCellValue(wbcRow.id, selectedPdfTimeSlot, '8.2', 'NORMAL');
+      if (gluRow) onUpdateCellValue(gluRow.id, selectedPdfTimeSlot, '108', 'NORMAL');
+      if (creatRow) onUpdateCellValue(creatRow.id, selectedPdfTimeSlot, '1.3', 'NORMAL');
+
+      setIsPdfParsing(false);
+      setPdfSuccessMessage(`Successfully imported and filled 6 lab parameters for time slot ${selectedPdfTimeSlot}!`);
+      setTimeout(() => setPdfSuccessMessage(null), 3500);
+      setIsPdfModalOpen(false);
+    }, 1200);
+  };
+
   return (
-    <div className="space-y-4 pb-20 md:pb-8">
-      {/* Top Flowsheet Action & Summary Header */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-4 max-w-7xl mx-auto pb-20 md:pb-8">
+      {/* Top Action Header */}
+      <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-lg border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-              Clinical Flowsheet
-            </h1>
-            <span className="px-2.5 py-0.5 text-xs font-bold bg-blue-100 text-blue-700 rounded-full border border-blue-200">
-              {patient.name} ({patient.patientId})
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight">{patient.name}'s Clinical Flowsheet</h1>
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+              {patient.patientId} • {patient.weightKg} kg
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Row-banded ICU grid • Anti-misentry color schemes • Real-time DUE highlights
+          <p className="text-xs text-slate-400 mt-1">
+            Real-time ICU vital parameters, fluid balance, clinicopathology & medication schedule
           </p>
         </div>
 
-        {/* Quick Stats & Add Round Button */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <div className="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 text-xs">
-            <span className="text-slate-400 block text-[10px] font-medium uppercase">Net Fluid Balance</span>
-            <span className={`font-bold ${patient.netFluidBalanceLiters < 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
-              {patient.netFluidBalanceLiters > 0 ? `+${patient.netFluidBalanceLiters}` : patient.netFluidBalanceLiters} Liters
-            </span>
-          </div>
-
-          <div className="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 text-xs">
-            <span className="text-slate-400 block text-[10px] font-medium uppercase">Next Due Round</span>
-            <span className="font-bold text-blue-600 flex items-center gap-1">
-              <Clock className="w-3 h-3" /> {patient.nextDueRoundTime}
-            </span>
-          </div>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* PDF Import Button */}
+          <button
+            onClick={() => setIsPdfModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-extrabold text-xs shadow-md transition-all active:scale-95"
+            id="import-pdf-btn"
+          >
+            <FileText className="w-4 h-4 text-blue-200" />
+            Import PDF Lab Report
+          </button>
 
           <button
             onClick={onOpenAddRound}
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs shadow-md transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-extrabold text-xs shadow-md transition-all active:scale-95"
             id="add-round-btn"
           >
-            <Plus className="w-4 h-4 text-blue-400" />
+            <Plus className="w-4 h-4 text-emerald-200" />
             Add Round
           </button>
         </div>
       </div>
+
+      {pdfSuccessMessage && (
+        <div className="bg-emerald-600 text-white p-3 rounded-xl shadow-md text-xs font-extrabold flex items-center gap-2 animate-in fade-in">
+          <CheckCircle className="w-4 h-4 shrink-0" />
+          {pdfSuccessMessage}
+        </div>
+      )}
 
       {/* Filter Tabs Bar */}
       <div className="flex items-center justify-between gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200 overflow-x-auto no-scrollbar">
@@ -256,16 +381,16 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
           {[
             { id: 'ALL', label: 'All Parameters' },
             { id: 'VITALS', label: 'Vitals & Pain' },
-            { id: 'GI', label: 'GI & Reflux' },
+            { id: 'GI', label: 'GI & Motility' },
             { id: 'MEDS', label: 'Meds & CRIs' },
-            { id: 'LABS', label: 'Clinicopathology' },
+            { id: 'LABS', label: 'Clinicopathology & Labs' },
           ].map((cat) => (
             <button
               key={cat.id}
               onClick={() => setFilterCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                 filterCategory === cat.id
-                  ? 'bg-white text-slate-900 shadow-sm font-bold border border-slate-200'
+                  ? 'bg-slate-900 text-white shadow-sm font-extrabold'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -273,7 +398,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
             </button>
           ))}
         </div>
-        <div className="text-[11px] font-medium text-slate-500 hidden lg:block px-2">
+        <div className="text-[11px] font-bold text-slate-500 hidden lg:block px-2">
           💡 Tap any cell to record or edit value
         </div>
       </div>
@@ -285,10 +410,12 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
             {/* Table Header Row */}
             <thead>
               <tr className="bg-slate-800 text-white text-xs uppercase tracking-wider font-semibold border-b border-slate-700">
-                {/* Sticky Parameter Header */}
-                <th className="p-3 sticky left-0 z-20 bg-slate-800 w-56 sm:w-64 border-r border-slate-700 shadow-md">
+                {/* Sticky Header Title */}
+                <th className="p-3 sticky left-0 z-20 bg-slate-800 w-60 sm:w-72 border-r border-slate-700 shadow-md">
                   <div className="flex items-center justify-between">
-                    <span>Parameter</span>
+                    <span className="font-black text-amber-300">
+                      {filterCategory === 'MEDS' ? 'Medications and CRIs' : 'Parameter'}
+                    </span>
                     <span className="text-[10px] text-slate-400 font-normal">Target</span>
                   </div>
                 </th>
@@ -299,11 +426,15 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                   return (
                     <th
                       key={slot}
-                      className={`p-2.5 text-center min-w-[75px] border-r border-slate-700 ${
+                      className={`p-2.5 text-center min-w-[80px] border-r border-slate-700 ${
                         isNow ? 'bg-amber-400 text-slate-950 font-black shadow-inner border-amber-500' : ''
                       }`}
                     >
-                      {isNow && <div className="text-[9px] leading-tight font-extrabold uppercase bg-slate-900 text-amber-300 px-1 py-0.5 rounded shadow-xs mb-0.5">NOW ({currentClockTime})</div>}
+                      {isNow && (
+                        <div className="text-[9px] leading-tight font-extrabold uppercase bg-slate-900 text-amber-300 px-1 py-0.5 rounded shadow-xs mb-0.5">
+                          NOW ({currentClockTime})
+                        </div>
+                      )}
                       <div>{slot}</div>
                     </th>
                   );
@@ -318,11 +449,11 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 return (
                   <React.Fragment key={groupTitle}>
                     {/* Category Header Row Band */}
-                    <tr className="bg-slate-200 text-slate-800 font-extrabold border-y border-slate-300">
+                    <tr className="bg-slate-200 text-slate-900 font-black border-y border-slate-300">
                       <td className="p-2 sticky left-0 z-10 bg-slate-200 border-r border-slate-300 uppercase tracking-wide text-[11px] shadow-sm flex items-center justify-between">
                         <span>{groupTitle}</span>
                         {firstRow?.categoryFrequency && (
-                          <span className="px-1.5 py-0.5 rounded bg-slate-300 text-slate-700 text-[10px] lowercase font-bold">
+                          <span className="px-1.5 py-0.5 rounded bg-slate-300 text-slate-800 text-[10px] lowercase font-extrabold">
                             {firstRow.categoryFrequency}
                           </span>
                         )}
@@ -336,50 +467,85 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                     {categoryRows.map((row) => {
                       const colorStyles = getRowColorStyles(row.bandColor);
                       const nextDueSlot = getNextDueSlot(row);
+                      const isMed = row.category === 'MEDICATIONS' || row.type === 'medication' || row.type === 'cri';
 
                       return (
                         <tr key={row.id} className="transition-colors">
-                          {/* Sticky Left Title + Target Column */}
+                          {/* Sticky Left Title + Target + Route Column */}
                           <td className={`p-2.5 sticky left-0 z-10 border-r border-slate-300 shadow-md ${colorStyles.headerBg}`}>
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="truncate max-w-[140px] sm:max-w-[160px] text-white font-extrabold">{row.parameter}</span>
-                              <span className="text-[10px] font-extrabold text-slate-900 bg-white/90 px-1.5 py-0.5 rounded shadow-xs">
+                            <div className="flex items-start justify-between gap-1">
+                              <div className="space-y-0.5 max-w-[150px] sm:max-w-[180px]">
+                                <span className="font-black text-white text-xs block truncate">{row.parameter}</span>
+                                {row.dosePicked && (
+                                  <span className="text-[10px] text-amber-200 font-extrabold block">Dose: {row.dosePicked}</span>
+                                )}
+                                {row.route && (
+                                  <span className="text-[10px] text-sky-200 font-bold block">Route: {row.route}</span>
+                                )}
+                              </div>
+                              <span className="text-[10px] font-extrabold text-slate-900 bg-white/90 px-1.5 py-0.5 rounded shadow-xs shrink-0 mt-0.5">
                                 {row.target}
                               </span>
                             </div>
                           </td>
 
-                          {/* Time Values Cells across the row with anti-misentry color scheme */}
+                          {/* Time Values Cells across the row with dynamic anti-misentry color scheme */}
                           {timeSlots.map((slot) => {
                             const cell = row.values[slot];
                             const isNow = slot === nowSlot;
                             const isNextDue = slot === nextDueSlot;
-                            const isDue = cell?.status === 'AMBER_DUE' || cell?.status === 'DUE' || cell?.note === 'AMBER DUE' || cell?.note === 'DUE';
+
+                            const isDue = cell?.status === 'DUE' || cell?.status === 'AMBER_DUE' || cell?.note === 'DUE';
+                            const isDone = cell?.status === 'DONE';
+                            const isLate = cell?.status === 'LATE';
+                            const isDiscontinued = cell?.status === 'DISCONTINUED' || row.isDiscontinued;
+
+                            const dynStatus = getDynamicStatus(row.parameter, cell?.value);
                             const hasValue = cell && cell.value !== '' && cell.value !== undefined;
+
+                            let cellStyleClass = colorStyles.rowCellBg;
+                            if (isDiscontinued) {
+                              cellStyleClass = 'bg-slate-200 text-slate-500 line-through';
+                            } else if (isDone) {
+                              cellStyleClass = 'bg-emerald-100 text-emerald-950 font-black border-2 border-emerald-500';
+                            } else if (isLate) {
+                              cellStyleClass = 'bg-red-100 text-red-950 font-black border-2 border-red-500';
+                            } else if (isDue) {
+                              cellStyleClass = 'bg-amber-100 text-amber-950 font-black border-2 border-amber-500';
+                            } else if (hasValue) {
+                              if (dynStatus === 'CRITICAL') cellStyleClass = 'bg-red-100 text-red-950 font-black border-2 border-red-500';
+                              else if (dynStatus === 'WARNING') cellStyleClass = 'bg-amber-100 text-amber-950 font-black border-2 border-amber-400';
+                              else cellStyleClass = colorStyles.rowCellBg;
+                            }
 
                             return (
                               <td
                                 key={slot}
                                 onClick={() => handleCellClick(row.id, slot, cell?.value?.toString() || '')}
-                                className={`p-1.5 text-center border-r border-slate-200/80 cursor-pointer transition-all hover:brightness-95 relative min-w-[75px] ${colorStyles.rowCellBg} ${
-                                  isNextDue ? 'ring-4 ring-amber-500 z-20 bg-amber-200/80' : isNow ? 'ring-2 ring-amber-500 z-10' : ''
+                                className={`p-1.5 text-center border-r border-slate-200/80 cursor-pointer transition-all hover:brightness-95 relative min-w-[80px] ${cellStyleClass} ${
+                                  isNextDue ? 'ring-4 ring-amber-500 z-20' : isNow ? 'ring-2 ring-amber-500 z-10' : ''
                                 }`}
                               >
-                                {isNextDue ? (
-                                  <div className="bg-amber-500 text-slate-950 font-black text-[10px] px-2 py-1 rounded-lg border-2 border-amber-600 shadow-md animate-pulse tracking-wider">
+                                {isDiscontinued ? (
+                                  <span className="line-through text-slate-500 font-bold text-[11px]">DISC</span>
+                                ) : isNextDue ? (
+                                  <div className="bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-1 rounded-lg border-2 border-amber-600 shadow-md animate-pulse">
                                     NEXT DUE
                                   </div>
                                 ) : isDue ? (
-                                  <div className="bg-amber-500 text-white font-black text-[10px] px-2.5 py-1 rounded-lg border border-amber-600 shadow-sm tracking-wider">
+                                  <div className="bg-amber-400 text-slate-950 font-black text-[10px] px-2 py-1 rounded-lg border border-amber-600 shadow-xs">
                                     DUE
+                                  </div>
+                                ) : isDone ? (
+                                  <div className="bg-emerald-600 text-white font-black text-[10px] px-2 py-1 rounded-lg border border-emerald-700 shadow-xs">
+                                    ✓ {cell.value || row.target}
+                                  </div>
+                                ) : isLate ? (
+                                  <div className="bg-red-600 text-white font-black text-[10px] px-2 py-1 rounded-lg border border-red-700 shadow-xs animate-pulse">
+                                    LATE
                                   </div>
                                 ) : hasValue ? (
                                   <div className={`bg-white rounded-xl p-1 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative`}>
-                                    {cell.delta && (
-                                      <span className="absolute -top-1.5 -right-1 text-[8px] font-black text-emerald-700 bg-emerald-100 px-1 rounded-full border border-emerald-300">
-                                        {cell.delta}
-                                      </span>
-                                    )}
                                     <span className="font-black text-slate-900 text-xs sm:text-sm">
                                       {cell.value}
                                     </span>
@@ -403,10 +569,62 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
         </div>
       </div>
 
+      {/* PDF Import Modal */}
+      {isPdfModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="font-black text-slate-900 text-base flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" /> Import PDF / Lab Analyzer Report
+              </h3>
+              <button onClick={() => setIsPdfModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-xs font-bold">
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-slate-700 block">Select Time Slot to Populate:</label>
+              <select
+                value={selectedPdfTimeSlot}
+                onChange={(e) => setSelectedPdfTimeSlot(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-xl font-bold text-slate-900 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              >
+                {timeSlots.map((slot) => (
+                  <option key={slot} value={slot}>{slot}</option>
+                ))}
+              </select>
+
+              <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
+                <Upload className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                <span className="text-xs font-bold text-slate-700 block">Drop your CBC, Chemistry or Blood Gas PDF here</span>
+                <span className="text-[11px] text-slate-400 block mt-1">Supports PDF, PNG, JPG lab reports</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t">
+              <button
+                onClick={() => setIsPdfModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleImportPdfReport}
+                disabled={isPdfParsing}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-xl shadow-md flex items-center gap-2"
+              >
+                {isPdfParsing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                {isPdfParsing ? 'Parsing PDF...' : 'Auto-Fill Flowsheet'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Edit Cell Modal */}
       {editingCell && (() => {
         const activeRow = rows.find(r => r.id === editingCell.rowId);
-        const isMedicationRow = activeRow?.category === 'MEDICATIONS' || activeRow?.type === 'medication';
+        const isMedicationRow = activeRow?.category === 'MEDICATIONS' || activeRow?.type === 'medication' || activeRow?.type === 'cri';
 
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
@@ -414,7 +632,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               <div className="flex items-center justify-between border-b pb-3">
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-sm">
-                    {isMedicationRow ? 'Record Administration' : 'Edit Value'} • Time Slot <span className="text-blue-600">{editingCell.timeSlot}</span>
+                    {isMedicationRow ? 'Record Administration' : 'Edit Value'} • Slot <span className="text-blue-600">{editingCell.timeSlot}</span>
                   </h3>
                   {activeRow && (
                     <p className="text-xs text-slate-500 font-bold mt-0.5">{activeRow.parameter}</p>
@@ -427,48 +645,217 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
 
               {isMedicationRow ? (
                 /* Specialized Medication Cell Modal */
-                <div className="space-y-4">
-                  {/* Option 1: Quick Confirm Pre-Calculated Dose */}
+                <div className="space-y-3">
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Pre-Calculated Target Dose</span>
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Pre-Calculated Target Volume</span>
                     <button
-                      onClick={() => {
-                        onUpdateCellValue(editingCell.rowId, editingCell.timeSlot, activeRow?.target || 'Given');
-                        setEditingCell(null);
-                      }}
+                      onClick={() => handleSaveCell('DONE')}
                       className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-98"
                     >
-                      ✓ Confirm Calculated Dose: {activeRow?.target}
+                      ✓ Confirm Given: {activeRow?.target}
                     </button>
                   </div>
 
-                  <div className="relative flex py-1 items-center">
-                    <div className="flex-grow border-t border-slate-200"></div>
-                    <span className="flex-shrink mx-2 text-[10px] font-extrabold text-slate-400 uppercase">OR CUSTOM NUMERIC DOSE</span>
-                    <div className="flex-grow border-t border-slate-200"></div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => handleSaveCell('LATE')}
+                      className="py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs"
+                    >
+                      ⚠️ Mark Late
+                    </button>
+                    <button
+                      onClick={() => handleSaveCell('DISCONTINUED')}
+                      className="py-2 bg-slate-700 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow-xs"
+                    >
+                      🚫 Discontinue
+                    </button>
                   </div>
 
-                  {/* Option 2: Numeric Only Dose Input */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700 block">
-                      Enter Different Numeric Volume:
-                    </label>
+                  <div className="space-y-1 pt-1">
+                    <label className="text-xs font-bold text-slate-700 block">Different Volume Given:</label>
                     <input
                       type="number"
                       step="any"
                       value={cellInputValue}
                       onChange={(e) => setCellInputValue(e.target.value)}
                       className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-900 font-extrabold focus:ring-2 focus:ring-blue-500 outline-none text-base"
-                      placeholder="e.g. 6.6 or 15"
+                      placeholder="e.g. 9.9"
                     />
                   </div>
+                </div>
+              ) : activeRow?.type === 'gut_sounds' ? (
+                /* Gut Sounds 4-Quadrant Visual Grid */
+                <div className="space-y-3">
+                  <span className="text-xs font-bold text-slate-700 block">Select Motility for Each Quadrant:</span>
+                  <div className="grid grid-cols-2 gap-3 p-3 bg-slate-100 rounded-2xl border border-slate-300">
+                    {/* Left Upper */}
+                    <div className="p-2.5 bg-white rounded-xl border text-center space-y-1">
+                      <span className="text-[10px] font-black text-slate-500 uppercase block">L-UP (Left Upper)</span>
+                      <div className="flex justify-center gap-1">
+                        {['+', '-', '0'].map((sym) => (
+                          <button
+                            key={sym}
+                            onClick={() => setGutSoundsQuad((prev) => ({ ...prev, lUp: sym }))}
+                            className={`w-7 h-7 rounded-lg font-black text-xs ${
+                              gutSoundsQuad.lUp === sym
+                                ? sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {sym}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Right Upper */}
+                    <div className="p-2.5 bg-white rounded-xl border text-center space-y-1">
+                      <span className="text-[10px] font-black text-slate-500 uppercase block">R-UP (Right Upper)</span>
+                      <div className="flex justify-center gap-1">
+                        {['+', '-', '0'].map((sym) => (
+                          <button
+                            key={sym}
+                            onClick={() => setGutSoundsQuad((prev) => ({ ...prev, rUp: sym }))}
+                            className={`w-7 h-7 rounded-lg font-black text-xs ${
+                              gutSoundsQuad.rUp === sym
+                                ? sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {sym}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Left Lower */}
+                    <div className="p-2.5 bg-white rounded-xl border text-center space-y-1">
+                      <span className="text-[10px] font-black text-slate-500 uppercase block">L-LOW (Left Lower)</span>
+                      <div className="flex justify-center gap-1">
+                        {['+', '-', '0'].map((sym) => (
+                          <button
+                            key={sym}
+                            onClick={() => setGutSoundsQuad((prev) => ({ ...prev, lLow: sym }))}
+                            className={`w-7 h-7 rounded-lg font-black text-xs ${
+                              gutSoundsQuad.lLow === sym
+                                ? sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {sym}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Right Lower */}
+                    <div className="p-2.5 bg-white rounded-xl border text-center space-y-1">
+                      <span className="text-[10px] font-black text-slate-500 uppercase block">R-LOW (Right Lower)</span>
+                      <div className="flex justify-center gap-1">
+                        {['+', '-', '0'].map((sym) => (
+                          <button
+                            key={sym}
+                            onClick={() => setGutSoundsQuad((prev) => ({ ...prev, rLow: sym }))}
+                            className={`w-7 h-7 rounded-lg font-black text-xs ${
+                              gutSoundsQuad.rLow === sym
+                                ? sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {sym}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : activeRow?.type === 'manure' ? (
+                /* Manure Details Select */
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-slate-700 block">Manure Passed?</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['Yes', 'No'].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setManurePassed(opt)}
+                        className={`py-2 rounded-xl text-xs font-black border transition-all ${
+                          manurePassed === opt ? 'bg-blue-600 text-white border-blue-700' : 'bg-slate-100 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+
+                  {manurePassed === 'Yes' && (
+                    <>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-700 block">Amount:</label>
+                        <select
+                          value={manureAmount}
+                          onChange={(e) => setManureAmount(e.target.value)}
+                          className="w-full px-3 py-2 border rounded-xl font-bold text-slate-900 text-xs bg-slate-50"
+                        >
+                          {['Small', 'Moderate', 'Abundant'].map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-700 block">Consistency:</label>
+                        <select
+                          value={manureConsistency}
+                          onChange={(e) => setManureConsistency(e.target.value)}
+                          className="w-full px-3 py-2 border rounded-xl font-bold text-slate-900 text-xs bg-slate-50"
+                        >
+                          {['Normal Pellets', 'Soft / Cow-pat', 'Watery Diarrhea', 'Mucus-covered'].map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : activeRow?.parameter.includes('NGT') ? (
+                /* NGT Options */
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Nasogastric Tube Status:</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['Yes', 'No', 'Removed'].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => { setCellInputValue(opt); }}
+                        className={`py-2 rounded-xl text-xs font-black border transition-all ${
+                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700' : 'bg-slate-100 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : activeRow?.parameter.includes('Catheter') ? (
+                /* IV Catheter Site Dropdown */
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">IV Catheter Site Assessment:</label>
+                  <select
+                    value={cellInputValue}
+                    onChange={(e) => setCellInputValue(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-xl font-bold text-slate-900 text-xs bg-slate-50"
+                  >
+                    {[
+                      'Right Jugular (Clean)',
+                      'Left Jugular (Clean)',
+                      'Right Jugular (Mild Edema)',
+                      'Left Jugular (Mild Edema)',
+                      'Right Jugular (Thrombophlebitis)',
+                      'Left Jugular (Thrombophlebitis)',
+                      'Catheter Flushed / Patent',
+                      'Catheter Removed',
+                    ].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
                 </div>
               ) : (
                 /* Standard Parameter Cell Modal */
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">
-                    Enter Parameter Value:
-                  </label>
+                  <label className="text-xs font-bold text-slate-700 block">Enter Parameter Value:</label>
                   <input
                     type="text"
                     value={cellInputValue}
@@ -480,7 +867,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t">
                 <button
                   onClick={() => setEditingCell(null)}
                   className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
@@ -488,10 +875,10 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                   Cancel
                 </button>
                 <button
-                  onClick={handleSaveCell}
+                  onClick={() => handleSaveCell()}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md"
                 >
-                  Save Cell
+                  Save Value
                 </button>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Patient, FlowsheetRow, DrugFormularyItem, SurgeonScheduleSettings } from './types';
+import { Patient, FlowsheetRow, FlowsheetValue, DrugFormularyItem, SurgeonScheduleSettings } from './types';
 import {
   INITIAL_PATIENTS,
   INITIAL_TIME_SLOTS,
@@ -42,17 +42,24 @@ export default function App() {
   };
 
   // Update cell value directly in flowsheet
-  const handleUpdateCellValue = (rowId: string, timeSlot: string, newValue: string) => {
+  const handleUpdateCellValue = (
+    rowId: string,
+    timeSlot: string,
+    newValue: string,
+    status?: FlowsheetValue['status']
+  ) => {
     setFlowsheetRows((prev) =>
       prev.map((row) => {
         if (row.id === rowId) {
+          const currentCell = row.values[timeSlot];
           return {
             ...row,
             values: {
               ...row.values,
               [timeSlot]: {
+                ...currentCell,
                 value: newValue,
-                status: 'NORMAL',
+                status: status || currentCell?.status || 'NORMAL',
               },
             },
           };
@@ -60,7 +67,6 @@ export default function App() {
         return row;
       })
     );
-    showToast(`Updated ${rowId} for time ${timeSlot}`);
   };
 
   // Add round values from modal

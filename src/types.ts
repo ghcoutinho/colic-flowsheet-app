@@ -29,7 +29,7 @@ export interface Patient {
 export interface FlowsheetValue {
   value: string | number;
   delta?: number | string; // e.g. +2, -0.5
-  status?: 'NORMAL' | 'AMBER_DUE' | 'DUE' | 'WARNING' | 'CRITICAL';
+  status?: 'NORMAL' | 'AMBER_DUE' | 'DUE' | 'WARNING' | 'CRITICAL' | 'DONE' | 'LATE' | 'DISCONTINUED';
   note?: string;
 }
 
@@ -41,8 +41,11 @@ export interface FlowsheetRow {
   parameter: string;
   unit?: string;
   target: string;
+  route?: string; // e.g., "IV", "IM", "PO", "IV CRI", "SC"
+  dosePicked?: string; // e.g., "1.1 mg/kg", "6.6 mg/kg"
+  isDiscontinued?: boolean;
   bandColor: 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'pink' | 'slate';
-  type?: 'numeric' | 'select' | 'text' | 'medication' | 'cri';
+  type?: 'numeric' | 'select' | 'text' | 'medication' | 'cri' | 'gut_sounds' | 'manure';
   // Mapping of time slot (e.g. "10:00", "11:00", "12:00", "13:00", "14:00", "15:00") to FlowsheetValue
   values: Record<string, FlowsheetValue>;
 }
