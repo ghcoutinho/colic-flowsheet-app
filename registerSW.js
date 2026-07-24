@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/colic-flowsheet-app/sw.js', { scope: '/colic-flowsheet-app/' })})}
