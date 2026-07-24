@@ -155,6 +155,17 @@ export default function Flowsheet({ patient }: Props) {
     setRounds(newRounds);
   };
 
+  const deleteRound = (index: number) => {
+    if (rounds.length <= 1) {
+      alert("At least one round must remain on the flowsheet.");
+      return;
+    }
+    const rTime = rounds[index]?.time || 'this round';
+    if (window.confirm(`Delete round at ${rTime}?`)) {
+      setRounds(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
   // Place DUE markers at the given times, creating new round columns when a
   // matching time doesn't exist yet. GIVEN doses are never overwritten.
   const placeDueMarkers = (rs: RoundData[], drugName: string, times: string[]): RoundData[] => {
@@ -405,8 +416,17 @@ export default function Flowsheet({ patient }: Props) {
               <th>Parameter</th>
               <th>Target</th>
               {rounds.map((r, i) => (
-                <th key={i} style={{ minWidth: '120px' }}>
-                  <input type="time" value={r.time} onChange={e => updateRound(i, 'time', e.target.value)} style={{ background: 'transparent', border: 'none', fontWeight: 600, color: 'inherit', width: '100%' }} />
+                <th key={i} style={{ minWidth: '130px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.2rem' }}>
+                    <input type="time" value={r.time} onChange={e => updateRound(i, 'time', e.target.value)} style={{ background: 'transparent', border: 'none', fontWeight: 600, color: 'inherit', width: '100%' }} />
+                    <button
+                      type="button"
+                      className="med-remove"
+                      title={`Delete round at ${r.time}`}
+                      onClick={() => deleteRound(i)}
+                      style={{ opacity: 0.6, fontSize: '1.1rem', padding: '0 2px', lineHeight: 1 }}
+                    >×</button>
+                  </div>
                 </th>
               ))}
             </tr>
