@@ -301,12 +301,75 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
     return null;
   };
 
+  const isNumericRow = (row: FlowsheetRow) => {
+    if (row.type === 'numeric') return true;
+    if (row.type === 'select' || row.type === 'text' || row.type === 'medication' || row.type === 'cri' || row.type === 'gut_sounds' || row.type === 'manure') return false;
+    const p = row.parameter.toLowerCase();
+    return (
+      p.includes('rate') ||
+      p.includes('temp') ||
+      p.includes('crt') ||
+      p.includes('score') ||
+      p.includes('reflux vol') ||
+      p.includes('pcv') ||
+      p.includes('protein') ||
+      p.includes('fibrinogen') ||
+      p.includes('wbc') ||
+      p.includes('neutrophil') ||
+      p.includes('lymphocyte') ||
+      p.includes('monocyte') ||
+      p.includes('eosinophil') ||
+      p.includes('lactate') ||
+      p.includes('creatinine') ||
+      p.includes('glucose') ||
+      p.includes('obel')
+    );
+  };
+
+  const handleInlineNumericKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    currentRow: FlowsheetRow,
+    slot: string,
+    val: string
+  ) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const cleanVal = val.trim();
+      const status = getDynamicStatus(currentRow.parameter, cleanVal);
+      onUpdateCellValue(currentRow.id, slot, cleanVal, status);
+
+      // Find next numeric row in filteredRows below currentRow
+      const currIndex = filteredRows.findIndex(r => r.id === currentRow.id);
+      for (let i = currIndex + 1; i < filteredRows.length; i++) {
+        const nextRow = filteredRows[i];
+        if (isNumericRow(nextRow)) {
+          const nextInputEl = document.getElementById(`inline-num-input-${nextRow.id}-${slot}`) as HTMLInputElement;
+          if (nextInputEl) {
+            nextInputEl.focus();
+            nextInputEl.select();
+            break;
+          }
+        }
+      }
+    }
+  };
+
   const handleCellClick = (rowId: string, timeSlot: string, currentValue: string) => {
+    const row = rows.find(r => r.id === rowId);
+    if (row && isNumericRow(row)) {
+      // Direct inline editing for numeric parameters - no modal dialog box
+      const inputEl = document.getElementById(`inline-num-input-${rowId}-${timeSlot}`) as HTMLInputElement;
+      if (inputEl) {
+        inputEl.focus();
+        inputEl.select();
+      }
+      return;
+    }
+
     setEditingCell({ rowId, timeSlot, currentValue });
     setCellInputValue(currentValue);
 
     // Initialize gut sounds state if gut_sounds row
-    const row = rows.find(r => r.id === rowId);
     if (row?.type === 'gut_sounds' && currentValue.includes('L-UP')) {
       const parts = currentValue.split('|').map(s => s.trim());
       const getSymbol = (str: string) => str.split(':')[1]?.trim() || '+';
@@ -610,6 +673,37 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                 ) : isLate ? (
                                   <div className="bg-red-600 text-white font-black text-[10px] px-2 py-1 rounded-lg border border-red-700 shadow-xs animate-pulse">
                                     LATE
+                                  </div>
+                                ) : isNumericRow(row) ? (
+                                  <div className={`bg-white rounded-xl p-0.5 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative`}>
+                                    {calculatedDelta && (
+                                      <span className={`absolute -top-2 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full border shadow-xs pointer-events-none ${
+                                        calculatedDelta.startsWith('+') && calculatedDelta !== '+0'
+                                          ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                          : calculatedDelta.startsWith('-')
+                                          ? 'bg-sky-100 text-sky-800 border-sky-300'
+                                          : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                      }`}>
+                                        {calculatedDelta}
+                                      </span>
+                                    )}
+                                    <input
+                                      id={`inline-num-input-${row.id}-${slot}`}
+                                      type="number"
+                                      step="any"
+                                      defaultValue={cell?.value !== undefined ? cell.value : ''}
+                                      key={`${row.id}-${slot}-${cell?.value}`}
+                                      onBlur={(e) => {
+                                        const cleanVal = e.target.value.trim();
+                                        if (cleanVal !== (cell?.value?.toString() || '')) {
+                                          const status = getDynamicStatus(row.parameter, cleanVal);
+                                          onUpdateCellValue(row.id, slot, cleanVal, status);
+                                        }
+                                      }}
+                                      onKeyDown={(e) => handleInlineNumericKeyDown(e, row, slot, (e.target as HTMLInputElement).value)}
+                                      className="w-full text-center font-black text-slate-900 text-xs sm:text-sm bg-transparent outline-none focus:ring-2 focus:ring-blue-500 rounded-lg py-1"
+                                      placeholder="—"
+                                    />
                                   </div>
                                 ) : hasValue ? (
                                   row.type === 'gut_sounds' ? (
