@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { RoundData } from '../utils/algorithms';
-import { Download } from 'lucide-react';
+import { CheckCircle2, RefreshCw } from 'lucide-react';
 
 export default function PrognosisCalculator() {
   const [lastRoundTime, setLastRoundTime] = useState<string>('');
@@ -97,16 +97,25 @@ export default function PrognosisCalculator() {
       try {
         const rounds = JSON.parse(saved) as RoundData[];
         if (rounds.length > 0) {
-          const r = rounds[rounds.length - 1];
-          setLastRoundTime(r.time || '');
+          // Find latest round with clinical data (or fallback to very last)
+          let targetRound = rounds[rounds.length - 1];
+          for (let i = rounds.length - 1; i >= 0; i--) {
+            const r = rounds[i];
+            if (r.hr !== '' || r.pcv !== '' || r.lactate !== '' || r.rr !== '' || r.painScore !== '' || r.gutSounds !== '') {
+              targetRound = r;
+              break;
+            }
+          }
+
+          setLastRoundTime(targetRound.time || '');
           const newInputs = {
             ...inputs,
-            hr: String(r.hr || ''),
-            rr: String(r.rr || ''),
-            pcv: String(r.pcv || ''),
-            lactate: String(r.lactate || ''),
-            pain: mapPain(r.painScore, r.painBehavior),
-            gutSounds: mapGutSounds(r.gutSounds)
+            hr: targetRound.hr !== undefined && targetRound.hr !== '' ? String(targetRound.hr) : inputs.hr,
+            rr: targetRound.rr !== undefined && targetRound.rr !== '' ? String(targetRound.rr) : inputs.rr,
+            pcv: targetRound.pcv !== undefined && targetRound.pcv !== '' ? String(targetRound.pcv) : inputs.pcv,
+            lactate: targetRound.lactate !== undefined && targetRound.lactate !== '' ? String(targetRound.lactate) : inputs.lactate,
+            pain: mapPain(targetRound.painScore, targetRound.painBehavior),
+            gutSounds: mapGutSounds(targetRound.gutSounds)
           };
           setInputs(newInputs);
           calculateProbabilities(newInputs);
@@ -133,13 +142,24 @@ export default function PrognosisCalculator() {
           </div>
 
           <button 
-            className="btn btn-ghost" 
+            className="btn btn-primary" 
             onClick={importFromFlowsheet}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
-            <Download size={16} /> Import Latest Flowsheet Results
-            {lastRoundTime && <span className="badge" style={{ marginLeft: '4px' }}>{lastRoundTime}</span>}
+            <RefreshCw size={16} /> Auto-Import Flowsheet Results
           </button>
+        </div>
+
+        {/* Sync Banner */}
+        <div style={{ padding: '0.75rem 1rem', background: 'var(--primary-light)', borderLeft: '4px solid var(--primary-color)', borderRadius: '6px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary-hover)' }}>
+            <CheckCircle2 size={18} /> Linked to Clinical Flowsheet
+          </div>
+          {lastRoundTime && (
+            <div style={{ fontSize: '0.8rem', color: 'var(--primary-hover)', fontWeight: 700 }}>
+              Latest Flowsheet Round Loaded: <span className="badge" style={{ backgroundColor: 'var(--primary-color)', color: 'white' }}>{lastRoundTime}</span>
+            </div>
+          )}
         </div>
 
         {/* Systemic Parameters */}
@@ -149,15 +169,15 @@ export default function PrognosisCalculator() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
           <div className="input-group">
             <label className="input-label">Heart Rate (bpm)</label>
-            <input className="input-field" type="number" value={inputs.hr} onChange={e => setInputs({...inputs, hr: e.target.value})} placeholder="Ex: 44" />
+            <input className="input-field" type="number" value={inputs.hr} onChange={e => { const updated = {...inputs, hr: e.target.value}; setInputs(updated); calculateProbabilities(updated); }} placeholder="Ex: 44" />
           </div>
           <div className="input-group">
             <label className="input-label">Respiratory Rate (brpm)</label>
-            <input className="input-field" type="number" value={inputs.rr} onChange={e => setInputs({...inputs, rr: e.target.value})} placeholder="Ex: 16" />
+            <input className="input-field" type="number" value={inputs.rr} onChange={e => { const updated = {...inputs, rr: e.target.value}; setInputs(updated); calculateProbabilities(updated); }} placeholder="Ex: 16" />
           </div>
           <div className="input-group">
             <label className="input-label">Abdominal Pain Intensity</label>
-            <select className="input-field" value={inputs.pain} onChange={e => setInputs({...inputs, pain: e.target.value})}>
+            <select className="input-field" value={inputs.pain} onChange={e => { const updated = {...inputs, pain: e.target.value}; setInputs(updated); calculateProbabilities(updated); }}>
               <option value="0">Absent or Mild (Responsive)</option>
               <option value="1">Moderate / Intermittent</option>
               <option value="2">Severe / Continuous (Refractory)</option>
@@ -165,7 +185,7 @@ export default function PrognosisCalculator() {
           </div>
           <div className="input-group">
             <label className="input-label">Intestinal Motility (Gut Sounds)</label>
-            <select className="input-field" value={inputs.gutSounds} onChange={e => setInputs({...inputs, gutSounds: e.target.value})}>
+            <select className="input-field" value={inputs.gutSounds} onChange={e => { const updated = {...inputs, gutSounds: e.target.value}; setInputs(updated); calculateProbabilities(updated); }}>
               <option value="0">Normal</option>
               <option value="1">Reduced / Hypomotile</option>
               <option value="2">Totally Absent</option>
@@ -180,22 +200,22 @@ export default function PrognosisCalculator() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
           <div className="input-group">
             <label className="input-label">Hematocrit (PCV %)</label>
-            <input className="input-field" type="number" value={inputs.pcv} onChange={e => setInputs({...inputs, pcv: e.target.value})} placeholder="Ex: 38" />
+            <input className="input-field" type="number" value={inputs.pcv} onChange={e => { const updated = {...inputs, pcv: e.target.value}; setInputs(updated); calculateProbabilities(updated); }} placeholder="Ex: 38" />
           </div>
           <div className="input-group">
             <label className="input-label">Blood Lactate (mmol/L)</label>
-            <input className="input-field" type="number" step="0.1" value={inputs.lactate} onChange={e => setInputs({...inputs, lactate: e.target.value})} placeholder="Ex: 1.2" />
+            <input className="input-field" type="number" step="0.1" value={inputs.lactate} onChange={e => { const updated = {...inputs, lactate: e.target.value}; setInputs(updated); calculateProbabilities(updated); }} placeholder="Ex: 1.2" />
           </div>
           <div className="input-group">
             <label className="input-label">Transrectal Exam</label>
-            <select className="input-field" value={inputs.rectal} onChange={e => setInputs({...inputs, rectal: e.target.value})}>
+            <select className="input-field" value={inputs.rectal} onChange={e => { const updated = {...inputs, rectal: e.target.value}; setInputs(updated); calculateProbabilities(updated); }}>
               <option value="0">Normal or Simple Impaction</option>
               <option value="1">Evident Structural Abnormalities</option>
             </select>
           </div>
           <div className="input-group">
             <label className="input-label">Ultrasonography (FLASH)</label>
-            <select className="input-field" value={inputs.us} onChange={e => setInputs({...inputs, us: e.target.value})}>
+            <select className="input-field" value={inputs.us} onChange={e => { const updated = {...inputs, us: e.target.value}; setInputs(updated); calculateProbabilities(updated); }}>
               <option value="0">Normal</option>
               <option value="1">Abnormal (Free fluid, distended loops)</option>
             </select>

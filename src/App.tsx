@@ -161,7 +161,7 @@ function App() {
           {activeTab === 'Patients' && <PatientManager currentPatient={patient} onSessionChange={handleSessionChange} />}
           {activeTab === 'Identification' && <Identification key={sessionId} patient={patient} setPatient={setPatient} />}
           {activeTab === 'Flowsheet' && <Flowsheet key={sessionId} patient={patient} />}
-          {activeTab === 'Prognosis' && <PrognosisCalculator />}
+          {activeTab === 'Prognosis' && <PrognosisCalculator key={`${sessionId}_prognosis`} />}
           {activeTab === 'Dose Calculator' && <DoseCalculator patient={patient} setPatient={setPatient} />}
           {activeTab === 'Standing Orders' && renderTable('Standing Orders')}
           {activeTab === 'References' && <ReferenceIntervals />}
