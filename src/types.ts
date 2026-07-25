@@ -63,6 +63,14 @@ export interface FlowsheetRow {
   bandColor: 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'pink' | 'slate';
   type?: 'numeric' | 'select' | 'text' | 'medication' | 'cri' | 'gut_sounds' | 'manure' | 'rectal_exam' | 'flash_us' | 'peritoneal' | 'response_therapy';
   drugCategory?: string;
+
+  // Lab Reference Range Properties
+  sectionGroup?: 'Hematology' | 'Chemistry' | 'Immunology' | 'Quick Labs';
+  referenceMin?: number;
+  referenceMax?: number;
+  criticalMin?: number;
+  criticalMax?: number;
+
   // Mapping of time slot (e.g. "10:00", "11:00", "12:00", "13:00", "14:00", "15:00") to FlowsheetValue
   values: Record<string, FlowsheetValue>;
 }

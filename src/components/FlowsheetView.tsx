@@ -62,6 +62,16 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
   }, []);
 
   // Determine the time slot closest to the current system clock
+
+  const handleCellUpdate = (rowId: string, timeSlot: string, value: string | number, status?: any) => {
+    const valStr = String(value);
+    onUpdateCellValue(rowId, timeSlot, valStr, status);
+    if (rowId === 'ht_pcv') onUpdateCellValue('lab_pcv', timeSlot, valStr, status);
+    if (rowId === 'lab_pcv') onUpdateCellValue('ht_pcv', timeSlot, valStr, status);
+    if (rowId === 'tp') onUpdateCellValue('lab_tp', timeSlot, valStr, status);
+    if (rowId === 'lab_tp') onUpdateCellValue('tp', timeSlot, valStr, status);
+  };
+
   const getNowSlot = (slots: string[], clockStr: string) => {
     if (!slots || slots.length === 0) return '';
     const [ch, cm] = clockStr.split(':').map(Number);
@@ -147,7 +157,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               status = 'NORMAL';
             }
             if (trendRow.values[slot]?.value !== trendText) {
-              onUpdateCellValue(trendRow.id, slot, trendText, status);
+              handleCellUpdate(trendRow.id, slot, trendText, status);
             }
           }
           prevPcv = numPcv;
@@ -169,7 +179,13 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
   const groupedRows: { [key: string]: FlowsheetRow[] } = {};
   filteredRows.forEach((row) => {
     let groupKey = row.categoryLabel || row.category;
-    if (row.category === 'CLINICOPATHOLOGY' || groupKey.includes('CLINICOPATHOLOGY')) {
+    if (row.category === 'CLINICOPATHOLOGY') {
+      if (row.sectionGroup) {
+        groupKey = row.sectionGroup === 'Quick Labs' ? 'PCV, TP and Systemic Lactate' : row.sectionGroup;
+      } else {
+        groupKey = 'CLINICOPATHOLOGY & LABS';
+      }
+    } else if (groupKey.includes('CLINICOPATHOLOGY')) {
       groupKey = 'CLINICOPATHOLOGY & LABS';
     }
     if (!groupedRows[groupKey]) {
@@ -189,20 +205,32 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
       const hasVal = cell && cell.value !== '' && cell.value !== undefined;
       if (!hasVal) {
         if (!isSlotCollected) {
-          onUpdateCellValue(row.id, timeSlot, '', 'PROCESSING');
+          handleCellUpdate(row.id, timeSlot, '', 'PROCESSING');
         } else {
-          onUpdateCellValue(row.id, timeSlot, '', 'NORMAL');
+          handleCellUpdate(row.id, timeSlot, '', 'NORMAL');
         }
       }
     });
   };
 
   // Dynamic status evaluation based on JSON dataset thresholds
-  const getDynamicStatus = (param: string, value: any): 'NORMAL' | 'WARNING' | 'CRITICAL' => {
+  const getDynamicStatus = (row: FlowsheetRow, value: any): 'NORMAL' | 'WARNING' | 'CRITICAL' => {
     if (value === undefined || value === null || value === '') return 'NORMAL';
-    const p = param.toLowerCase();
+    const num = parseFloat(String(value));
+    
+    if (!isNaN(num)) {
+      if (row.criticalMin !== undefined && num <= row.criticalMin) return 'CRITICAL';
+      if (row.criticalMax !== undefined && num >= row.criticalMax) return 'CRITICAL';
+      if (row.referenceMin !== undefined && num < row.referenceMin) return 'WARNING';
+      if (row.referenceMax !== undefined && num > row.referenceMax) return 'WARNING';
+      
+      if (row.referenceMin !== undefined || row.referenceMax !== undefined || row.criticalMin !== undefined || row.criticalMax !== undefined) {
+          return 'NORMAL';
+      }
+    }
+
+    const p = row.parameter.toLowerCase();
     const strVal = String(value).toLowerCase();
-    const num = parseFloat(strVal);
 
     if (p.includes('reflux vol')) {
       // User rule: < 2L shows RED
@@ -364,8 +392,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
       const cell = currentRow.values[slot];
       
       if (cleanVal !== (cell?.value?.toString() || '')) {
-        const status = getDynamicStatus(currentRow.parameter, cleanVal);
-        onUpdateCellValue(currentRow.id, slot, cleanVal, status);
+        const status = getDynamicStatus(currentRow, cleanVal);
+        handleCellUpdate(currentRow.id, slot, cleanVal, status);
       }
 
       // Find next numeric row in filteredRows below (or above if Shift is held)
@@ -444,8 +472,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
         valToSave = `${valToSave} ${unitStr}`;
       }
 
-      const calculatedStatus = statusOverride || (isMed ? 'DONE' : getDynamicStatus(activeRow?.parameter || '', valToSave));
-      onUpdateCellValue(editingCell.rowId, editingCell.timeSlot, valToSave, calculatedStatus);
+      const calculatedStatus = statusOverride || (isMed ? 'DONE' : activeRow ? getDynamicStatus(activeRow, valToSave) : 'NORMAL');
+      handleCellUpdate(editingCell.rowId, editingCell.timeSlot, valToSave, calculatedStatus);
       setEditingCell(null);
     }
   };
@@ -483,7 +511,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
         if (match && match[1]) {
           const row = rows.find(r => r.parameter.toLowerCase().includes(keyword.toLowerCase()));
           if (row) {
-             onUpdateCellValue(row.id, selectedPdfTimeSlot, match[1], 'NORMAL');
+             handleCellUpdate(row.id, selectedPdfTimeSlot, match[1], 'NORMAL');
              filledCount++;
           }
         }
@@ -741,7 +769,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                             const isLate = cell?.status === 'LATE';
                             const isDiscontinued = cell?.status === 'DISCONTINUED' || row.isDiscontinued;
 
-                            const dynStatus = getDynamicStatus(row.parameter, cell?.value);
+                            const dynStatus = getDynamicStatus(row, cell?.value);
                             const hasValue = cell && cell.value !== '' && cell.value !== undefined;
 
                             // Calculate dynamic delta from previous non-empty numeric cell
@@ -832,8 +860,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                       onBlur={(e) => {
                                         const cleanVal = e.target.value.trim();
                                         if (cleanVal !== (cell?.value?.toString() || '')) {
-                                          const status = getDynamicStatus(row.parameter, cleanVal);
-                                          onUpdateCellValue(row.id, slot, cleanVal, status);
+                                          const status = getDynamicStatus(row, cleanVal);
+                                          handleCellUpdate(row.id, slot, cleanVal, status);
                                         }
                                       }}
                                       onKeyDown={(e) => handleInlineNumericKeyDown(e, row, slot, (e.target as HTMLInputElement).value)}

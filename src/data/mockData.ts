@@ -1,4 +1,6 @@
 import { Patient, FlowsheetRow, DrugFormularyItem, SurgeonScheduleSettings, StandingOrder, ReferenceRangeCategory, ASOMetadataReport } from '../types';
+import { ALL_CORNELL_LABS } from './cornellReferenceRanges';
+
 
 export const INITIAL_PATIENTS: Patient[] = [
   {
@@ -81,7 +83,48 @@ export const INITIAL_TIME_SLOTS = [
   '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'
 ];
 
+
+export const mockLabRows: FlowsheetRow[] = ALL_CORNELL_LABS.map(lab => {
+  let value = (lab.referenceMax + lab.referenceMin) / 2;
+  if (lab.id === 'lactate') value = 6.2;
+  if (lab.id === 'lab_pcv' || lab.id === 'ht_pcv') value = 52;
+  if (lab.id === 'tp') value = 7.5;
+  if (lab.id === 'lab_creatinine') value = 3.8;
+  if (lab.id === 'lab_calcium') value = 11.0;
+  
+  let displayValue: number | string = value;
+  if (value > 100) displayValue = Math.round(value);
+  else if (value < 10) displayValue = Number(value.toFixed(1));
+  else displayValue = Number(value.toFixed(1));
+  
+  if (lab.id === 'ht_pcv' || lab.id === 'lab_pcv') displayValue = 52;
+  if (lab.id === 'tp') displayValue = 7.5;
+  if (lab.id === 'lactate') displayValue = 6.2;
+  
+  return {
+    id: lab.id,
+    category: 'CLINICOPATHOLOGY',
+    categoryLabel: 'Clinicopathology & Labs',
+    categoryFrequency: 'q12h',
+    parameter: lab.name,
+    target: `Normal: ${lab.referenceMin}-${lab.referenceMax} ${lab.units}`,
+    unit: lab.units,
+    bandColor: 'blue',
+    type: 'numeric',
+    sectionGroup: lab.sectionGroup,
+    referenceMin: lab.referenceMin,
+    referenceMax: lab.referenceMax,
+    criticalMin: lab.criticalMin,
+    criticalMax: lab.criticalMax,
+    values: {
+      '10:00': { value: displayValue, status: 'DONE' },
+      '12:00': { value: '', status: 'DUE' },
+    }
+  } as FlowsheetRow;
+});
+
 export const INITIAL_FLOWSHEET_ROWS: FlowsheetRow[] = [
+  ...mockLabRows,
   // --- VITALS & PERFUSION ---
   {
     id: 'hr',
