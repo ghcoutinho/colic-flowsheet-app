@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { Patient } from '../types';
 import { UserPlus, X, ShieldAlert, Heart, Activity, FileText, Scale, Calendar, Clock, AlertTriangle } from 'lucide-react';
+import { ComboboxWithAdd } from './ComboboxWithAdd';
 
 interface NewPatientModalProps {
   onClose: () => void;
   onSavePatient: (patient: Patient) => void;
+  initialPatient?: Patient | null;
 }
 
-export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSavePatient }) => {
-  const [formData, setFormData] = useState<Partial<Patient>>({
+export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSavePatient, initialPatient }) => {
+  const [formData, setFormData] = useState<Partial<Patient>>(initialPatient || {
     name: '',
     patientId: `#EQU-${Math.floor(1000 + Math.random() * 9000)}`,
     weightKg: 500,
@@ -51,7 +53,8 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
     }
 
     const newPatient: Patient = {
-      id: `p_${Date.now()}`,
+      ...initialPatient,
+      id: initialPatient ? initialPatient.id : `p_${Date.now()}`,
       name: formData.name || 'Unnamed Horse',
       patientId: formData.patientId || `#EQU-${Date.now()}`,
       weightKg: Number(formData.weightKg) || 500,
@@ -101,11 +104,11 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
         <div className="flex items-center justify-between border-b pb-3">
           <div>
             <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-blue-600" /> New Patient Registration & Admission
+              <UserPlus className="w-5 h-5 text-blue-600" /> {initialPatient ? 'Edit Patient' : 'New Patient Registration & Admission'}
             </h2>
             <p className="text-xs text-slate-500">Comprehensive clinical signalment, baseline vitals & consent parameters</p>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">
+          <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -153,16 +156,17 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Sex / Reproductive Status</label>
-                <select
-                  value={formData.sex}
-                  onChange={(e) => setFormData({ ...formData, sex: e.target.value as any })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50 text-slate-900"
-                >
-                  <option value="Gelding">Gelding (Castrado)</option>
-                  <option value="Stallion">Stallion (Garanhão - Inguinal Hernia Risk)</option>
-                  <option value="Mare">Mare (Égua)</option>
-                </select>
+                <ComboboxWithAdd
+                  label="Sex / Reproductive Status"
+                  value={formData.sex || ''}
+                  onChange={(val) => setFormData({ ...formData, sex: val as any })}
+                  options={[
+                    'Gelding',
+                    'Stallion',
+                    'Mare',
+                  ]}
+                  placeholder="Select sex..."
+                />
               </div>
 
               <div>
@@ -176,58 +180,20 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Breed</label>
-                <input
-                  type="text"
-                  list="breed-options"
-                  value={formData.breed}
-                  onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                <ComboboxWithAdd
+                  label="Breed"
+                  value={formData.breed || ''}
+                  onChange={(val) => setFormData({ ...formData, breed: val })}
+                  options={[
+                    'Thoroughbred', 'Quarter Horse', 'Arabian', 'Standardbred', 'Appaloosa', 'Paint Horse', 'Pinto',
+                    'Warmblood', 'Hanoverian', 'KWPN (Dutch Warmblood)', 'Oldenburg', 'Trakehner', 'Holsteiner', 'Westphalian', 'Selle Français', 'Lusitano', 'PRE (Pura Raza Española)',
+                    'Belgian Draft', 'Clydesdale', 'Shire', 'Percheron',
+                    'Tennessee Walking Horse', 'Missouri Fox Trotter', 'Paso Fino', 'Mangalarga Marchador', 'Campolina', 'Crioulo', 'Pantaneiro', 'Quarto de Milha (BRA)',
+                    'Welsh Pony', 'Shetland Pony', 'Connemara Pony', 'Haflinger',
+                    'Crossbred / Mixed', 'Grade Horse'
+                  ]}
                   placeholder="Select or type breed..."
                 />
-                <datalist id="breed-options">
-                  {/* Sport & Racing */}
-                  <option value="Thoroughbred" />
-                  <option value="Quarter Horse" />
-                  <option value="Arabian" />
-                  <option value="Standardbred" />
-                  <option value="Appaloosa" />
-                  <option value="Paint Horse" />
-                  <option value="Pinto" />
-                  {/* Warmbloods */}
-                  <option value="Warmblood" />
-                  <option value="Hanoverian" />
-                  <option value="KWPN (Dutch Warmblood)" />
-                  <option value="Oldenburg" />
-                  <option value="Trakehner" />
-                  <option value="Holsteiner" />
-                  <option value="Westphalian" />
-                  <option value="Selle Français" />
-                  <option value="Lusitano" />
-                  <option value="PRE (Pura Raza Española)" />
-                  {/* Draft */}
-                  <option value="Belgian Draft" />
-                  <option value="Clydesdale" />
-                  <option value="Shire" />
-                  <option value="Percheron" />
-                  {/* Gaited & Ranch */}
-                  <option value="Tennessee Walking Horse" />
-                  <option value="Missouri Fox Trotter" />
-                  <option value="Paso Fino" />
-                  <option value="Mangalarga Marchador" />
-                  <option value="Campolina" />
-                  <option value="Crioulo" />
-                  <option value="Pantaneiro" />
-                  <option value="Quarto de Milha (BRA)" />
-                  {/* Pony */}
-                  <option value="Welsh Pony" />
-                  <option value="Shetland Pony" />
-                  <option value="Connemara Pony" />
-                  <option value="Haflinger" />
-                  {/* Mixed */}
-                  <option value="Crossbred / Mixed" />
-                  <option value="Grade Horse" />
-                </datalist>
               </div>
 
               <div>
@@ -264,68 +230,60 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-semibold">
               <div>
-                <label className="text-slate-700 block mb-1">Crib-Biter / Aerophagia? (EFE Risk)</label>
-                <select
+                <ComboboxWithAdd
+                  label="Crib-Biter / Aerophagia? (EFE Risk)"
                   value={formData.cribBiter ? 'Yes' : 'No'}
-                  onChange={(e) => setFormData({ ...formData, cribBiter: e.target.value === 'Yes' })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
-                >
-                  <option value="No">No</option>
-                  <option value="Yes">Yes (High Epiploic Foramen Risk)</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, cribBiter: val === 'Yes' })}
+                  options={['No', 'Yes']}
+                />
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Previous Abdominal Surgery?</label>
-                <input
-                  type="text"
-                  value={formData.previousAbdominalSurgery}
-                  onChange={(e) => setFormData({ ...formData, previousAbdominalSurgery: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                <ComboboxWithAdd
+                  label="Previous Abdominal Surgery?"
+                  value={formData.previousAbdominalSurgery || ''}
+                  onChange={(val) => setFormData({ ...formData, previousAbdominalSurgery: val })}
+                  options={['No', 'Yes', 'Unknown']}
                   placeholder="e.g. No, or '2024 Celiotomy'"
                 />
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Recurrent Colic History?</label>
-                <input
-                  type="text"
-                  value={formData.recurrentColicHistory}
-                  onChange={(e) => setFormData({ ...formData, recurrentColicHistory: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                <ComboboxWithAdd
+                  label="Recurrent Colic History?"
+                  value={formData.recurrentColicHistory || ''}
+                  onChange={(val) => setFormData({ ...formData, recurrentColicHistory: val })}
+                  options={['No', 'Yes (Mild)', 'Yes (Severe)', 'Unknown']}
                   placeholder="e.g. No, or 3 episodes in 6 mo"
                 />
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Tetanus Vaccination Status</label>
-                <input
-                  type="text"
-                  value={formData.tetanusVaccinationDate}
-                  onChange={(e) => setFormData({ ...formData, tetanusVaccinationDate: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                <ComboboxWithAdd
+                  label="Tetanus Vaccination Status"
+                  value={formData.tetanusVaccinationDate || ''}
+                  onChange={(val) => setFormData({ ...formData, tetanusVaccinationDate: val })}
+                  options={['Up to Date', 'Unknown', 'Overdue', 'Unvaccinated']}
                   placeholder="e.g. Up to date (< 6 mo)"
                 />
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Pre-Admission Analgesia Given</label>
-                <input
-                  type="text"
-                  value={formData.preAdmissionAnalgesia}
-                  onChange={(e) => setFormData({ ...formData, preAdmissionAnalgesia: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                <ComboboxWithAdd
+                  label="Pre-Admission Analgesia Given"
+                  value={formData.preAdmissionAnalgesia || ''}
+                  onChange={(val) => setFormData({ ...formData, preAdmissionAnalgesia: val })}
+                  options={['None', 'Flunixin meglumine', 'Xylazine', 'Detomidine', 'Dipyrone', 'Buscopan']}
                   placeholder="e.g. Flunixin 1.1 mg/kg 2h ago"
                 />
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Recent Deworming History</label>
-                <input
-                  type="text"
-                  value={formData.recentDeworming}
-                  onChange={(e) => setFormData({ ...formData, recentDeworming: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                <ComboboxWithAdd
+                  label="Recent Deworming History"
+                  value={formData.recentDeworming || ''}
+                  onChange={(val) => setFormData({ ...formData, recentDeworming: val })}
+                  options={['Up to Date', 'Unknown', 'Overdue', 'Ivermectin', 'Moxidectin']}
                   placeholder="e.g. Ivermectin 30 days ago"
                 />
               </div>
@@ -340,35 +298,51 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-semibold">
               <div>
-                <label className="text-slate-700 block mb-1">Admission Rectal Exam Findings</label>
-                <input
-                  type="text"
-                  value={formData.rectalExamBaseline}
-                  onChange={(e) => setFormData({ ...formData, rectalExamBaseline: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                <ComboboxWithAdd
+                  label="Admission Rectal Exam Findings"
+                  value={formData.rectalExamBaseline || ''}
+                  onChange={(val) => setFormData({ ...formData, rectalExamBaseline: val })}
+                  options={['Normal / Empty Pelvic Flexure', 'Pelvic flexure impaction', 'SI distension', 'Large colon gas distension', 'Right dorsal displacement', 'Nephrosplenic entrapment']}
                   placeholder="e.g. Pelvic flexure impaction / SI distension"
                 />
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Primary Diagnosis / Complaint *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.diagnosis}
-                  onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                <ComboboxWithAdd
+                  label="Primary Diagnosis / Complaint"
+                  value={formData.diagnosis || ''}
+                  onChange={(val) => setFormData({ ...formData, diagnosis: val })}
+                  options={[
+                    'Large Colon Volvulus',
+                    'Large Colon Impaction',
+                    'Small Intestine Strangulation',
+                    'Epiploic Foramen Entrapment',
+                    'Nephrosplenic Entrapment',
+                    'Right Dorsal Displacement',
+                    'Ileal Impaction',
+                    'Spasmodic Colic',
+                    'Gastric Ulcers (EGUS)',
+                    'Enteritis',
+                    'Colitis',
+                    'Peritonitis'
+                  ]}
                   placeholder="e.g. Large Colon Volvulus"
+                  required
                 />
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Surgical Procedure / Plan</label>
-                <input
-                  type="text"
-                  value={formData.surgicalProcedure}
-                  onChange={(e) => setFormData({ ...formData, surgicalProcedure: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                <ComboboxWithAdd
+                  label="Surgical Procedure / Plan"
+                  value={formData.surgicalProcedure || ''}
+                  onChange={(val) => setFormData({ ...formData, surgicalProcedure: val })}
+                  options={[
+                    'Exploratory Celiotomy',
+                    'Large Colon Resection',
+                    'Small Intestine Resection & Anastomosis',
+                    'Pelvic Flexure Enterotomy',
+                    'Medical Management (No Surgery)'
+                  ]}
                   placeholder="e.g. Exploratory Celiotomy"
                 />
               </div>
@@ -384,17 +358,18 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Initial ICU Acuity Status</label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50 text-slate-900"
-                >
-                  <option value="CRITICAL">CRITICAL (High Risk / Post-Op)</option>
-                  <option value="STABLE">STABLE (Medical Management)</option>
-                  <option value="MONITORING">MONITORING (ICU Watch)</option>
-                  <option value="RECOVERING">RECOVERING</option>
-                </select>
+                <ComboboxWithAdd
+                  label="Initial ICU Acuity Status"
+                  value={formData.status || ''}
+                  onChange={(val) => setFormData({ ...formData, status: val as any })}
+                  options={[
+                    'CRITICAL',
+                    'STABLE',
+                    'MONITORING',
+                    'RECOVERING'
+                  ]}
+                  placeholder="Select status..."
+                />
               </div>
             </div>
           </div>
@@ -407,66 +382,59 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-semibold">
               <div>
-                <label className="text-slate-700 block mb-1">Surgery & Financial Consent Status</label>
-                <select
-                  value={formData.surgeryConsentStatus}
-                  onChange={(e) => setFormData({ ...formData, surgeryConsentStatus: e.target.value as any })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50 text-slate-900"
-                >
-                  <option value="Full Surgical Intervention Agreed">Full Surgical Intervention Agreed</option>
-                  <option value="Medical Management Only">Medical Management Only (No Surgery)</option>
-                  <option value="Financial Ceiling Reached">Financial Ceiling Reached</option>
-                  <option value="DNR / Euthanasia Authorized">DNR / Euthanasia Authorized if Unfavorable</option>
-                </select>
+                <ComboboxWithAdd
+                  label="Surgery & Financial Consent Status"
+                  value={formData.surgeryConsentStatus || ''}
+                  onChange={(val) => setFormData({ ...formData, surgeryConsentStatus: val as any })}
+                  options={[
+                    'Full Surgical Intervention Agreed',
+                    'Medical Management Only (No Surgery)',
+                    'Financial Ceiling Reached',
+                    'DNR / Euthanasia Authorized if Unfavorable'
+                  ]}
+                  placeholder="Select consent status..."
+                />
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Facility / Hospital</label>
-                <input
-                  type="text"
-                  list="facility-options"
-                  value={formData.facility}
-                  onChange={(e) => setFormData({ ...formData, facility: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                <ComboboxWithAdd
+                  label="Facility / Hospital"
+                  value={formData.facility || ''}
+                  onChange={(val) => setFormData({ ...formData, facility: val })}
+                  options={[
+                    'UFMG Veterinary Hospital',
+                    'Private Equine Clinic',
+                    'Other'
+                  ]}
                   placeholder="e.g. UFMG Veterinary Hospital"
                 />
-                <datalist id="facility-options">
-                  <option value="UFMG Veterinary Hospital" />
-                  <option value="Private Equine Clinic" />
-                </datalist>
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Attending Surgeon</label>
-                <input
-                  type="text"
-                  list="surgeon-options"
-                  value={formData.assignedSurgeon}
-                  onChange={(e) => setFormData({ ...formData, assignedSurgeon: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                <ComboboxWithAdd
+                  label="Attending Surgeon"
+                  value={formData.assignedSurgeon || ''}
+                  onChange={(val) => setFormData({ ...formData, assignedSurgeon: val })}
+                  options={[
+                    'Dr. Gustavo Coutinho',
+                    'Dr. On Call',
+                    'Dr. Attending'
+                  ]}
                   placeholder="Select or enter surgeon..."
                 />
-                <datalist id="surgeon-options">
-                  <option value="Dr. Gustavo Coutinho" />
-                  <option value="Dr. On Call" />
-                  <option value="Dr. Attending" />
-                </datalist>
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Intern / Resident</label>
-                <input
-                  type="text"
-                  list="intern-options"
-                  value={formData.intern}
-                  onChange={(e) => setFormData({ ...formData, intern: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                <ComboboxWithAdd
+                  label="Intern / Resident"
+                  value={formData.intern || ''}
+                  onChange={(val) => setFormData({ ...formData, intern: val })}
+                  options={[
+                    'Resident A',
+                    'Intern B'
+                  ]}
                   placeholder="Select or enter intern..."
                 />
-                <datalist id="intern-options">
-                  <option value="Resident A" />
-                  <option value="Intern B" />
-                </datalist>
               </div>
 
               <div>

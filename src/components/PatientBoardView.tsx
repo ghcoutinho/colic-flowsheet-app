@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Patient, PatientStatus } from '../types';
-import { HeartPulse, Plus, Copy, Trash2, Receipt, Clock, Thermometer, Droplets, Activity } from 'lucide-react';
+import { HeartPulse, Plus, Copy, Trash2, Receipt, Clock, Thermometer, Droplets, Activity, Edit3 } from 'lucide-react';
 import { BillingInvoiceModal } from './BillingInvoiceModal';
 
 interface PatientBoardViewProps {
@@ -10,6 +10,7 @@ interface PatientBoardViewProps {
   onOpenNewPatientModal: () => void;
   onDuplicatePatient: (id: string) => void;
   onDeletePatient: (id: string) => void;
+  onEditPatient?: (patient: Patient) => void;
 }
 
 export const PatientBoardView: React.FC<PatientBoardViewProps> = ({
@@ -19,6 +20,7 @@ export const PatientBoardView: React.FC<PatientBoardViewProps> = ({
   onOpenNewPatientModal,
   onDuplicatePatient,
   onDeletePatient,
+  onEditPatient,
 }) => {
   const [billingPatientId, setBillingPatientId] = useState<string | null>(null);
 
@@ -86,6 +88,13 @@ export const PatientBoardView: React.FC<PatientBoardViewProps> = ({
                           <div className="text-[10px] text-slate-500">{p.patientId} • {p.weightKg} kg</div>
                         </div>
                         <div className="flex flex-col gap-1">
+                          <button 
+                            onClick={() => onEditPatient?.(p)}
+                            className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title="Edit Patient"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
                           <button 
                             onClick={() => onDuplicatePatient(p.id)}
                             className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

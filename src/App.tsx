@@ -77,6 +77,7 @@ export default function App() {
 
   const [isAddRoundOpen, setIsAddRoundOpen] = useState(false);
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Sync to localStorage on every state mutation
@@ -120,7 +121,15 @@ export default function App() {
   };
 
   // Behavioral Rule 1: Auto-reset flowsheet & next full hour column alignment on new patient save
-  const handleSaveNewPatient = (newP: Patient) => {
+  const handleSavePatient = (newP: Patient) => {
+    if (editingPatient) {
+      setPatients(prev => prev.map(pt => pt.id === newP.id ? newP : pt));
+      setEditingPatient(null);
+      setIsNewPatientModalOpen(false);
+      showToast(`Updated ${newP.name}!`);
+      return;
+    }
+
     const now = new Date();
     let nextFullHour = now.getHours() + (now.getMinutes() > 0 ? 1 : 0);
     if (nextFullHour >= 24) nextFullHour = 0;
@@ -154,6 +163,7 @@ export default function App() {
     setTimeSlots(newSlots);
     setFlowsheetRows(resetRows);
     setIsNewPatientModalOpen(false);
+    setEditingPatient(null);
 
     showToast(`Registered ${newP.name}! Flowsheet reset starting at ${newSlots[0]}`);
   };
@@ -289,6 +299,7 @@ export default function App() {
             return {
               ...row,
               target: doseText,
+              drugCategory: formularyItem?.category,
               values: {
                 ...row.values,
                 ...scheduledValues,
@@ -306,6 +317,7 @@ export default function App() {
         categoryLabel: 'MEDICATIONS & CRIs',
         parameter: `${drugName}`,
         target: doseText,
+        drugCategory: formularyItem?.category,
         bandColor: 'pink',
         type: 'medication',
         values: scheduledValues,
@@ -326,6 +338,7 @@ export default function App() {
 
   // Open the full New Patient Registration Modal
   const handleOpenNewPatientModal = () => {
+    setEditingPatient(null);
     setIsNewPatientModalOpen(true);
   };
 
@@ -378,10 +391,17 @@ export default function App() {
           <PatientBoardView
             patients={patients}
             activePatientId={activePatientId}
-            onSelectPatient={(p) => setActivePatientId(p.id)}
-            onOpenNewPatientModal={handleOpenNewPatientModal}
-            onDuplicatePatient={handleDuplicatePatient}
+            onSelectPatient={(p) => {
+              setActivePatientId(p.id);
+              setActiveTab('flowsheet');
+            }}
             onDeletePatient={handleDeletePatient}
+            onDuplicatePatient={handleDuplicatePatient}
+            onOpenNewPatientModal={handleOpenNewPatientModal}
+            onEditPatient={(p) => {
+              setEditingPatient(p);
+              setIsNewPatientModalOpen(true);
+            }}
           />
         )}
 
@@ -435,9 +455,13 @@ export default function App() {
 
       {/* New Patient Registration Modal */}
       {isNewPatientModalOpen && (
-        <NewPatientModal
-          onClose={() => setIsNewPatientModalOpen(false)}
-          onSavePatient={handleSaveNewPatient}
+        <NewPatientModal 
+          onClose={() => {
+            setIsNewPatientModalOpen(false);
+            setEditingPatient(null);
+          }}
+          onSavePatient={handleSavePatient}
+          initialPatient={editingPatient}
         />
       )}
     </div>

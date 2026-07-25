@@ -1,3 +1,6 @@
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 import React, { useState, useEffect } from 'react';
 import { FlowsheetRow, Patient, SurgeonScheduleSettings } from '../types';
 import { Plus, Clock, FileText, Upload, CheckCircle, AlertTriangle, XCircle, RefreshCw, Calendar } from 'lucide-react';
@@ -26,6 +29,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
 
   // PDF Lab Import Modal state
   const [isPdfModalOpen, setIsPdfModalOpen] = useState<boolean>(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [selectedPdfTimeSlot, setSelectedPdfTimeSlot] = useState<string>('12:00');
   const [pdfSuccessMessage, setPdfSuccessMessage] = useState<string | null>(null);
   const [isPdfParsing, setIsPdfParsing] = useState<boolean>(false);
@@ -430,29 +434,61 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
   };
 
   // PDF Document Auto-Fill Parser
-  const handleImportPdfReport = () => {
+  const handleImportPdfReport = async () => {
+    if (!pdfFile) {
+      alert("Please select a PDF file first.");
+      return;
+    }
     setIsPdfParsing(true);
-    setTimeout(() => {
-      // Auto-fill extracted lab values from PDF
-      const pcvRow = rows.find(r => r.parameter.toLowerCase().includes('hematocrit'));
-      const tpRow = rows.find(r => r.parameter.toLowerCase().includes('total protein'));
-      const lacRow = rows.find(r => r.parameter.toLowerCase().includes('lactate'));
-      const wbcRow = rows.find(r => r.parameter.toLowerCase().includes('wbc'));
-      const gluRow = rows.find(r => r.parameter.toLowerCase().includes('glucose'));
-      const creatRow = rows.find(r => r.parameter.toLowerCase().includes('creatinine'));
+    try {
+      const arrayBuffer = await pdfFile.arrayBuffer();
+      const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item: any) => item.str).join(' ');
+        fullText += pageText + ' ';
+      }
+      
+      // Regex extractors
+      const pcvMatch = fullText.match(/(?:PCV|Hematocrit|HCT)\s*[:=]?\s*(\d{2,3}(?:\.\d+)?)/i);
+      const tpMatch = fullText.match(/(?:Total Protein|TP|Protein, Total)\s*[:=]?\s*(\d+(?:\.\d+)?)/i);
+      const lacMatch = fullText.match(/(?:Lactate|Lac)\s*[:=]?\s*(\d+(?:\.\d+)?)/i);
+      const wbcMatch = fullText.match(/(?:WBC|White Blood Cells)\s*[:=]?\s*(\d+(?:\.\d+)?)/i);
+      const gluMatch = fullText.match(/(?:Glucose|Glu)\s*[:=]?\s*(\d{2,3}(?:\.\d+)?)/i);
+      const creatMatch = fullText.match(/(?:Creatinine|Creat)\s*[:=]?\s*(\d+(?:\.\d+)?)/i);
 
-      if (pcvRow) onUpdateCellValue(pcvRow.id, selectedPdfTimeSlot, '44', 'NORMAL');
-      if (tpRow) onUpdateCellValue(tpRow.id, selectedPdfTimeSlot, '6.5', 'NORMAL');
-      if (lacRow) onUpdateCellValue(lacRow.id, selectedPdfTimeSlot, '2.1', 'WARNING');
-      if (wbcRow) onUpdateCellValue(wbcRow.id, selectedPdfTimeSlot, '8.2', 'NORMAL');
-      if (gluRow) onUpdateCellValue(gluRow.id, selectedPdfTimeSlot, '108', 'NORMAL');
-      if (creatRow) onUpdateCellValue(creatRow.id, selectedPdfTimeSlot, '1.3', 'NORMAL');
+      let filledCount = 0;
+      
+      const fillIfFound = (keyword: string, match: RegExpMatchArray | null) => {
+        if (match && match[1]) {
+          const row = rows.find(r => r.parameter.toLowerCase().includes(keyword.toLowerCase()));
+          if (row) {
+             onUpdateCellValue(row.id, selectedPdfTimeSlot, match[1], 'NORMAL');
+             filledCount++;
+          }
+        }
+      };
 
-      setIsPdfParsing(false);
-      setPdfSuccessMessage(`Successfully imported and filled 6 lab parameters for time slot ${selectedPdfTimeSlot}!`);
+      fillIfFound('hematocrit', pcvMatch);
+      fillIfFound('total protein', tpMatch);
+      fillIfFound('lactate', lacMatch);
+      fillIfFound('wbc', wbcMatch);
+      fillIfFound('glucose', gluMatch);
+      fillIfFound('creatinine', creatMatch);
+
+      setPdfSuccessMessage(`Successfully extracted and filled ${filledCount} lab parameters for time slot ${selectedPdfTimeSlot}!`);
       setTimeout(() => setPdfSuccessMessage(null), 3500);
       setIsPdfModalOpen(false);
-    }, 1200);
+      setPdfFile(null);
+    } catch (error) {
+      console.error("Error parsing PDF:", error);
+      alert("Failed to parse the PDF file. Please ensure it contains readable text.");
+    } finally {
+      setIsPdfParsing(false);
+    }
   };
 
   // Compute the DUE slot for clinicopathology lab collection
@@ -659,6 +695,11 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                             <div className="flex items-start justify-between gap-1">
                               <div className="space-y-0.5 max-w-[150px] sm:max-w-[180px]">
                                 <span className="font-black text-white text-xs block truncate">{row.parameter}</span>
+                                {row.drugCategory && (
+                                  <span className="inline-block mt-0.5 px-1.5 py-0.5 bg-slate-800/40 text-slate-100 text-[9px] font-bold uppercase tracking-wider rounded border border-white/10">
+                                    {row.drugCategory}
+                                  </span>
+                                )}
                                 {row.dosePicked && (
                                   <span className="text-[10px] text-amber-200 font-extrabold block">Dose: {row.dosePicked}</span>
                                 )}
@@ -894,11 +935,23 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 ))}
               </select>
 
-              <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
+              <label className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer block relative">
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setPdfFile(e.target.files[0]);
+                    }
+                  }}
+                />
                 <Upload className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                <span className="text-xs font-bold text-slate-700 block">Drop your CBC, Chemistry or Blood Gas PDF here</span>
-                <span className="text-[11px] text-slate-400 block mt-1">Supports PDF, PNG, JPG lab reports</span>
-              </div>
+                <span className="text-xs font-bold text-slate-700 block">
+                  {pdfFile ? pdfFile.name : 'Click to browse or drop your Lab Report PDF here'}
+                </span>
+                <span className="text-[11px] text-slate-400 block mt-1">Extracts PCV, TP, Lactate, WBC, Glucose, Creatinine</span>
+              </label>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t">
