@@ -361,21 +361,38 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
     if (e.key === 'Enter') {
       e.preventDefault();
       const cleanVal = val.trim();
-      const status = getDynamicStatus(currentRow.parameter, cleanVal);
-      onUpdateCellValue(currentRow.id, slot, cleanVal, status);
+      const cell = currentRow.values[slot];
+      
+      if (cleanVal !== (cell?.value?.toString() || '')) {
+        const status = getDynamicStatus(currentRow.parameter, cleanVal);
+        onUpdateCellValue(currentRow.id, slot, cleanVal, status);
+      }
 
-      // Find next numeric row in filteredRows below currentRow
+      // Find next numeric row in filteredRows below (or above if Shift is held)
       const currIndex = filteredRows.findIndex(r => r.id === currentRow.id);
-      for (let i = currIndex + 1; i < filteredRows.length; i++) {
-        const nextRow = filteredRows[i];
-        if (isNumericRow(nextRow)) {
+      const dir = e.shiftKey ? -1 : 1;
+      
+      let targetRowIndex = -1;
+      for (let i = currIndex + dir; i >= 0 && i < filteredRows.length; i += dir) {
+        if (isNumericRow(filteredRows[i])) {
+          targetRowIndex = i;
+          break;
+        }
+      }
+
+      if (targetRowIndex !== -1) {
+        const nextRow = filteredRows[targetRowIndex];
+        // Use setTimeout to allow any pending state updates/renders to flush
+        setTimeout(() => {
           const nextInputEl = document.getElementById(`inline-num-input-${nextRow.id}-${slot}`) as HTMLInputElement;
           if (nextInputEl) {
             nextInputEl.focus();
             nextInputEl.select();
-            break;
           }
-        }
+        }, 50);
+      } else {
+        // If no more rows, just blur to dismiss keyboard
+        (e.target as HTMLInputElement).blur();
       }
     }
   };
