@@ -110,17 +110,17 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4">
-      <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in duration-150">
+    <div className="fixed inset-0 bg-surface-container-lowest/75 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="bg-surface-container border border-surface-container-high rounded-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-surface-container-highest space-y-5 animate-in fade-in duration-150">
         {/* Header */}
         <div className="flex items-center justify-between border-b pb-3">
           <div>
-            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-blue-600" /> {initialPatient ? 'Edit Patient' : 'New Patient Registration & Admission'}
+            <h2 className="text-xl font-black text-on-surface flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-primary" /> {initialPatient ? 'Edit Patient' : 'New Patient Registration & Admission'}
             </h2>
-            <p className="text-xs text-slate-500">Comprehensive clinical signalment, baseline vitals & consent parameters</p>
+            <p className="text-xs text-outline-variant">Comprehensive clinical signalment, baseline vitals & consent parameters</p>
           </div>
-          <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">
+          <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-outline rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -128,41 +128,41 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Section 1: Basic Signalment */}
           <div className="space-y-3">
-            <h3 className="text-xs font-black text-blue-700 uppercase tracking-wider bg-blue-50 p-2 rounded-lg flex items-center gap-1.5">
+            <h3 className="text-xs font-black text-blue-700 uppercase tracking-wider bg-primary-container text-on-primary-container p-2 rounded-lg flex items-center gap-1.5">
               🐴 1. Equine Signalment & Identification
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-semibold">
               <div>
-                <label className="text-slate-700 block mb-1">Horse Name *</label>
+                <label className="text-on-surface-variant block mb-1">Horse Name *</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                  className="w-full p-2 border border-outline-variant rounded-xl font-bold bg-surface-container-low"
                   placeholder="e.g. Thunder Star"
                 />
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Patient ID / Medical Record #</label>
+                <label className="text-on-surface-variant block mb-1">Patient ID / Medical Record #</label>
                 <input
                   type="text"
                   value={formData.patientId}
                   onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                  className="w-full p-2 border border-outline-variant rounded-xl font-bold bg-surface-container-low"
                 />
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Body Weight (kg) *</label>
+                <label className="text-on-surface-variant block mb-1">Body Weight (kg) *</label>
                 <input
                   type="number"
                   required
                   value={formData.weightKg}
                   onChange={(e) => setFormData({ ...formData, weightKg: Number(e.target.value) })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                  className="w-full p-2 border border-outline-variant rounded-xl font-bold bg-surface-container-low"
                   placeholder="480"
                 />
               </div>
@@ -182,12 +182,12 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Age (Years)</label>
+                <label className="text-on-surface-variant block mb-1">Age (Years)</label>
                 <input
                   type="number"
                   value={formData.ageYears}
                   onChange={(e) => setFormData({ ...formData, ageYears: Number(e.target.value) })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                  className="w-full p-2 border border-outline-variant rounded-xl font-bold bg-surface-container-low"
                 />
               </div>
 
@@ -209,25 +209,25 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Body Condition Score (BCS 1-9)</label>
+                <label className="text-on-surface-variant block mb-1">Body Condition Score (BCS 1-9)</label>
                 <input
                   type="number"
                   min="1"
                   max="9"
                   value={formData.bodyConditionScore}
                   onChange={(e) => setFormData({ ...formData, bodyConditionScore: Number(e.target.value) })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                  className="w-full p-2 border border-outline-variant rounded-xl font-bold bg-surface-container-low"
                 />
               </div>
 
               {formData.sex === 'Mare' && (
                 <div>
-                  <label className="text-slate-700 block mb-1">Last Foaling Date (LCV Window)</label>
+                  <label className="text-on-surface-variant block mb-1">Last Foaling Date (LCV Window)</label>
                   <input
                     type="date"
                     value={formData.lastFoalingDate}
                     onChange={(e) => setFormData({ ...formData, lastFoalingDate: e.target.value })}
-                    className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                    className="w-full p-2 border border-outline-variant rounded-xl font-bold bg-surface-container-low"
                   />
                 </div>
               )}
@@ -236,7 +236,7 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
 
           {/* Section 2: Clinical Risk Factors & History */}
           <div className="space-y-3">
-            <h3 className="text-xs font-black text-amber-800 uppercase tracking-wider bg-amber-50 p-2 rounded-lg flex items-center gap-1.5">
+            <h3 className="text-xs font-black text-amber-800 uppercase tracking-wider bg-tertiary-container text-on-tertiary-container p-2 rounded-lg flex items-center gap-1.5">
               ⚠️ 2. Risk Factors & History (EPI / Adhesions / EGUS)
             </h3>
 
@@ -360,12 +360,12 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Surgery Date &amp; Time</label>
+                <label className="text-on-surface-variant block mb-1">Surgery Date &amp; Time</label>
                 <input
                   type="datetime-local"
                   value={formData.surgeryTime}
                   onChange={(e) => setFormData({ ...formData, surgeryTime: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                  className="w-full p-2 border border-outline-variant rounded-xl font-bold bg-surface-container-low"
                 />
               </div>
 
@@ -450,23 +450,23 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Owner / Emergency Contact</label>
+                <label className="text-on-surface-variant block mb-1">Owner / Emergency Contact</label>
                 <input
                   type="text"
                   value={formData.ownerEmergencyContact}
                   onChange={(e) => setFormData({ ...formData, ownerEmergencyContact: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                  className="w-full p-2 border border-outline-variant rounded-xl font-bold bg-surface-container-low"
                   placeholder="e.g. John Doe (555-0199)"
                 />
               </div>
 
               <div>
-                <label className="text-slate-700 block mb-1">Referring Veterinarian</label>
+                <label className="text-on-surface-variant block mb-1">Referring Veterinarian</label>
                 <input
                   type="text"
                   value={formData.referringVetContact}
                   onChange={(e) => setFormData({ ...formData, referringVetContact: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-xl font-bold bg-slate-50"
+                  className="w-full p-2 border border-outline-variant rounded-xl font-bold bg-surface-container-low"
                   placeholder="e.g. Dr. Smith (Equine Clinic)"
                 />
               </div>
@@ -478,13 +478,13 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs"
+              className="px-4 py-2 bg-surface-container-lowest hover:bg-slate-200 text-on-surface-variant rounded-xl font-bold text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs shadow-md transition-all active:scale-95"
+              className="px-5 py-2.5 bg-primary text-on-primary hover:bg-blue-500 text-on-surface rounded-xl font-black text-xs border border-surface-container-highest transition-all active:scale-95"
             >
               Save Patient & Reset Flowsheet
             </button>

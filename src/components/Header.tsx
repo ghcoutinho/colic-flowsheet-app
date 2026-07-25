@@ -37,15 +37,15 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 shadow-md">
+    <header className="bg-surface-container-lowest text-on-surface border-b border-slate-800 sticky top-0 z-40 border border-surface-container-highest">
       {/* Top Banner Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3">
         {/* Brand & Logo */}
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab('flowsheet')}>
-          <img src="icon.png" alt="CMT Cover Logo" className="w-10 h-10 rounded-xl object-cover border border-blue-400/40 shadow-sm hover:scale-105 transition-transform" />
+          <img src="icon.png" alt="CMT Cover Logo" className="w-10 h-10 rounded-xl object-cover border border-blue-400/40 border border-surface-container-high hover:scale-105 transition-transform" />
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold tracking-tight text-lg text-white">CMT</span>
+              <span className="font-extrabold tracking-tight text-lg text-on-surface">CMT</span>
               <span className="hidden sm:inline-block text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
                 ICU Flowsheet v1.0
               </span>
@@ -59,7 +59,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Excel Export Button */}
           <button
             onClick={onExportExcelBackup}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-black shadow-md transition-all active:scale-95"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-on-surface rounded-lg text-xs font-black border border-surface-container-highest transition-all active:scale-95"
             title="Download Excel (.xlsx) backup file"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -87,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
             <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
             <div className="text-left">
-              <span className="font-bold text-white block sm:inline">{activePatient.name}</span>
+              <span className="font-bold text-on-surface block sm:inline">{activePatient.name}</span>
               <span className="text-slate-400 text-[11px] ml-1 hidden sm:inline">({activePatient.patientId})</span>
             </div>
             <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${
@@ -116,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({
                     }`}
                   >
                     <div>
-                      <div className="font-bold text-sm text-white">{p.name} <span className="text-xs text-slate-400">({p.weightKg} kg)</span></div>
+                      <div className="font-bold text-sm text-on-surface">{p.name} <span className="text-xs text-slate-400">({p.weightKg} kg)</span></div>
                       <div className="text-[11px] text-slate-400 truncate max-w-[150px]">{p.diagnosis}</div>
                     </div>
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
@@ -154,12 +154,12 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-sm font-bold'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                    ? 'bg-primary text-on-primary text-on-surface border border-surface-container-high font-bold'
+                    : 'text-slate-300 hover:text-on-surface hover:bg-slate-800/60'
                 }`}
                 id={`nav-tab-${tab.id}`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-on-surface' : 'text-slate-400'}`} />
                 {tab.label}
               </button>
             );

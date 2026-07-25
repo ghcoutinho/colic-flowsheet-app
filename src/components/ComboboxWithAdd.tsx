@@ -68,7 +68,7 @@ export const ComboboxWithAdd: React.FC<ComboboxWithAddProps> = ({
 
   return (
     <div className="relative" ref={containerRef}>
-      <label className="text-slate-700 block mb-1 font-semibold">
+      <label className="text-on-surface-variant block mb-1 font-semibold">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <div className="relative">
@@ -83,27 +83,27 @@ export const ComboboxWithAdd: React.FC<ComboboxWithAddProps> = ({
           }}
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full p-2 pr-8 border border-slate-300 rounded-xl font-bold bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none"
+          className="w-full p-2 pr-8 border border-outline-variant rounded-xl font-bold bg-surface-container-low focus:ring-2 focus:ring-blue-500 outline-none"
         />
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-outline"
         >
           <ChevronDown className="w-4 h-4" />
         </button>
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-surface-container border border-surface-container-high border border-surface-container-highest rounded-xl border border-outline-variant max-h-60 overflow-y-auto">
           {filteredOptions.length > 0 ? (
             <ul className="py-1">
               {filteredOptions.map((opt, i) => (
                 <li
                   key={i}
                   onClick={() => handleSelectOption(opt)}
-                  className={`px-3 py-2 cursor-pointer text-sm flex items-center justify-between hover:bg-slate-100 ${
-                    value === opt ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-700'
+                  className={`px-3 py-2 cursor-pointer text-sm flex items-center justify-between hover:bg-surface-container-lowest ${
+                    value === opt ? 'bg-primary-container text-on-primary-container text-blue-700 font-bold' : 'text-on-surface-variant'
                   }`}
                 >
                   {opt}
@@ -112,7 +112,7 @@ export const ComboboxWithAdd: React.FC<ComboboxWithAddProps> = ({
               ))}
             </ul>
           ) : (
-            <div className="px-3 py-2 text-sm text-slate-500 italic">No matches found.</div>
+            <div className="px-3 py-2 text-sm text-outline-variant italic">No matches found.</div>
           )}
 
           {/* Add Option Button */}
@@ -121,7 +121,7 @@ export const ComboboxWithAdd: React.FC<ComboboxWithAddProps> = ({
               <button
                 type="button"
                 onClick={handleAddOption}
-                className="w-full px-2 py-2 text-sm font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg flex items-center gap-2 transition-colors"
+                className="w-full px-2 py-2 text-sm font-bold text-primary bg-primary-container text-on-primary-container hover:bg-blue-100 rounded-lg flex items-center gap-2 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add "{inputValue}"

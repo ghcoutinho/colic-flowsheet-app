@@ -80,7 +80,7 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
   return (
     <div className="space-y-5 max-w-4xl mx-auto pb-20 md:pb-8">
       {/* Top Header Card */}
-      <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-lg border border-slate-800">
+      <div className="bg-surface-container-lowest text-on-surface rounded-2xl p-5 border border-outline-variant border border-slate-800">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
           <div className="bg-slate-800/90 border border-slate-700 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-inner">
             <div>
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Weight</div>
-              <div className="text-base font-extrabold text-white flex items-center gap-1.5">
+              <div className="text-base font-extrabold text-on-surface flex items-center gap-1.5">
                 <span>Patient: {patient.name}</span>
                 <span className="text-blue-400 font-black">{patient.weightKg} kg</span>
                 <span className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded font-bold border border-blue-500/30">Synced</span>
@@ -105,14 +105,14 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
             <div className="flex items-center gap-1">
               <button
                 onClick={() => onUpdatePatientWeight(Math.max(50, patient.weightKg - 10))}
-                className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center text-sm"
+                className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-on-surface font-bold flex items-center justify-center text-sm"
                 title="Decrease Weight"
               >
                 -
               </button>
               <button
                 onClick={() => onUpdatePatientWeight(patient.weightKg + 10)}
-                className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center text-sm"
+                className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-on-surface font-bold flex items-center justify-center text-sm"
                 title="Increase Weight"
               >
                 +
@@ -130,7 +130,7 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search Formulary (Antibiotics, Analgesics, Sedatives, CRIs)..."
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400"
             />
           </div>
 
@@ -141,7 +141,7 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                   selectedCategory === cat
-                    ? 'bg-blue-600 text-white font-bold shadow-sm'
+                    ? 'bg-primary text-on-primary text-on-surface font-bold border border-surface-container-high'
                     : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                 }`}
               >
@@ -165,7 +165,7 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
           return (
             <div
               key={item.id}
-              className="bg-slate-900 text-white rounded-2xl border border-slate-800 shadow-md p-5 space-y-4 transition-all hover:border-slate-700"
+              className="bg-surface-container-lowest text-on-surface rounded-2xl border border-slate-800 border border-surface-container-highest p-5 space-y-4 transition-all hover:border-slate-700"
             >
               {/* Drug Title Header */}
               <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
@@ -177,10 +177,10 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
                         {item.brand}
                       </span>
                     )}
-                    <span className="text-slate-500">•</span>
+                    <span className="text-outline-variant">•</span>
                     <span className="text-xs text-slate-400 font-medium">{item.route}</span>
                   </div>
-                  <h3 className="text-lg font-extrabold text-white mt-0.5">{item.name}</h3>
+                  <h3 className="text-lg font-extrabold text-on-surface mt-0.5">{item.name}</h3>
                   {item.indications && item.indications.length > 0 && (
                     <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
                       {item.indications.map((ind, i) => (
@@ -209,7 +209,7 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleDoseRateChange(item.id, -0.1)}
-                      className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 font-bold text-white flex items-center justify-center text-sm"
+                      className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 font-bold text-on-surface flex items-center justify-center text-sm"
                     >
                       -
                     </button>
@@ -229,7 +229,7 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
                     />
                     <button
                       onClick={() => handleDoseRateChange(item.id, +0.1)}
-                      className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 font-bold text-white flex items-center justify-center text-sm"
+                      className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 font-bold text-on-surface flex items-center justify-center text-sm"
                     >
                       +
                     </button>
@@ -246,7 +246,7 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
                     type="number"
                     value={state.concentration}
                     onChange={(e) => handleConcentrationChange(item.id, parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white font-extrabold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-1.5 bg-surface-container-lowest border border-slate-700 rounded-lg text-on-surface font-extrabold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -254,7 +254,7 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
               {/* Prominent Calculated Output Box (Matches Screenshot) */}
               <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-4 text-center border border-blue-400/40 shadow-inner">
                 <div className="text-xs font-bold uppercase tracking-wider text-blue-100">Calculated Volume</div>
-                <div className="text-2xl sm:text-3xl font-black text-white mt-1">
+                <div className="text-2xl sm:text-3xl font-black text-on-surface mt-1">
                   {calcVol} {(item.category === 'CRIs' || item.defaultFrequency === 'CRI' || item.doseUnit.includes('/hr')) ? 'mL/hr' : 'mL'}
                 </div>
                 <div className="text-[11px] text-blue-200 mt-0.5">
@@ -265,10 +265,10 @@ export const DoseCalculator: React.FC<DoseCalculatorProps> = ({
               {/* Sync to Flowsheet Button */}
               <button
                 onClick={() => handleSync(item)}
-                className={`w-full py-3 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 ${
+                className={`w-full py-3 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all border border-surface-container-highest active:scale-98 ${
                   isSynced
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                    ? 'bg-emerald-500 text-on-surface'
+                    : 'bg-emerald-600 hover:bg-emerald-500 text-on-surface'
                 }`}
                 id={`sync-btn-${item.id}`}
               >

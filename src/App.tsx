@@ -395,10 +395,10 @@ export default function App() {
 
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-500 selection:text-white">
+    <div className="min-h-screen flex flex-col selection:bg-primary selection:text-on-primary">
       {/* Toast Notification Banner */}
       {toastMessage && (
-        <div className="fixed top-16 right-4 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-2xl border border-slate-700 animate-in fade-in slide-in-from-top-3 duration-200 flex items-center gap-2">
+        <div className="fixed top-16 right-4 z-50 bg-surface-container-lowest text-on-surface text-xs font-bold px-4 py-2.5 rounded-xl shadow-2xl border border-slate-700 animate-in fade-in slide-in-from-top-3 duration-200 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
           <span>{toastMessage}</span>
         </div>

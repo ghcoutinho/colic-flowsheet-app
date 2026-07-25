@@ -322,21 +322,21 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
   const getRowColorStyles = (color: FlowsheetRow['bandColor'] | string) => {
     switch (color) {
       case 'red':
-        return { headerBg: 'bg-red-700 text-white font-extrabold', rowCellBg: 'bg-red-100/70 hover:bg-red-100', cardBorder: 'border-red-300' };
+        return { headerBg: 'bg-red-700 text-on-surface font-extrabold', rowCellBg: 'bg-red-100/70 hover:bg-red-100', cardBorder: 'border-red-300' };
       case 'orange':
-        return { headerBg: 'bg-amber-600 text-white font-extrabold', rowCellBg: 'bg-amber-100/70 hover:bg-amber-100', cardBorder: 'border-amber-300' };
+        return { headerBg: 'bg-amber-600 text-on-surface font-extrabold', rowCellBg: 'bg-amber-100/70 hover:bg-amber-100', cardBorder: 'border-amber-300' };
       case 'yellow':
         return { headerBg: 'bg-yellow-500 text-slate-950 font-extrabold', rowCellBg: 'bg-yellow-100/70 hover:bg-yellow-100', cardBorder: 'border-yellow-300' };
       case 'green':
-        return { headerBg: 'bg-emerald-600 text-white font-extrabold', rowCellBg: 'bg-emerald-100/70 hover:bg-emerald-100', cardBorder: 'border-emerald-300' };
+        return { headerBg: 'bg-emerald-600 text-on-surface font-extrabold', rowCellBg: 'bg-emerald-100/70 hover:bg-emerald-100', cardBorder: 'border-emerald-300' };
       case 'blue':
-        return { headerBg: 'bg-sky-600 text-white font-extrabold', rowCellBg: 'bg-sky-100/70 hover:bg-sky-100', cardBorder: 'border-sky-300' };
+        return { headerBg: 'bg-sky-600 text-on-surface font-extrabold', rowCellBg: 'bg-sky-100/70 hover:bg-sky-100', cardBorder: 'border-sky-300' };
       case 'purple':
-        return { headerBg: 'bg-purple-600 text-white font-extrabold', rowCellBg: 'bg-purple-100/70 hover:bg-purple-100', cardBorder: 'border-purple-300' };
+        return { headerBg: 'bg-purple-600 text-on-surface font-extrabold', rowCellBg: 'bg-purple-100/70 hover:bg-purple-100', cardBorder: 'border-purple-300' };
       case 'pink':
-        return { headerBg: 'bg-pink-600 text-white font-extrabold', rowCellBg: 'bg-pink-100/70 hover:bg-pink-100', cardBorder: 'border-pink-300' };
+        return { headerBg: 'bg-pink-600 text-on-surface font-extrabold', rowCellBg: 'bg-pink-100/70 hover:bg-pink-100', cardBorder: 'border-pink-300' };
       default:
-        return { headerBg: 'bg-slate-700 text-white font-extrabold', rowCellBg: 'bg-slate-50 hover:bg-slate-100', cardBorder: 'border-slate-300' };
+        return { headerBg: 'bg-slate-700 text-on-surface font-extrabold', rowCellBg: 'bg-surface-container-low hover:bg-surface-container-lowest', cardBorder: 'border-outline-variant' };
     }
   };
 
@@ -557,7 +557,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-20 md:pb-8">
       {/* Top Action Header */}
-      <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-lg border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-surface-container-lowest text-on-surface rounded-2xl p-4 sm:p-5 border border-outline-variant border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-black tracking-tight">{patient.name}'s Clinical Flowsheet</h1>
@@ -574,7 +574,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
           {/* PDF Import Button */}
           <button
             onClick={() => setIsPdfModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-extrabold text-xs shadow-md transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-primary text-on-primary hover:bg-blue-500 text-on-surface rounded-xl font-extrabold text-xs border border-surface-container-highest transition-all active:scale-95"
             id="import-pdf-btn"
           >
             <Upload className="w-4 h-4 text-blue-200" />
@@ -583,7 +583,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
 
           <button
             onClick={onOpenAddRound}
-            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-extrabold text-xs shadow-md transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-on-surface rounded-xl font-extrabold text-xs border border-surface-container-highest transition-all active:scale-95"
             id="add-round-btn"
           >
             <Plus className="w-4 h-4 text-emerald-200" />
@@ -593,14 +593,14 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
       </div>
 
       {pdfSuccessMessage && (
-        <div className="bg-emerald-600 text-white p-3 rounded-xl shadow-md text-xs font-extrabold flex items-center gap-2 animate-in fade-in">
+        <div className="bg-emerald-600 text-on-surface p-3 rounded-xl border border-surface-container-highest text-xs font-extrabold flex items-center gap-2 animate-in fade-in">
           <CheckCircle className="w-4 h-4 shrink-0" />
           {pdfSuccessMessage}
         </div>
       )}
 
       {/* Filter Tabs Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-surface-container-lowest p-1.5 rounded-xl border border-surface-container-highest">
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
           {[
             { id: 'ALL', label: 'All Parameters' },
@@ -614,8 +614,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               onClick={() => setFilterCategory(cat.id)}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                 filterCategory === cat.id
-                  ? 'bg-slate-900 text-white shadow-sm font-extrabold'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-surface-container-lowest text-on-surface border border-surface-container-high font-extrabold'
+                  : 'text-outline hover:text-on-surface'
               }`}
             >
               {cat.label}
@@ -624,25 +624,25 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
         </div>
 
         {surgeonRequirementLabel ? (
-          <div className="bg-blue-600 text-white px-3 py-1.5 rounded-xl shadow-xs text-xs font-extrabold flex items-center gap-1.5 animate-in fade-in shrink-0">
+          <div className="bg-primary text-on-primary text-on-surface px-3 py-1.5 rounded-xl shadow-xs text-xs font-extrabold flex items-center gap-1.5 animate-in fade-in shrink-0">
             <Clock className="w-3.5 h-3.5 text-blue-200" /> {surgeonRequirementLabel}
           </div>
         ) : (
-          <div className="text-[11px] font-bold text-slate-500 hidden lg:block px-2">
+          <div className="text-[11px] font-bold text-outline-variant hidden lg:block px-2">
             💡 Tap any cell to record or edit value
           </div>
         )}
       </div>
 
       {/* Main Flowsheet Grid Container with Sticky Left Column */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+      <div className="bg-surface-container border border-surface-container-high rounded-2xl border border-surface-container-highest border border-surface-container-high">
         <div className="overflow-auto relative" style={{ maxHeight: 'calc(100vh - 260px)' }}>
           <table className="w-full text-left border-collapse min-w-[850px]">
             {/* Table Header Row (Sticky Top) */}
-            <thead className="sticky top-0 z-30 bg-slate-800 text-white text-xs uppercase tracking-wider font-semibold border-b border-slate-700 shadow-md">
+            <thead className="sticky top-0 z-30 bg-slate-800 text-on-surface text-xs uppercase tracking-wider font-semibold border-b border-slate-700 border border-surface-container-highest">
               <tr className="bg-slate-800">
                 {/* Sticky Header Title */}
-                <th className="p-3 sticky top-0 left-0 z-40 bg-slate-800 w-60 sm:w-72 border-r border-slate-700 shadow-md">
+                <th className="p-3 sticky top-0 left-0 z-40 bg-slate-800 w-60 sm:w-72 border-r border-slate-700 border border-surface-container-highest">
                   <div className="flex items-center justify-between">
                     <span className="font-black text-amber-300">
                       {filterCategory === 'MEDS' ? 'Medications and CRIs' : 'Parameter'}
@@ -658,11 +658,11 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                     <th
                       key={slot}
                       className={`p-2.5 text-center min-w-[85px] border-r border-slate-700 transition-all ${
-                        isNow ? 'bg-amber-400 text-slate-950 font-black shadow-lg border-x-2 border-amber-600 ring-2 ring-amber-400 z-30 scale-102' : ''
+                        isNow ? 'bg-amber-400 text-slate-950 font-black border border-outline-variant border-x-2 border-amber-600 ring-2 ring-amber-400 z-30 scale-102' : ''
                       }`}
                     >
                       {isNow && (
-                        <div className="text-[9px] leading-tight font-black uppercase bg-slate-950 text-amber-300 px-1.5 py-0.5 rounded shadow-sm mb-1 animate-pulse flex items-center justify-center gap-1">
+                        <div className="text-[9px] leading-tight font-black uppercase bg-slate-950 text-amber-300 px-1.5 py-0.5 rounded border border-surface-container-high mb-1 animate-pulse flex items-center justify-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
                           NOW ({currentClockTime})
                         </div>
@@ -675,17 +675,17 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
             </thead>
 
             {/* Table Body grouped by Category Header Bands */}
-            <tbody className="divide-y divide-slate-200 text-xs font-medium">
+            <tbody className="divide-y divide-surface-container-highest text-xs font-medium">
               {Object.entries(groupedRows).map(([groupTitle, categoryRows]) => {
                 const firstRow = categoryRows[0];
                 return (
                   <React.Fragment key={groupTitle}>
                     {/* Category Header Row Band */}
-                    <tr className="bg-slate-200 text-slate-900 font-black border-y border-slate-300">
-                      <td className="p-2 sticky left-0 z-10 bg-slate-200 border-r border-slate-300 uppercase tracking-wide text-[11px] shadow-sm flex items-center justify-between">
+                    <tr className="bg-slate-200 text-on-surface font-black border-y border-outline-variant">
+                      <td className="p-2 sticky left-0 z-10 bg-slate-200 border-r border-outline-variant uppercase tracking-wide text-[11px] border border-surface-container-high flex items-center justify-between">
                         <span>{groupTitle}</span>
                         {firstRow?.categoryFrequency && (
-                          <span className="px-1.5 py-0.5 rounded bg-slate-300 text-slate-800 text-[10px] lowercase font-extrabold">
+                          <span className="px-1.5 py-0.5 rounded bg-slate-300 text-on-surface text-[10px] lowercase font-extrabold">
                             {firstRow.categoryFrequency}
                           </span>
                         )}
@@ -705,10 +705,10 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleToggleSlotCollection(categoryRows, slot)}
-                                  className={`px-2.5 py-1 rounded-xl font-black text-[10px] shadow-md transition-all flex items-center justify-center gap-1 mx-auto active:scale-95 ${
+                                  className={`px-2.5 py-1 rounded-xl font-black text-[10px] border border-surface-container-highest transition-all flex items-center justify-center gap-1 mx-auto active:scale-95 ${
                                     isSlotCollected
-                                      ? 'bg-slate-900 text-amber-300 border border-amber-400 animate-pulse'
-                                      : 'bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-700 shadow-sm'
+                                      ? 'bg-surface-container-lowest text-amber-300 border border-amber-400 animate-pulse'
+                                      : 'bg-emerald-600 text-on-surface hover:bg-emerald-500 border border-emerald-700 border border-surface-container-high'
                                   }`}
                                   title="Click to mark sample as collected / processing for this DUE time slot"
                                 >
@@ -718,11 +718,11 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                             );
                           }
                           return (
-                            <td key={slot} className={`p-2 border-r border-slate-300/50 ${isNowCol ? 'bg-amber-200/60 border-x-2 border-amber-500/80' : 'bg-slate-200/50'}`}></td>
+                            <td key={slot} className={`p-2 border-r border-outline-variant/50 ${isNowCol ? 'bg-amber-200/60 border-x-2 border-amber-500/80' : 'bg-slate-200/50'}`}></td>
                           );
                         }
                         return (
-                          <td key={slot} className={`p-2 border-r border-slate-300/50 ${isNowCol ? 'bg-amber-200/60 border-x-2 border-amber-500/80' : 'bg-slate-200/50'}`}></td>
+                          <td key={slot} className={`p-2 border-r border-outline-variant/50 ${isNowCol ? 'bg-amber-200/60 border-x-2 border-amber-500/80' : 'bg-slate-200/50'}`}></td>
                         );
                       })}
                     </tr>
@@ -736,10 +736,10 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                       return (
                         <tr key={row.id} className="transition-colors">
                           {/* Sticky Left Title + Target + Route Column */}
-                          <td className={`p-2.5 sticky left-0 z-10 border-r border-slate-300 shadow-md ${colorStyles.headerBg}`}>
+                          <td className={`p-2.5 sticky left-0 z-10 border-r border-outline-variant border border-surface-container-highest ${colorStyles.headerBg}`}>
                             <div className="flex items-start justify-between gap-1">
                               <div className="space-y-0.5 max-w-[150px] sm:max-w-[180px]">
-                                <span className="font-black text-white text-xs block truncate">{row.parameter}</span>
+                                <span className="font-black text-on-surface text-xs block truncate">{row.parameter}</span>
                                 {row.drugCategory && (
                                   <span className="inline-block mt-0.5 px-1.5 py-0.5 bg-slate-800/40 text-slate-100 text-[9px] font-bold uppercase tracking-wider rounded border border-white/10">
                                     {row.drugCategory}
@@ -752,7 +752,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                   <span className="text-[10px] text-sky-200 font-bold block">Route: {row.route}</span>
                                 )}
                               </div>
-                              <span className="text-[10px] font-extrabold text-slate-900 bg-white/90 px-1.5 py-0.5 rounded shadow-xs shrink-0 mt-0.5">
+                              <span className="text-[10px] font-extrabold text-on-surface bg-surface-container border border-surface-container-high/90 px-1.5 py-0.5 rounded shadow-xs shrink-0 mt-0.5">
                                 {row.target}
                               </span>
                             </div>
@@ -794,7 +794,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
 
                             let cellStyleClass = colorStyles.rowCellBg;
                             if (isDiscontinued) {
-                              cellStyleClass = 'bg-slate-200 text-slate-500 line-through';
+                              cellStyleClass = 'bg-slate-200 text-outline-variant line-through';
                             } else if (isDone) {
                               cellStyleClass = 'bg-emerald-100 text-emerald-950 font-black border-2 border-emerald-500';
                             } else if (isLate) {
@@ -810,7 +810,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                             // Continuous NOW column background highlight styling
                             const nowColumnHighlight = isNow
                               ? 'bg-amber-100/70 border-x-2 border-amber-500/80 shadow-xs z-10'
-                              : 'border-r border-slate-200/80';
+                              : 'border-r border-surface-container-highest/80';
 
                             return (
                               <td
@@ -821,19 +821,19 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                 } ${isNextDue ? 'ring-4 ring-amber-500 z-20' : ''}`}
                               >
                                 {isDiscontinued ? (
-                                  <span className="line-through text-slate-500 font-bold text-[11px]">DISC</span>
+                                  <span className="line-through text-outline-variant font-bold text-[11px]">DISC</span>
                                 ) : isNumericRow(row) ? (
                                   <div className={`rounded-xl p-0.5 shadow-xs border flex flex-col items-center justify-center min-h-[38px] relative transition-all ${
                                     isNextDue
                                       ? 'bg-amber-100/90 border-2 border-amber-600 ring-2 ring-amber-400'
                                       : isDue
-                                      ? 'bg-amber-50/90 border-2 border-amber-500'
+                                      ? 'bg-tertiary-container text-on-tertiary-container/90 border-2 border-amber-500'
                                       : isNow
-                                      ? 'bg-amber-50/90 border-amber-400'
-                                      : `bg-white ${colorStyles.cardBorder}`
+                                      ? 'bg-tertiary-container text-on-tertiary-container/90 border-amber-400'
+                                      : `bg-surface-container border border-surface-container-high ${colorStyles.cardBorder}`
                                   }`}>
                                     {isNextDue ? (
-                                      <span className="absolute -top-2.5 bg-amber-500 text-slate-950 text-[8px] font-black px-1.5 py-0.2 rounded-full border border-amber-700 shadow-xs uppercase animate-pulse pointer-events-none">
+                                      <span className="absolute -top-2.5 bg-tertiary text-on-tertiary text-slate-950 text-[8px] font-black px-1.5 py-0.2 rounded-full border border-amber-700 shadow-xs uppercase animate-pulse pointer-events-none">
                                         NEXT DUE
                                       </span>
                                     ) : isDue ? (
@@ -865,12 +865,12 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                         }
                                       }}
                                       onKeyDown={(e) => handleInlineNumericKeyDown(e, row, slot, (e.target as HTMLInputElement).value)}
-                                      className="w-full text-center font-black text-slate-900 text-xs sm:text-sm bg-transparent outline-none focus:ring-2 focus:ring-blue-500 rounded-lg py-1"
+                                      className="w-full text-center font-black text-on-surface text-xs sm:text-sm bg-transparent outline-none focus:ring-2 focus:ring-blue-500 rounded-lg py-1"
                                       placeholder="—"
                                     />
                                   </div>
                                 ) : isNextDue ? (
-                                  <div className="bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-1 rounded-lg border-2 border-amber-600 shadow-md animate-pulse">
+                                  <div className="bg-tertiary text-on-tertiary text-slate-950 font-black text-[10px] px-1.5 py-1 rounded-lg border-2 border-amber-600 border border-surface-container-highest animate-pulse">
                                     NEXT DUE
                                   </div>
                                 ) : isDue ? (
@@ -878,7 +878,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                     DUE
                                   </div>
                                 ) : isDone ? (
-                                  <div className="bg-emerald-600 text-white font-black text-[10px] px-2 py-1 rounded-lg border border-emerald-700 shadow-xs">
+                                  <div className="bg-emerald-600 text-on-surface font-black text-[10px] px-2 py-1 rounded-lg border border-emerald-700 shadow-xs">
                                     ✓ {cell.value || row.target}
                                   </div>
                                 ) : hasValue ? (
@@ -899,12 +899,12 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                         if (sym === '++') return <span className="text-emerald-600 font-black text-xs tracking-tighter">++</span>;
                                         if (sym === '+') return <span className="text-emerald-500 font-black text-sm">+</span>;
                                         if (sym === '-') return <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-2xs" />;
-                                        if (sym === '0') return <span className="w-3 h-0.5 bg-red-600 rounded-full block" />;
-                                        return <span className="text-slate-500 font-bold text-[10px]">{sym}</span>;
+                                        if (sym === '0') return <span className="w-3 h-0.5 bg-error text-on-error rounded-full block" />;
+                                        return <span className="text-outline-variant font-bold text-[10px]">{sym}</span>;
                                       };
 
                                       return (
-                                        <div className="w-12 h-12 bg-white border border-slate-300 rounded-xl p-0.5 relative shadow-xs mx-auto flex items-center justify-center">
+                                        <div className="w-12 h-12 bg-surface-container border border-surface-container-high border border-outline-variant rounded-xl p-0.5 relative shadow-xs mx-auto flex items-center justify-center">
                                           {/* Dark Blue Cross Dividers */}
                                           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2.5px] bg-sky-900 rounded-full z-0"></div>
                                           <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[2.5px] bg-sky-900 rounded-full z-0"></div>
@@ -919,7 +919,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                       );
                                     })()
                                   ) : (
-                                    <div className={`bg-white rounded-xl p-1 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative`}>
+                                    <div className={`bg-surface-container border border-surface-container-high rounded-xl p-1 shadow-xs border ${colorStyles.cardBorder} flex flex-col items-center justify-center min-h-[38px] relative`}>
                                       {calculatedDelta && (
                                         <span className={`absolute -top-2 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full border shadow-xs ${
                                           calculatedDelta.startsWith('+') && calculatedDelta !== '+0'
@@ -931,13 +931,13 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                                           {calculatedDelta}
                                         </span>
                                       )}
-                                      <span className="font-black text-slate-900 text-xs sm:text-sm">
+                                      <span className="font-black text-on-surface text-xs sm:text-sm">
                                         {cell.value}
                                       </span>
                                     </div>
                                   )
                                 ) : (
-                                  <div className="h-7 flex items-center justify-center text-slate-400 hover:text-slate-700 text-xs font-bold">
+                                  <div className="h-7 flex items-center justify-center text-slate-400 hover:text-on-surface-variant text-xs font-bold">
                                     +
                                   </div>
                                 )}
@@ -957,30 +957,30 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
 
       {/* PDF Import Modal */}
       {isPdfModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in duration-150">
+        <div className="fixed inset-0 bg-surface-container-lowest/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-surface-container border border-surface-container-high rounded-2xl max-w-md w-full p-6 shadow-2xl border border-surface-container-highest space-y-4 animate-in fade-in zoom-in duration-150">
             <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="font-black text-slate-900 text-base flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" /> Import PDF / Lab Analyzer Report
+              <h3 className="font-black text-on-surface text-base flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" /> Import PDF / Lab Analyzer Report
               </h3>
-              <button onClick={() => setIsPdfModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-xs font-bold">
+              <button onClick={() => setIsPdfModalOpen(false)} className="text-slate-400 hover:text-outline text-xs font-bold">
                 ✕
               </button>
             </div>
 
             <div className="space-y-3">
-              <label className="text-xs font-bold text-slate-700 block">Select Time Slot to Populate:</label>
+              <label className="text-xs font-bold text-on-surface-variant block">Select Time Slot to Populate:</label>
               <select
                 value={selectedPdfTimeSlot}
                 onChange={(e) => setSelectedPdfTimeSlot(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-xl font-bold text-slate-900 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                className="w-full px-3 py-2 border border-outline-variant rounded-xl font-bold text-on-surface bg-surface-container-low focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               >
                 {timeSlots.map((slot) => (
                   <option key={slot} value={slot}>{slot}</option>
                 ))}
               </select>
 
-              <label className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer block relative">
+              <label className="border-2 border-dashed border-outline-variant rounded-2xl p-6 text-center bg-surface-container-low hover:bg-surface-container-lowest transition-colors cursor-pointer block relative">
                 <input
                   type="file"
                   accept="application/pdf"
@@ -992,7 +992,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                   }}
                 />
                 <Upload className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                <span className="text-xs font-bold text-slate-700 block">
+                <span className="text-xs font-bold text-on-surface-variant block">
                   {pdfFile ? pdfFile.name : 'Click to browse or drop your Lab Report PDF here'}
                 </span>
                 <span className="text-[11px] text-slate-400 block mt-1">Extracts PCV, TP, Lactate, WBC, Glucose, Creatinine</span>
@@ -1002,14 +1002,14 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
             <div className="flex items-center justify-end gap-2 pt-2 border-t">
               <button
                 onClick={() => setIsPdfModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-outline hover:bg-surface-container-lowest"
               >
                 Cancel
               </button>
               <button
                 onClick={handleImportPdfReport}
                 disabled={isPdfParsing}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-xl shadow-md flex items-center gap-2"
+                className="px-5 py-2.5 bg-primary text-on-primary hover:opacity-90 text-on-surface text-xs font-extrabold rounded-xl border border-surface-container-highest flex items-center gap-2"
               >
                 {isPdfParsing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 {isPdfParsing ? 'Parsing PDF...' : 'Auto-Fill Flowsheet'}
@@ -1025,18 +1025,18 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
         const isMedicationRow = activeRow?.category === 'MEDICATIONS' || activeRow?.type === 'medication' || activeRow?.type === 'cri';
 
         return (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in duration-150">
+          <div className="fixed inset-0 bg-surface-container-lowest/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+            <div className="bg-surface-container border border-surface-container-high rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-surface-container-highest space-y-4 animate-in fade-in zoom-in duration-150">
               <div className="flex items-center justify-between border-b pb-3">
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-sm">
-                    {isMedicationRow ? 'Record Administration' : 'Edit Value'} • Slot <span className="text-blue-600">{editingCell.timeSlot}</span>
+                  <h3 className="font-extrabold text-on-surface text-sm">
+                    {isMedicationRow ? 'Record Administration' : 'Edit Value'} • Slot <span className="text-primary">{editingCell.timeSlot}</span>
                   </h3>
                   {activeRow && (
-                    <p className="text-xs text-slate-500 font-bold mt-0.5">{activeRow.parameter}</p>
+                    <p className="text-xs text-outline-variant font-bold mt-0.5">{activeRow.parameter}</p>
                   )}
                 </div>
-                <button onClick={() => setEditingCell(null)} className="text-slate-400 hover:text-slate-600 text-xs font-bold">
+                <button onClick={() => setEditingCell(null)} className="text-slate-400 hover:text-outline text-xs font-bold">
                   ✕
                 </button>
               </div>
@@ -1044,11 +1044,11 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               {isMedicationRow ? (
                 /* Specialized Medication Cell Modal */
                 <div className="space-y-3">
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Pre-Calculated Target Volume</span>
+                  <div className="bg-surface-container-low p-3 rounded-xl border border-surface-container-highest space-y-2">
+                    <span className="text-[11px] font-bold text-outline-variant uppercase tracking-wider block">Pre-Calculated Target Volume</span>
                     <button
                       onClick={() => handleSaveCell('DONE')}
-                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-98"
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-on-surface font-extrabold text-xs sm:text-sm rounded-xl border border-surface-container-highest flex items-center justify-center gap-2 transition-all active:scale-98"
                     >
                       ✓ Confirm Given: {activeRow?.target}
                     </button>
@@ -1057,26 +1057,26 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => handleSaveCell('LATE')}
-                      className="py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs"
+                      className="py-2 bg-tertiary text-on-tertiary hover:bg-amber-600 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs"
                     >
                       ⚠️ Mark Late
                     </button>
                     <button
                       onClick={() => handleSaveCell('DISCONTINUED')}
-                      className="py-2 bg-slate-700 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow-xs"
+                      className="py-2 bg-slate-700 hover:bg-slate-800 text-on-surface font-extrabold text-xs rounded-xl shadow-xs"
                     >
                       🚫 Discontinue
                     </button>
                   </div>
 
                   <div className="space-y-1 pt-1">
-                    <label className="text-xs font-bold text-slate-700 block">Different Volume Given:</label>
+                    <label className="text-xs font-bold text-on-surface-variant block">Different Volume Given:</label>
                     <input
                       type="number"
                       step="any"
                       value={cellInputValue}
                       onChange={(e) => setCellInputValue(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-900 font-extrabold focus:ring-2 focus:ring-blue-500 outline-none text-base"
+                      className="w-full px-3 py-2 border border-outline-variant rounded-xl text-on-surface font-extrabold focus:ring-2 focus:ring-blue-500 outline-none text-base"
                       placeholder="e.g. 9.9"
                     />
                   </div>
@@ -1085,34 +1085,34 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 /* Gut Sounds 4-Quadrant Visual Grid with ++ option */
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700 block">Select Motility for Each Quadrant:</span>
-                    <span className="text-[11px] font-extrabold text-blue-600">Live Preview:</span>
+                    <span className="text-xs font-bold text-on-surface-variant block">Select Motility for Each Quadrant:</span>
+                    <span className="text-[11px] font-extrabold text-primary">Live Preview:</span>
                   </div>
 
                   {/* Live Cross Widget Preview */}
-                  <div className="w-14 h-14 bg-white border-2 border-slate-400 rounded-xl p-0.5 relative shadow-md mx-auto flex items-center justify-center">
+                  <div className="w-14 h-14 bg-surface-container border border-surface-container-high border-2 border-slate-400 rounded-xl p-0.5 relative border border-surface-container-highest mx-auto flex items-center justify-center">
                     <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[3px] bg-sky-900 rounded-full z-0"></div>
                     <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[3px] bg-sky-900 rounded-full z-0"></div>
                     <div className="grid grid-cols-2 grid-rows-2 w-full h-full z-10 text-center font-black">
                       <div className="flex items-center justify-center">
-                        {gutSoundsQuad.lUp === '++' ? <span className="text-emerald-600 font-black text-xs">++</span> : gutSoundsQuad.lUp === '+' ? <span className="text-emerald-500 font-black text-sm">+</span> : gutSoundsQuad.lUp === '-' ? <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-xs" /> : <span className="w-3 h-0.5 bg-red-600 rounded-full block" />}
+                        {gutSoundsQuad.lUp === '++' ? <span className="text-emerald-600 font-black text-xs">++</span> : gutSoundsQuad.lUp === '+' ? <span className="text-emerald-500 font-black text-sm">+</span> : gutSoundsQuad.lUp === '-' ? <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-xs" /> : <span className="w-3 h-0.5 bg-error text-on-error rounded-full block" />}
                       </div>
                       <div className="flex items-center justify-center">
-                        {gutSoundsQuad.rUp === '++' ? <span className="text-emerald-600 font-black text-xs">++</span> : gutSoundsQuad.rUp === '+' ? <span className="text-emerald-500 font-black text-sm">+</span> : gutSoundsQuad.rUp === '-' ? <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-xs" /> : <span className="w-3 h-0.5 bg-red-600 rounded-full block" />}
+                        {gutSoundsQuad.rUp === '++' ? <span className="text-emerald-600 font-black text-xs">++</span> : gutSoundsQuad.rUp === '+' ? <span className="text-emerald-500 font-black text-sm">+</span> : gutSoundsQuad.rUp === '-' ? <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-xs" /> : <span className="w-3 h-0.5 bg-error text-on-error rounded-full block" />}
                       </div>
                       <div className="flex items-center justify-center">
-                        {gutSoundsQuad.lLow === '++' ? <span className="text-emerald-600 font-black text-xs">++</span> : gutSoundsQuad.lLow === '+' ? <span className="text-emerald-500 font-black text-sm">+</span> : gutSoundsQuad.lLow === '-' ? <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-xs" /> : <span className="w-3 h-0.5 bg-red-600 rounded-full block" />}
+                        {gutSoundsQuad.lLow === '++' ? <span className="text-emerald-600 font-black text-xs">++</span> : gutSoundsQuad.lLow === '+' ? <span className="text-emerald-500 font-black text-sm">+</span> : gutSoundsQuad.lLow === '-' ? <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-xs" /> : <span className="w-3 h-0.5 bg-error text-on-error rounded-full block" />}
                       </div>
                       <div className="flex items-center justify-center">
-                        {gutSoundsQuad.rLow === '++' ? <span className="text-emerald-600 font-black text-xs">++</span> : gutSoundsQuad.rLow === '+' ? <span className="text-emerald-500 font-black text-sm">+</span> : gutSoundsQuad.rLow === '-' ? <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-xs" /> : <span className="w-3 h-0.5 bg-red-600 rounded-full block" />}
+                        {gutSoundsQuad.rLow === '++' ? <span className="text-emerald-600 font-black text-xs">++</span> : gutSoundsQuad.rLow === '+' ? <span className="text-emerald-500 font-black text-sm">+</span> : gutSoundsQuad.rLow === '-' ? <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 block shadow-xs" /> : <span className="w-3 h-0.5 bg-error text-on-error rounded-full block" />}
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2.5 p-3 bg-slate-100 rounded-2xl border border-slate-300">
+                  <div className="grid grid-cols-2 gap-2.5 p-3 bg-surface-container-lowest rounded-2xl border border-outline-variant">
                     {/* Left Upper */}
-                    <div className="p-2 bg-white rounded-xl border text-center space-y-1">
-                      <span className="text-[10px] font-black text-slate-500 uppercase block">L-UP (Left Upper)</span>
+                    <div className="p-2 bg-surface-container border border-surface-container-high rounded-xl border text-center space-y-1">
+                      <span className="text-[10px] font-black text-outline-variant uppercase block">L-UP (Left Upper)</span>
                       <div className="flex justify-center gap-1">
                         {['++', '+', '-', '0'].map((sym) => (
                           <button
@@ -1120,8 +1120,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                             onClick={() => setGutSoundsQuad((prev) => ({ ...prev, lUp: sym }))}
                             className={`w-7 h-7 rounded-lg font-black text-xs transition-all ${
                               gutSoundsQuad.lUp === sym
-                                ? sym === '++' || sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? sym === '++' || sym === '+' ? 'bg-emerald-600 text-on-surface' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-error text-on-error text-on-surface'
+                                : 'bg-surface-container-lowest text-outline hover:bg-slate-200'
                             }`}
                           >
                             {sym}
@@ -1131,8 +1131,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                     </div>
 
                     {/* Right Upper */}
-                    <div className="p-2 bg-white rounded-xl border text-center space-y-1">
-                      <span className="text-[10px] font-black text-slate-500 uppercase block">R-UP (Right Upper)</span>
+                    <div className="p-2 bg-surface-container border border-surface-container-high rounded-xl border text-center space-y-1">
+                      <span className="text-[10px] font-black text-outline-variant uppercase block">R-UP (Right Upper)</span>
                       <div className="flex justify-center gap-1">
                         {['++', '+', '-', '0'].map((sym) => (
                           <button
@@ -1140,8 +1140,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                             onClick={() => setGutSoundsQuad((prev) => ({ ...prev, rUp: sym }))}
                             className={`w-7 h-7 rounded-lg font-black text-xs transition-all ${
                               gutSoundsQuad.rUp === sym
-                                ? sym === '++' || sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? sym === '++' || sym === '+' ? 'bg-emerald-600 text-on-surface' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-error text-on-error text-on-surface'
+                                : 'bg-surface-container-lowest text-outline hover:bg-slate-200'
                             }`}
                           >
                             {sym}
@@ -1151,8 +1151,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                     </div>
 
                     {/* Left Lower */}
-                    <div className="p-2 bg-white rounded-xl border text-center space-y-1">
-                      <span className="text-[10px] font-black text-slate-500 uppercase block">L-LOW (Left Lower)</span>
+                    <div className="p-2 bg-surface-container border border-surface-container-high rounded-xl border text-center space-y-1">
+                      <span className="text-[10px] font-black text-outline-variant uppercase block">L-LOW (Left Lower)</span>
                       <div className="flex justify-center gap-1">
                         {['++', '+', '-', '0'].map((sym) => (
                           <button
@@ -1160,8 +1160,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                             onClick={() => setGutSoundsQuad((prev) => ({ ...prev, lLow: sym }))}
                             className={`w-7 h-7 rounded-lg font-black text-xs transition-all ${
                               gutSoundsQuad.lLow === sym
-                                ? sym === '++' || sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? sym === '++' || sym === '+' ? 'bg-emerald-600 text-on-surface' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-error text-on-error text-on-surface'
+                                : 'bg-surface-container-lowest text-outline hover:bg-slate-200'
                             }`}
                           >
                             {sym}
@@ -1171,8 +1171,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                     </div>
 
                     {/* Right Lower */}
-                    <div className="p-2 bg-white rounded-xl border text-center space-y-1">
-                      <span className="text-[10px] font-black text-slate-500 uppercase block">R-LOW (Right Lower)</span>
+                    <div className="p-2 bg-surface-container border border-surface-container-high rounded-xl border text-center space-y-1">
+                      <span className="text-[10px] font-black text-outline-variant uppercase block">R-LOW (Right Lower)</span>
                       <div className="flex justify-center gap-1">
                         {['++', '+', '-', '0'].map((sym) => (
                           <button
@@ -1180,8 +1180,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                             onClick={() => setGutSoundsQuad((prev) => ({ ...prev, rLow: sym }))}
                             className={`w-7 h-7 rounded-lg font-black text-xs transition-all ${
                               gutSoundsQuad.rLow === sym
-                                ? sym === '++' || sym === '+' ? 'bg-emerald-600 text-white' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-red-600 text-white'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? sym === '++' || sym === '+' ? 'bg-emerald-600 text-on-surface' : sym === '-' ? 'bg-amber-400 text-slate-950' : 'bg-error text-on-error text-on-surface'
+                                : 'bg-surface-container-lowest text-outline hover:bg-slate-200'
                             }`}
                           >
                             {sym}
@@ -1194,14 +1194,14 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               ) : activeRow?.type === 'manure' ? (
                 /* Manure Details Select */
                 <div className="space-y-3">
-                  <label className="text-xs font-bold text-slate-700 block">Manure Passed?</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Manure Passed?</label>
                   <div className="grid grid-cols-2 gap-2">
                     {['Yes', 'No'].map((opt) => (
                       <button
                         key={opt}
                         onClick={() => setManurePassed(opt)}
                         className={`py-2 rounded-xl text-xs font-black border transition-all ${
-                          manurePassed === opt ? 'bg-blue-600 text-white border-blue-700' : 'bg-slate-100 text-slate-700 border-slate-200'
+                          manurePassed === opt ? 'bg-primary text-on-primary text-on-surface border-blue-700' : 'bg-surface-container-lowest text-on-surface-variant border-surface-container-highest'
                         }`}
                       >
                         {opt}
@@ -1212,22 +1212,22 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                   {manurePassed === 'Yes' && (
                     <>
                       <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-700 block">Amount:</label>
+                        <label className="text-xs font-bold text-on-surface-variant block">Amount:</label>
                         <select
                           value={manureAmount}
                           onChange={(e) => setManureAmount(e.target.value)}
-                          className="w-full px-3 py-2 border rounded-xl font-bold text-slate-900 text-xs bg-slate-50"
+                          className="w-full px-3 py-2 border rounded-xl font-bold text-on-surface text-xs bg-surface-container-low"
                         >
                           {['Small', 'Moderate', 'Abundant'].map(a => <option key={a} value={a}>{a}</option>)}
                         </select>
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-700 block">Consistency:</label>
+                        <label className="text-xs font-bold text-on-surface-variant block">Consistency:</label>
                         <select
                           value={manureConsistency}
                           onChange={(e) => setManureConsistency(e.target.value)}
-                          className="w-full px-3 py-2 border rounded-xl font-bold text-slate-900 text-xs bg-slate-50"
+                          className="w-full px-3 py-2 border rounded-xl font-bold text-on-surface text-xs bg-surface-container-low"
                         >
                           {['Normal Pellets', 'Soft / Cow-pat', 'Watery Diarrhea', 'Mucus-covered'].map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
@@ -1238,14 +1238,14 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               ) : activeRow?.parameter.includes('NGT') ? (
                 /* NGT Options */
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Nasogastric Tube Status:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Nasogastric Tube Status:</label>
                   <div className="grid grid-cols-3 gap-2">
                     {['Yes', 'No', 'Removed'].map((opt) => (
                       <button
                         key={opt}
                         onClick={() => { setCellInputValue(opt); }}
                         className={`py-2 rounded-xl text-xs font-black border transition-all ${
-                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700' : 'bg-slate-100 text-slate-700 border-slate-200'
+                          cellInputValue === opt ? 'bg-primary text-on-primary text-on-surface border-blue-700' : 'bg-surface-container-lowest text-on-surface-variant border-surface-container-highest'
                         }`}
                       >
                         {opt}
@@ -1256,11 +1256,11 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               ) : activeRow?.parameter.includes('Catheter') ? (
                 /* IV Catheter Site Dropdown */
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">IV Catheter Site Assessment:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">IV Catheter Site Assessment:</label>
                   <select
                     value={cellInputValue}
                     onChange={(e) => setCellInputValue(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-xl font-bold text-slate-900 text-xs bg-slate-50"
+                    className="w-full px-3 py-2 border rounded-xl font-bold text-on-surface text-xs bg-surface-container-low"
                   >
                     {[
                       'Right Jugular (Clean)',
@@ -1276,7 +1276,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 </div>
               ) : activeRow?.parameter.includes('Mucous') || activeRow?.id === 'mm' ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Select Mucous Membrane Status:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Select Mucous Membrane Status:</label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       'Pink, Moist',
@@ -1290,7 +1290,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         key={opt}
                         onClick={() => setCellInputValue(opt)}
                         className={`py-2 px-2.5 rounded-xl text-xs font-bold border text-left transition-all ${
-                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          cellInputValue === opt ? 'bg-primary text-on-primary text-on-surface border-blue-700 font-extrabold border border-surface-container-high' : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1300,7 +1300,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 </div>
               ) : activeRow?.parameter.includes('Mentation') ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Select Mentation:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Select Mentation:</label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       'BAR (Bright, Alert)',
@@ -1313,7 +1313,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         key={opt}
                         onClick={() => setCellInputValue(opt)}
                         className={`py-2 px-2.5 rounded-xl text-xs font-bold border text-left transition-all ${
-                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          cellInputValue === opt ? 'bg-primary text-on-primary text-on-surface border-blue-700 font-extrabold border border-surface-container-high' : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1323,7 +1323,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 </div>
               ) : activeRow?.parameter.includes('Pain behavior') ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Select Pain Behavior:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Select Pain Behavior:</label>
                   <div className="space-y-1.5">
                     {[
                       'Quiet / Resting',
@@ -1335,7 +1335,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         key={opt}
                         onClick={() => setCellInputValue(opt)}
                         className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
-                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          cellInputValue === opt ? 'bg-primary text-on-primary text-on-surface border-blue-700 font-extrabold border border-surface-container-high' : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1345,7 +1345,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 </div>
               ) : activeRow?.parameter.includes('Analgesia') ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Select Analgesia Administered:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Select Analgesia Administered:</label>
                   <div className="space-y-1.5">
                     {[
                       'None Needed',
@@ -1359,7 +1359,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         key={opt}
                         onClick={() => setCellInputValue(opt)}
                         className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
-                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          cellInputValue === opt ? 'bg-primary text-on-primary text-on-surface border-blue-700 font-extrabold border border-surface-container-high' : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1370,7 +1370,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               ) : activeRow?.type === 'rectal_exam' || activeRow?.parameter.includes('Rectal') ? (
                 /* Rectal Examination 1-Click Grid */
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Select Rectal Exam Findings:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Select Rectal Exam Findings:</label>
                   <div className="space-y-1.5">
                     {[
                       'Normal / Empty Pelvic Flexure',
@@ -1384,7 +1384,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         key={opt}
                         onClick={() => setCellInputValue(opt)}
                         className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
-                          cellInputValue === opt ? 'bg-purple-700 text-white border-purple-800 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          cellInputValue === opt ? 'bg-purple-700 text-on-surface border-purple-800 font-extrabold border border-surface-container-high' : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1395,7 +1395,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               ) : activeRow?.type === 'flash_us' || activeRow?.parameter.includes('FLASH') ? (
                 /* FLASH Abdominal US 1-Click Grid */
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Select FLASH Abdominal US Findings:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Select FLASH Abdominal US Findings:</label>
                   <div className="space-y-1.5">
                     {[
                       'Normal Motility & Normal Wall (<3mm)',
@@ -1409,7 +1409,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         key={opt}
                         onClick={() => setCellInputValue(opt)}
                         className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
-                          cellInputValue === opt ? 'bg-blue-700 text-white border-blue-800 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          cellInputValue === opt ? 'bg-blue-700 text-on-surface border-blue-800 font-extrabold border border-surface-container-high' : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1420,7 +1420,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               ) : activeRow?.type === 'response_therapy' || activeRow?.parameter.includes('Response to') ? (
                 /* Response to Therapy 1-Click Grid */
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Response to Medical Analgesia:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Response to Medical Analgesia:</label>
                   <div className="space-y-1.5">
                     {[
                       'Complete Resolution',
@@ -1433,8 +1433,8 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         onClick={() => setCellInputValue(opt)}
                         className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
                           cellInputValue === opt
-                            ? opt.includes('Complete') ? 'bg-emerald-600 text-white font-extrabold' : 'bg-red-600 text-white font-extrabold'
-                            : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                            ? opt.includes('Complete') ? 'bg-emerald-600 text-on-surface font-extrabold' : 'bg-error text-on-error text-on-surface font-extrabold'
+                            : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1445,7 +1445,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               ) : activeRow?.type === 'peritoneal' || activeRow?.parameter.includes('Peritoneal Gross') ? (
                 /* Peritoneal Appearance 1-Click Grid */
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Select Peritoneal Fluid Appearance:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Select Peritoneal Fluid Appearance:</label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       'Clear Yellow',
@@ -1458,7 +1458,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         key={opt}
                         onClick={() => setCellInputValue(opt)}
                         className={`py-2 px-2.5 rounded-xl text-xs font-bold border text-left transition-all ${
-                          cellInputValue === opt ? 'bg-purple-700 text-white border-purple-800 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          cellInputValue === opt ? 'bg-purple-700 text-on-surface border-purple-800 font-extrabold border border-surface-container-high' : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1468,7 +1468,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 </div>
               ) : activeRow?.parameter.includes('Reflux appearance') ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Select Reflux Appearance:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Select Reflux Appearance:</label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       'None / No Reflux',
@@ -1481,7 +1481,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         key={opt}
                         onClick={() => setCellInputValue(opt)}
                         className={`py-2 px-2.5 rounded-xl text-xs font-bold border text-left transition-all ${
-                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          cellInputValue === opt ? 'bg-primary text-on-primary text-on-surface border-blue-700 font-extrabold border border-surface-container-high' : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1491,7 +1491,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 </div>
               ) : activeRow?.parameter.includes('Digital pulse') ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Select Digital Pulse Status:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Select Digital Pulse Status:</label>
                   <div className="space-y-1.5">
                     {[
                       'Normal / Cool Hooves',
@@ -1503,7 +1503,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         key={opt}
                         onClick={() => setCellInputValue(opt)}
                         className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
-                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          cellInputValue === opt ? 'bg-primary text-on-primary text-on-surface border-blue-700 font-extrabold border border-surface-container-high' : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1513,7 +1513,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 </div>
               ) : activeRow?.parameter.includes('Cryotherapy') ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Select Cryotherapy Status:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Select Cryotherapy Status:</label>
                   <div className="space-y-1.5">
                     {[
                       'Yes (Ice Boots ON)',
@@ -1524,7 +1524,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         key={opt}
                         onClick={() => setCellInputValue(opt)}
                         className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
-                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          cellInputValue === opt ? 'bg-primary text-on-primary text-on-surface border-blue-700 font-extrabold border border-surface-container-high' : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1534,7 +1534,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 </div>
               ) : activeRow?.parameter.includes('Hoof Temp') ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Select Hoof Temp Status:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Select Hoof Temp Status:</label>
                   <div className="space-y-1.5">
                     {[
                       '< 10°C (Target Cryo)',
@@ -1545,7 +1545,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         key={opt}
                         onClick={() => setCellInputValue(opt)}
                         className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
-                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          cellInputValue === opt ? 'bg-primary text-on-primary text-on-surface border-blue-700 font-extrabold border border-surface-container-high' : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1555,7 +1555,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                 </div>
               ) : activeRow?.parameter.includes('Incision') ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Select Incision Status:</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Select Incision Status:</label>
                   <div className="space-y-1.5">
                     {[
                       'Clean, Dry, Intact',
@@ -1568,7 +1568,7 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
                         key={opt}
                         onClick={() => setCellInputValue(opt)}
                         className={`w-full py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all ${
-                          cellInputValue === opt ? 'bg-blue-600 text-white border-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          cellInputValue === opt ? 'bg-primary text-on-primary text-on-surface border-blue-700 font-extrabold border border-surface-container-high' : 'bg-surface-container-low text-on-surface border-surface-container-highest hover:bg-surface-container-lowest'
                         }`}
                       >
                         {opt}
@@ -1579,14 +1579,14 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               ) : (
                 /* Numeric Parameter Cell Modal */
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">Enter Parameter Value ({activeRow?.unit || activeRow?.target}):</label>
+                  <label className="text-xs font-bold text-on-surface-variant block">Enter Parameter Value ({activeRow?.unit || activeRow?.target}):</label>
                   <input
                     type="number"
                     step="any"
                     value={cellInputValue}
                     onChange={(e) => setCellInputValue(e.target.value)}
                     autoFocus
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-900 font-bold focus:ring-2 focus:ring-blue-500 outline-none text-base"
+                    className="w-full px-3 py-2 border border-outline-variant rounded-xl text-on-surface font-bold focus:ring-2 focus:ring-blue-500 outline-none text-base"
                     placeholder="e.g. 48, 38.1..."
                   />
                 </div>
@@ -1595,13 +1595,13 @@ export const FlowsheetView: React.FC<FlowsheetViewProps> = ({
               <div className="flex items-center justify-end gap-2 pt-2 border-t">
                 <button
                   onClick={() => setEditingCell(null)}
-                  className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                  className="px-3 py-2 rounded-xl text-xs font-semibold text-outline hover:bg-surface-container-lowest"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleSaveCell()}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md"
+                  className="px-4 py-2 bg-primary text-on-primary hover:opacity-90 text-on-surface text-xs font-bold rounded-xl border border-surface-container-highest"
                 >
                   Save Value
                 </button>

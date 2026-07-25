@@ -140,7 +140,7 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
   return (
     <div className="space-y-5 max-w-4xl mx-auto pb-20 md:pb-8">
       {/* Live Sync Control Header */}
-      <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-lg border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-surface-container-lowest text-on-surface rounded-2xl p-5 border border-outline-variant border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2">
@@ -159,10 +159,10 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
             onClick={() => setIsLiveSync(!isLiveSync)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-md ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all border border-surface-container-highest ${
               isLiveSync
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                : 'bg-amber-500 hover:bg-amber-600 text-slate-950'
+                ? 'bg-emerald-600 hover:bg-emerald-500 text-on-surface'
+                : 'bg-tertiary text-on-tertiary hover:bg-amber-600 text-slate-950'
             }`}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLiveSync ? 'animate-spin' : ''}`} />
@@ -181,8 +181,8 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
       {/* Triple Gauges Section: Survival %, Surgical Indication %, ICE Risk */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Gauge 1: Survival Probability */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm text-center space-y-2 relative overflow-hidden">
-          <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider">Survival Probability (%)</h3>
+        <div className="bg-surface-container border border-surface-container-high rounded-2xl p-5 border border-surface-container-highest border border-surface-container-high text-center space-y-2 relative overflow-hidden">
+          <h3 className="text-xs font-black text-outline-variant uppercase tracking-wider">Survival Probability (%)</h3>
 
           <div className="relative w-44 h-24 mx-auto flex items-center justify-center">
             <svg viewBox="0 0 100 60" className="w-full h-full">
@@ -205,18 +205,18 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
               </defs>
             </svg>
             <div className="absolute bottom-1 text-center">
-              <span className="text-3xl font-black text-slate-900">{survival}%</span>
+              <span className="text-3xl font-black text-on-surface">{survival}%</span>
             </div>
           </div>
 
-          <p className="text-[11px] text-slate-500 font-semibold">
+          <p className="text-[11px] text-outline-variant font-semibold">
             {survival >= 75 ? '🟢 Favorable ICU Prognosis' : survival >= 50 ? '🟡 Guarded Prognosis' : '🔴 Grave Prognosis'}
           </p>
         </div>
 
         {/* Gauge 2: Surgical Indication */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm text-center space-y-2 relative overflow-hidden">
-          <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider">Surgical Indication (%)</h3>
+        <div className="bg-surface-container border border-surface-container-high rounded-2xl p-5 border border-surface-container-highest border border-surface-container-high text-center space-y-2 relative overflow-hidden">
+          <h3 className="text-xs font-black text-outline-variant uppercase tracking-wider">Surgical Indication (%)</h3>
 
           <div className="relative w-44 h-24 mx-auto flex items-center justify-center">
             <svg viewBox="0 0 100 60" className="w-full h-full">
@@ -239,7 +239,7 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
               </defs>
             </svg>
             <div className="absolute bottom-1 text-center">
-              <span className="text-3xl font-black text-slate-900">{surgicalRisk}%</span>
+              <span className="text-3xl font-black text-on-surface">{surgicalRisk}%</span>
             </div>
           </div>
 
@@ -251,14 +251,14 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
         </div>
 
         {/* Gauge 3: ICE Score (Laminitis Risk) */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm text-center space-y-2 relative overflow-hidden">
-          <div className="flex items-center justify-center gap-1 text-xs font-black text-slate-500 uppercase tracking-wider">
+        <div className="bg-surface-container border border-surface-container-high rounded-2xl p-5 border border-surface-container-highest border border-surface-container-high text-center space-y-2 relative overflow-hidden">
+          <div className="flex items-center justify-center gap-1 text-xs font-black text-outline-variant uppercase tracking-wider">
             <Snowflake className="w-4 h-4 text-blue-500" /> ICE Laminitis Risk
           </div>
 
           <div className="py-2">
             <div className="text-3xl font-black text-blue-700">{iceRisk.score} / 5</div>
-            <div className="text-[11px] font-extrabold text-slate-600 mt-1">
+            <div className="text-[11px] font-extrabold text-outline mt-1">
               {iceRisk.score >= 3 ? '⚠️ HIGH LAMINITIS RISK' : 'LOW LAMINITIS RISK'}
             </div>
           </div>
@@ -274,7 +274,7 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
 
       {/* Manual What-If Simulator Sliders (Visible when toggled) */}
       {!isLiveSync && (
-        <div className="bg-amber-50 rounded-2xl p-5 border border-amber-200 shadow-sm space-y-4 animate-in fade-in">
+        <div className="bg-tertiary-container text-on-tertiary-container rounded-2xl p-5 border border-amber-200 border border-surface-container-high space-y-4 animate-in fade-in">
           <div className="flex items-center justify-between border-b border-amber-200 pb-3">
             <h3 className="text-sm font-black text-amber-950 flex items-center gap-2">
               <Sliders className="w-4 h-4 text-amber-700" /> Manual What-If Scenario Overrides
@@ -284,11 +284,11 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-slate-700">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-on-surface-variant">
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span>Heart Rate:</span>
-                <span className="font-bold text-slate-900">{manualHr} bpm</span>
+                <span className="font-bold text-on-surface">{manualHr} bpm</span>
               </div>
               <input
                 type="range"
@@ -303,7 +303,7 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span>Blood Lactate:</span>
-                <span className="font-bold text-slate-900">{manualLactate} mmol/L</span>
+                <span className="font-bold text-on-surface">{manualLactate} mmol/L</span>
               </div>
               <input
                 type="range"
@@ -319,7 +319,7 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span>PCV (%):</span>
-                <span className="font-bold text-slate-900">{manualPcv}%</span>
+                <span className="font-bold text-on-surface">{manualPcv}%</span>
               </div>
               <input
                 type="range"
@@ -334,7 +334,7 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span>Reflux Volume:</span>
-                <span className="font-bold text-slate-900">{manualReflux} L</span>
+                <span className="font-bold text-on-surface">{manualReflux} L</span>
               </div>
               <input
                 type="range"
@@ -351,120 +351,120 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
       )}
 
       {/* Influencing Factors List (Pulled Live from Flowsheet) */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
+      <div className="bg-surface-container border border-surface-container-high rounded-2xl p-5 border border-surface-container-highest border border-surface-container-high space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-black text-slate-900">Live Influencing Factors (From Flowsheet Time Slot {latestSlotUsed})</h3>
-          <span className="text-xs text-slate-500 font-bold">Auto-Evaluated</span>
+          <h3 className="text-sm font-black text-on-surface">Live Influencing Factors (From Flowsheet Time Slot {latestSlotUsed})</h3>
+          <span className="text-xs text-outline-variant font-bold">Auto-Evaluated</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {/* HR Factor */}
           <div className={`flex items-center justify-between p-3 rounded-xl border text-xs ${
-            hr > 60 ? 'bg-red-50 border-red-200' : hr > 44 ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'
+            hr > 60 ? 'bg-error-container text-on-error-container border-red-200' : hr > 44 ? 'bg-tertiary-container text-on-tertiary-container border-amber-200' : 'bg-emerald-50 border-emerald-200'
           }`}>
             <div className="flex items-center gap-2.5">
-              <span className="p-1.5 bg-white text-slate-800 rounded-lg font-bold shadow-xs">❤️</span>
+              <span className="p-1.5 bg-surface-container border border-surface-container-high text-on-surface rounded-lg font-bold shadow-xs">❤️</span>
               <div>
-                <div className="font-extrabold text-slate-900">Heart Rate</div>
-                <div className="text-[11px] text-slate-500 font-medium">{hr > 60 ? 'Severe Tachycardia' : hr > 44 ? 'Mild Elevation' : 'Normal'}</div>
+                <div className="font-extrabold text-on-surface">Heart Rate</div>
+                <div className="text-[11px] text-outline-variant font-medium">{hr > 60 ? 'Severe Tachycardia' : hr > 44 ? 'Mild Elevation' : 'Normal'}</div>
               </div>
             </div>
             <div className="text-right">
-              <span className="font-black text-slate-900 text-sm">{hr} bpm</span>
+              <span className="font-black text-on-surface text-sm">{hr} bpm</span>
             </div>
           </div>
 
           {/* Lactate Factor */}
           <div className={`flex items-center justify-between p-3 rounded-xl border text-xs ${
-            lactate > 3.5 ? 'bg-red-50 border-red-200' : lactate > 2.0 ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'
+            lactate > 3.5 ? 'bg-error-container text-on-error-container border-red-200' : lactate > 2.0 ? 'bg-tertiary-container text-on-tertiary-container border-amber-200' : 'bg-emerald-50 border-emerald-200'
           }`}>
             <div className="flex items-center gap-2.5">
-              <span className="p-1.5 bg-white text-slate-800 rounded-lg font-bold shadow-xs">🧪</span>
+              <span className="p-1.5 bg-surface-container border border-surface-container-high text-on-surface rounded-lg font-bold shadow-xs">🧪</span>
               <div>
-                <div className="font-extrabold text-slate-900">Plasma Lactate</div>
-                <div className="text-[11px] text-slate-500 font-medium">{lactate > 3.5 ? 'Hyperlactatemia Warning' : 'Normal / Decreasing'}</div>
+                <div className="font-extrabold text-on-surface">Plasma Lactate</div>
+                <div className="text-[11px] text-outline-variant font-medium">{lactate > 3.5 ? 'Hyperlactatemia Warning' : 'Normal / Decreasing'}</div>
               </div>
             </div>
             <div className="text-right">
-              <span className="font-black text-slate-900 text-sm">{lactate} mmol/L</span>
+              <span className="font-black text-on-surface text-sm">{lactate} mmol/L</span>
             </div>
           </div>
 
           {/* PCV Factor */}
           <div className={`flex items-center justify-between p-3 rounded-xl border text-xs ${
-            pcv > 50 ? 'bg-red-50 border-red-200' : pcv > 45 ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'
+            pcv > 50 ? 'bg-error-container text-on-error-container border-red-200' : pcv > 45 ? 'bg-tertiary-container text-on-tertiary-container border-amber-200' : 'bg-emerald-50 border-emerald-200'
           }`}>
             <div className="flex items-center gap-2.5">
-              <span className="p-1.5 bg-white text-slate-800 rounded-lg font-bold shadow-xs">🩸</span>
+              <span className="p-1.5 bg-surface-container border border-surface-container-high text-on-surface rounded-lg font-bold shadow-xs">🩸</span>
               <div>
-                <div className="font-extrabold text-slate-900">Hematocrit (PCV %)</div>
-                <div className="text-[11px] text-slate-500 font-medium">{pcv > 50 ? 'Severe Hemoconcentration' : 'Within Target Range'}</div>
+                <div className="font-extrabold text-on-surface">Hematocrit (PCV %)</div>
+                <div className="text-[11px] text-outline-variant font-medium">{pcv > 50 ? 'Severe Hemoconcentration' : 'Within Target Range'}</div>
               </div>
             </div>
             <div className="text-right">
-              <span className="font-black text-slate-900 text-sm">{pcv}%</span>
+              <span className="font-black text-on-surface text-sm">{pcv}%</span>
             </div>
           </div>
 
           {/* Reflux Vol Factor */}
           <div className={`flex items-center justify-between p-3 rounded-xl border text-xs ${
-            refluxLiters >= 2.0 ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'
+            refluxLiters >= 2.0 ? 'bg-tertiary-container text-on-tertiary-container border-amber-200' : 'bg-emerald-50 border-emerald-200'
           }`}>
             <div className="flex items-center gap-2.5">
-              <span className="p-1.5 bg-white text-slate-800 rounded-lg font-bold shadow-xs">🌊</span>
+              <span className="p-1.5 bg-surface-container border border-surface-container-high text-on-surface rounded-lg font-bold shadow-xs">🌊</span>
               <div>
-                <div className="font-extrabold text-slate-900">Reflux Volume</div>
-                <div className="text-[11px] text-slate-500 font-medium">{refluxLiters >= 2.0 ? 'Significant Reflux (>2 L)' : 'Minimal Reflux'}</div>
+                <div className="font-extrabold text-on-surface">Reflux Volume</div>
+                <div className="text-[11px] text-outline-variant font-medium">{refluxLiters >= 2.0 ? 'Significant Reflux (>2 L)' : 'Minimal Reflux'}</div>
               </div>
             </div>
             <div className="text-right">
-              <span className="font-black text-slate-900 text-sm">{refluxLiters} L</span>
+              <span className="font-black text-on-surface text-sm">{refluxLiters} L</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Multivariate Logistic Regression Reference Table */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
+      <div className="bg-surface-container border border-surface-container-high rounded-2xl p-5 border border-surface-container-highest border border-surface-container-high space-y-3">
         <div>
-          <h3 className="text-sm font-black text-slate-900">Validated Multivariate Logistic Model (Blikslager & Freeman)</h3>
-          <p className="text-xs text-slate-500">Evidence-based odds ratio weights applied for surgical exploratory decision</p>
+          <h3 className="text-sm font-black text-on-surface">Validated Multivariate Logistic Model (Blikslager & Freeman)</h3>
+          <p className="text-xs text-outline-variant">Evidence-based odds ratio weights applied for surgical exploratory decision</p>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-100 border-b border-slate-200 font-black text-slate-700 uppercase tracking-wider text-[11px]">
+              <tr className="bg-surface-container-lowest border-b border-surface-container-highest font-black text-on-surface-variant uppercase tracking-wider text-[11px]">
                 <th className="p-2.5">Variable</th>
                 <th className="p-2.5">Odds Ratio (OR)</th>
                 <th className="p-2.5">P-Value</th>
                 <th className="p-2.5">Confidence Interval (95%)</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
-              <tr className="bg-red-50/60">
+            <tbody className="divide-y divide-slate-100 font-medium text-on-surface">
+              <tr className="bg-error-container text-on-error-container/60">
                 <td className="p-2.5 font-extrabold">Heart Rate (&gt;60 bpm)</td>
                 <td className="p-2.5 text-blue-700 font-extrabold">OR: 3.5</td>
-                <td className="p-2.5 text-blue-600 font-bold">0.002</td>
-                <td className="p-2.5 text-slate-600">CI: 1.8-6.7</td>
+                <td className="p-2.5 text-primary font-bold">0.002</td>
+                <td className="p-2.5 text-outline">CI: 1.8-6.7</td>
               </tr>
               <tr className="bg-emerald-50/60">
                 <td className="p-2.5 font-extrabold">Plasma Lactate (&gt;2.0 mmol/L)</td>
                 <td className="p-2.5 text-blue-700 font-extrabold">OR: 5.2</td>
-                <td className="p-2.5 text-blue-600 font-bold">&lt;0.001</td>
-                <td className="p-2.5 text-slate-600">CI: 2.5-10.8</td>
+                <td className="p-2.5 text-primary font-bold">&lt;0.001</td>
+                <td className="p-2.5 text-outline">CI: 2.5-10.8</td>
               </tr>
-              <tr className="bg-amber-50/60">
+              <tr className="bg-tertiary-container text-on-tertiary-container/60">
                 <td className="p-2.5 font-extrabold">PCV (&gt;50%)</td>
                 <td className="p-2.5 text-blue-700 font-extrabold">OR: 2.8</td>
-                <td className="p-2.5 text-blue-600 font-bold">0.012</td>
-                <td className="p-2.5 text-slate-600">CI: 1.3-5.8</td>
+                <td className="p-2.5 text-primary font-bold">0.012</td>
+                <td className="p-2.5 text-outline">CI: 1.3-5.8</td>
               </tr>
               <tr>
                 <td className="p-2.5 font-extrabold">Reflux Volume (&gt;2.0 L)</td>
                 <td className="p-2.5 text-blue-700 font-extrabold">OR: 4.1</td>
-                <td className="p-2.5 text-blue-600 font-bold">0.005</td>
-                <td className="p-2.5 text-slate-600">CI: 1.9-8.4</td>
+                <td className="p-2.5 text-primary font-bold">0.005</td>
+                <td className="p-2.5 text-outline">CI: 1.9-8.4</td>
               </tr>
             </tbody>
           </table>
