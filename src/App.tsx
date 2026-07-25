@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Patient, FlowsheetRow, FlowsheetValue, DrugFormularyItem, SurgeonScheduleSettings } from './types';
+import { Patient, PatientStatus, FlowsheetRow, FlowsheetValue, DrugFormularyItem, SurgeonScheduleSettings } from './types';
+import { evaluatePatient, STATUS_LABELS } from './utils/prognosis';
 import {
   INITIAL_PATIENTS,
   INITIAL_TIME_SLOTS,
@@ -102,6 +103,56 @@ export default function App() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // ---- Live prognosis + triage suggestion -------------------------------
+  // Statuses the clinician has explicitly dismissed, so we stop re-proposing
+  // the same move on every keystroke. Keyed by patient id.
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<Record<string, PatientStatus>>({});
+
+  const { prognosis: livePrognosis, suggestion: liveSuggestion } = evaluatePatient(
+    flowsheetRows,
+    timeSlots,
+    activePatient?.callSurgeonTriggers,
+  );
+
+  // Keep the stored percentages in step with what has been charted, so the
+  // board card, the dashboard and the prognosis screen all agree.
+  useEffect(() => {
+    if (!activePatient) return;
+    const survival = Math.round(livePrognosis.survivalPercent);
+    const surgical = Math.round(livePrognosis.surgicalPercent);
+    if (
+      activePatient.survivalPrognosisPercent === survival &&
+      activePatient.surgicalIndicationPercent === surgical
+    ) return;
+    setPatients(prev => prev.map(p =>
+      p.id === activePatient.id
+        ? { ...p, survivalPrognosisPercent: survival, surgicalIndicationPercent: surgical }
+        : p,
+    ));
+  }, [activePatient?.id, livePrognosis.survivalPercent, livePrognosis.surgicalPercent]);
+
+  // Only surface a move when it differs from the current column and has not
+  // already been waved off. The clinician decides; nothing moves on its own.
+  const statusSuggestion =
+    activePatient &&
+    liveSuggestion.status !== activePatient.status &&
+    dismissedSuggestions[activePatient.id] !== liveSuggestion.status
+      ? { patientId: activePatient.id, ...liveSuggestion }
+      : null;
+
+  const handleAcceptSuggestion = () => {
+    if (!statusSuggestion) return;
+    setPatients(prev => prev.map(p =>
+      p.id === statusSuggestion.patientId ? { ...p, status: statusSuggestion.status } : p,
+    ));
+    showToast(`Moved to ${STATUS_LABELS[statusSuggestion.status]}`);
+  };
+
+  const handleDismissSuggestion = () => {
+    if (!statusSuggestion) return;
+    setDismissedSuggestions(prev => ({ ...prev, [statusSuggestion.patientId]: statusSuggestion.status }));
   };
 
   // Automatic 6-hour scheduled backup timer
@@ -402,6 +453,9 @@ export default function App() {
               setEditingPatient(p);
               setIsNewPatientModalOpen(true);
             }}
+            statusSuggestion={statusSuggestion}
+            onAcceptSuggestion={handleAcceptSuggestion}
+            onDismissSuggestion={handleDismissSuggestion}
           />
         )}
 

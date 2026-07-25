@@ -2,6 +2,17 @@ import React, { useState } from 'react';
 import { Patient } from '../types';
 import { UserPlus, X, ShieldAlert, Heart, Activity, FileText, Scale, Calendar, Clock, AlertTriangle } from 'lucide-react';
 import { ComboboxWithAdd } from './ComboboxWithAdd';
+import { calculatePrognosis, extractClinicalInputs } from '../utils/prognosis';
+
+/** Model baseline for a patient with nothing charted yet, so a new admission
+ *  starts from the same maths as everyone else rather than invented numbers. */
+function admissionBaseline() {
+  const { survivalPercent, surgicalPercent } = calculatePrognosis(extractClinicalInputs([], []));
+  return {
+    survivalPrognosisPercent: Math.round(survivalPercent),
+    surgicalIndicationPercent: Math.round(surgicalPercent),
+  };
+}
 
 interface NewPatientModalProps {
   onClose: () => void;
@@ -77,8 +88,9 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({ onClose, onSav
       surgicalProcedure: formData.surgicalProcedure,
       status: formData.status || 'CRITICAL',
       onIceScore: '1/5 (Low Risk)',
-      survivalPrognosisPercent: 88,
-      surgicalIndicationPercent: 20,
+      // Baseline from the shared model with nothing charted yet; these are
+      // recalculated from the flowsheet as soon as the first round is entered.
+      ...admissionBaseline(),
       netFluidBalanceLiters: 0,
       nextDueRoundTime: 'NOW',
       surgeryTime: formData.surgeryTime,

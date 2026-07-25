@@ -3,6 +3,31 @@ import { Patient, PatientStatus } from '../types';
 import { HeartPulse, Plus, Copy, Trash2, Receipt, Clock, Thermometer, Droplets, Activity, Edit3 } from 'lucide-react';
 import { BillingInvoiceModal } from './BillingInvoiceModal';
 
+interface StatusSuggestionForBoard {
+  patientId: string;
+  status: PatientStatus;
+  reason: string;
+}
+
+const STATUS_TITLES: Record<PatientStatus, string> = {
+  CRITICAL: 'Critical Care',
+  STABLE: 'Stable / Med Mgt',
+  MONITORING: 'ICU Monitoring',
+  RECOVERING: 'Recovering / Step Down',
+  DISCHARGED: 'Discharged',
+};
+
+// Survival is "higher is better"; surgical indication is "higher is worse".
+const survivalTone = (pct: number) =>
+  pct >= 75 ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+    : pct >= 40 ? 'bg-amber-50 border-amber-100 text-amber-800'
+    : 'bg-red-50 border-red-100 text-red-800';
+
+const surgicalTone = (pct: number) =>
+  pct >= 60 ? 'bg-red-50 border-red-100 text-red-800'
+    : pct >= 30 ? 'bg-amber-50 border-amber-100 text-amber-800'
+    : 'bg-emerald-50 border-emerald-100 text-emerald-800';
+
 interface PatientBoardViewProps {
   patients: Patient[];
   activePatientId: string;
@@ -11,6 +36,9 @@ interface PatientBoardViewProps {
   onDuplicatePatient: (id: string) => void;
   onDeletePatient: (id: string) => void;
   onEditPatient?: (patient: Patient) => void;
+  statusSuggestion?: StatusSuggestionForBoard | null;
+  onAcceptSuggestion?: () => void;
+  onDismissSuggestion?: () => void;
 }
 
 export const PatientBoardView: React.FC<PatientBoardViewProps> = ({
@@ -21,6 +49,9 @@ export const PatientBoardView: React.FC<PatientBoardViewProps> = ({
   onDuplicatePatient,
   onDeletePatient,
   onEditPatient,
+  statusSuggestion,
+  onAcceptSuggestion,
+  onDismissSuggestion,
 }) => {
   const [billingPatientId, setBillingPatientId] = useState<string | null>(null);
 
@@ -134,7 +165,38 @@ export const PatientBoardView: React.FC<PatientBoardViewProps> = ({
                           <Clock className="w-3 h-3 text-purple-600" />
                           <span className="text-[9px] font-bold text-purple-800">Due: {p.nextDueRoundTime}</span>
                         </div>
+                        <div className={`rounded-lg p-1.5 flex items-center gap-1.5 border ${survivalTone(p.survivalPrognosisPercent)}`}>
+                          <HeartPulse className="w-3 h-3" />
+                          <span className="text-[9px] font-bold">Surv {p.survivalPrognosisPercent}%</span>
+                        </div>
+                        <div className={`rounded-lg p-1.5 flex items-center gap-1.5 border ${surgicalTone(p.surgicalIndicationPercent)}`}>
+                          <Activity className="w-3 h-3" />
+                          <span className="text-[9px] font-bold">Surg {p.surgicalIndicationPercent}%</span>
+                        </div>
                       </div>
+
+                      {statusSuggestion?.patientId === p.id && (
+                        <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 p-2">
+                          <div className="text-[10px] font-bold text-amber-900 leading-snug">
+                            Suggested: {STATUS_TITLES[statusSuggestion.status]}
+                          </div>
+                          <div className="text-[9px] text-amber-800 mb-1.5">{statusSuggestion.reason}</div>
+                          <div className="flex gap-1.5">
+                            <button
+                              onClick={() => onAcceptSuggestion?.()}
+                              className="flex-1 text-[10px] font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-md py-1 transition-colors"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={() => onDismissSuggestion?.()}
+                              className="flex-1 text-[10px] font-bold text-amber-800 bg-white border border-amber-300 hover:bg-amber-100 rounded-md py-1 transition-colors"
+                            >
+                              Dismiss
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                       <button
                         onClick={() => setBillingPatientId(p.id)}

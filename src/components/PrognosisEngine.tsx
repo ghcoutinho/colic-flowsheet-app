@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Patient, FlowsheetRow } from '../types';
+import {
+  extractClinicalInputs,
+  calculatePrognosis as calculatePrognosisModel,
+  type ClinicalInputs,
+} from '../utils/prognosis';
 import { PieChart, TrendingUp, TrendingDown, AlertCircle, Info, Share2, Sliders, Activity, RefreshCw, ShieldAlert, Snowflake, HeartPulse } from 'lucide-react';
 
 interface PrognosisEngineProps {
@@ -7,6 +12,15 @@ interface PrognosisEngineProps {
   rows?: FlowsheetRow[];
   timeSlots?: string[];
 }
+
+/** Parse a flowsheet entry, falling back only when it is genuinely unparseable.
+ *  A plain `|| fallback` would discard a real charted zero — 0 L of reflux is a
+ *  normal finding, not a missing one. */
+const entryNum = (entry: { val: any } | null, fallback: number): number => {
+  if (!entry) return fallback;
+  const parsed = parseFloat(String(entry.val));
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
 
 export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows = [], timeSlots = [] }) => {
   const [isLiveSync, setIsLiveSync] = useState<boolean>(true);
@@ -36,12 +50,12 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
   const liveMmEntry = getLatestEntry('mucous') || getLatestEntry('mm');
   const liveCryoEntry = getLatestEntry('cryo');
 
-  const liveHr = liveHrEntry ? parseFloat(String(liveHrEntry.val)) || 44 : 44;
-  const liveLactate = liveLactateEntry ? parseFloat(String(liveLactateEntry.val)) || 1.8 : 1.8;
-  const livePcv = livePcvEntry ? parseFloat(String(livePcvEntry.val)) || 38 : 38;
-  const liveTp = liveTpEntry ? parseFloat(String(liveTpEntry.val)) || 6.8 : 6.8;
-  const liveReflux = liveRefluxEntry ? parseFloat(String(liveRefluxEntry.val)) || 0.5 : 0.5;
-  const livePain = livePainEntry ? parseFloat(String(livePainEntry.val)) || 0 : 0;
+  const liveHr = entryNum(liveHrEntry, 44);
+  const liveLactate = entryNum(liveLactateEntry, 1.8);
+  const livePcv = entryNum(livePcvEntry, 38);
+  const liveTp = entryNum(liveTpEntry, 6.8);
+  const liveReflux = entryNum(liveRefluxEntry, 0.5);
+  const livePain = entryNum(livePainEntry, 0);
   const liveMm = liveMmEntry ? String(liveMmEntry.val) : 'pink';
   const liveCryoOn = liveCryoEntry ? String(liveCryoEntry.val).toLowerCase().includes('yes') : true;
 
@@ -52,14 +66,19 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
   const liveWbcEntry = getLatestEntry('wbc');
   const liveResponseTherapyEntry = getLatestEntry('response to medical') || getLatestEntry('response');
 
-  const liveTemp = liveTempEntry ? parseFloat(String(liveTempEntry.val)) || 38.0 : 38.0;
-  const liveRr = liveRrEntry ? parseFloat(String(liveRrEntry.val)) || 16 : 16;
-  const livePeritonealLactate = livePeritonealLactateEntry ? parseFloat(String(livePeritonealLactateEntry.val)) || 1.5 : 1.5;
-  const livePflPlRatio = livePflPlRatioEntry ? parseFloat(String(livePflPlRatioEntry.val)) || 0.8 : (livePeritonealLactate / (liveLactate || 1));
-  const liveWbc = liveWbcEntry ? parseFloat(String(liveWbcEntry.val)) || 8.0 : 8.0;
+  const liveTemp = entryNum(liveTempEntry, 38.0);
+  const liveRr = entryNum(liveRrEntry, 16);
+  const livePeritonealLactate = entryNum(livePeritonealLactateEntry, 1.5);
+  const livePflPlRatio = livePflPlRatioEntry
+    ? entryNum(livePflPlRatioEntry, 0.8)
+    : (livePeritonealLactate / (liveLactate || 1));
+  const liveWbc = entryNum(liveWbcEntry, 8.0);
   const liveResponseTherapy = liveResponseTherapyEntry ? String(liveResponseTherapyEntry.val) : 'Complete Resolution';
 
   const latestSlotUsed = liveHrEntry?.slot || liveLactateEntry?.slot || timeSlots[timeSlots.length - 1] || 'NOW';
+
+  // Shared extraction for the prognosis model (calcium, rectal, US, gut sounds…)
+  const liveInputs = extractClinicalInputs(rows, timeSlots);
 
   // Manual simulation state overrides if user turns off live sync
   const [manualHr, setManualHr] = useState<number>(liveHr);
@@ -67,39 +86,37 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
   const [manualPcv, setManualPcv] = useState<number>(livePcv);
   const [manualReflux, setManualReflux] = useState<number>(liveReflux);
 
+  // useState initialisers only run on mount, so the sliders would otherwise keep
+  // first-render values while the flowsheet moved on. Re-seed them from live
+  // data whenever it changes and we are not mid-simulation.
+  useEffect(() => {
+    if (!isLiveSync) return;
+    setManualHr(liveHr);
+    setManualLactate(liveLactate);
+    setManualPcv(livePcv);
+    setManualReflux(liveReflux);
+  }, [isLiveSync, liveHr, liveLactate, livePcv, liveReflux]);
+
   const hr = isLiveSync ? liveHr : manualHr;
   const lactate = isLiveSync ? liveLactate : manualLactate;
   const pcv = isLiveSync ? livePcv : manualPcv;
   const refluxLiters = isLiveSync ? liveReflux : manualReflux;
 
-  // 1. Live Survival & Surgical Indication Logistic Regression Model
-  const calculatePrognosis = () => {
-    let riskScore = 0;
-    if (hr > 44) riskScore += (hr - 44) * 0.45;
-    if (lactate > 2.0) riskScore += (lactate - 2.0) * 8.5;
-    if (pcv > 45) riskScore += (pcv - 45) * 1.8;
-    if (refluxLiters >= 2.0) riskScore += 15;
-    if (livePain >= 2) riskScore += 12;
-
-    // Peritoneal Lactate / PFL:PL Ratio Strangulation Boost
-    if (livePflPlRatio > 1.0 || livePeritonealLactate > 3.5) riskScore += 25;
-
-    // Response to Medical Therapy Failure Boost
-    if (liveResponseTherapy.toLowerCase().includes('refractory') || liveResponseTherapy.toLowerCase().includes('deterioration')) {
-      riskScore += 22;
-    }
-
-    // WBC Leukopenia Trap Boost (Falling WBC = Neutrophil Margination / Endotoxemia)
-    if (liveWbc < 5.0 || liveWbc > 15.0) riskScore += 10;
-
-    const rawSurvival = Math.max(8, Math.min(98, 96 - riskScore));
-    const rawSurgical = Math.max(5, Math.min(98, riskScore * 1.25));
-
-    return {
-      survival: Math.round(rawSurvival),
-      surgicalRisk: Math.round(rawSurgical),
-    };
+  // 1. Survival (Colic Assessment Score) and surgical indication, both fed
+  //    through the shared logistic model so the board, dashboard and this
+  //    screen can never show different numbers.
+  const prognosisInputs: ClinicalInputs = {
+    ...liveInputs,
+    // In What-If mode the sliders replace the charted values.
+    hr,
+    lactate,
+    pcv,
+    refluxLiters,
   };
+
+  const prognosisResult = calculatePrognosisModel(prognosisInputs);
+  const survival = Math.round(prognosisResult.survivalPercent);
+  const surgicalRisk = Math.round(prognosisResult.surgicalPercent);
 
   // 2. Live ICE (Laminitis Risk) Assessment with SIRS Temp, RR, WBC
   const calculateIceRisk = () => {
@@ -118,7 +135,6 @@ export const PrognosisEngine: React.FC<PrognosisEngineProps> = ({ patient, rows 
     };
   };
 
-  const { survival, surgicalRisk } = calculatePrognosis();
   const iceRisk = calculateIceRisk();
 
   return (

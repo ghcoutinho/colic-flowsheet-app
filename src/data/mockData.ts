@@ -714,6 +714,20 @@ export const INITIAL_FLOWSHEET_ROWS: FlowsheetRow[] = [
       '10:00': { value: 102, status: 'NORMAL' },
     },
   },
+  {
+    // Feeds the Colic Assessment Score: hypocalcaemia tracks endotoxaemia and
+    // is weighted in the survival model.
+    id: 'calcium',
+    category: 'CLINICOPATHOLOGY',
+    parameter: 'Total Calcium (mg/dL)',
+    target: '11.0–13.5',
+    bandColor: 'blue',
+    type: 'numeric',
+    values: {
+      '10:00': { value: 10.4, status: 'WARNING' },
+      '12:00': { value: 11.6, status: 'WARNING' },
+    },
+  },
 
   // --- LAMINITIS & CRYOTHERAPY ---
   {
